@@ -9,17 +9,12 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <iostream>
-#include "siblib.h"
+#include "factorgraph.h"
 
 using namespace std;
 
 int main(int argc, char ** argv) {
-
-	Params par;
-	par.read_input(argc, argv);
-
-	Factor factor(&par);
-
+	FactorGraph factor(Params(argc, argv));
 	return 0;
 }
 
