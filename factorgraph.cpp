@@ -12,7 +12,7 @@
 
 using namespace std;
 
-Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null")
+Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), tol(1e-3)
 {
 	int c;
 	while ((c = getopt(argc, argv, "m:o:c:t:h")) != -1 ) {
@@ -168,19 +168,19 @@ void FactorGraph::set_field(int i)
 				it++;
 			switch(state) {
 				case 0:
-					for(int t = 0; t < int(nodes[i].times.size()); ++t) {
+					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 						nodes[i].ht[t] = (t >= it + 1) ? 1.0 : 0.0;
 						nodes[i].hg[t] = (t > it + 1) ? 1.0 : 0.0;
 					}
 					break;
 				case 1:
-					for(int t = 0; t < int(nodes[i].times.size()); ++t) {
+					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 						nodes[i].ht[t] = (t <= it) ? 1.0 : 0.0;
 						nodes[i].hg[t] = (t > it) ? 1.0 : 0.0; // abs T
 					}
 					break;
 				case 2:
-					for(int t = 0; t < int(nodes[i].times.size()); ++t) {
+					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 						nodes[i].ht[t] = (t < it) ? 1.0 : 0.0;
 						nodes[i].hg[t] = (t >= it) ? 1.0 : 0.0;
 					}
@@ -191,7 +191,7 @@ void FactorGraph::set_field(int i)
 			}
 		}
 	} else { // unobserved ?
-		for(int k = 0; k < int(nodes[i].times.size()); ++k) {
+		for(int k = 0; k < int(nodes[i].ht.size()); ++k) {
 			nodes[i].ht[k] = 1.0;
 			nodes[i].hg[k] = 1.0;
 		}
@@ -209,7 +209,7 @@ void FactorGraph::finalize()
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
 		finalize_node(i, nodes[i].tobs);
-		int ntimes = nodes[i].times.size();
+		int ntimes = nodes[i].times.size() - 1;
 		nodes[i].bt.resize(ntimes);
 		nodes[i].bg.resize(ntimes);
 		nodes[i].ht.resize(ntimes);
