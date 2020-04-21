@@ -183,8 +183,6 @@ int Sij(Node const & f, int j, int sij, int gi) {
 	return f.neighs[j].times[sij] <= f.times[gi] ? sij : f.neighs[j].times.size() - 1;
 }
 
-
-
 int idx(int sij, int sji, int qj) { return sji + qj * sij; }
 
 real_t prob_obs(Node const & f, int gi, int ti) {
@@ -256,8 +254,8 @@ real_t FactorGraph::update(int i)
 
 			P0.initialize(C0.begin(), C0.end(), 1.0, multiplies<real_t>());
 			P1.initialize(C1.begin(), C1.end(), 1.0, multiplies<real_t>());
-			//message to ti
-			// FIX HERE
+
+			//messages to ti, gi
 			real_t g_prob = prob_obs(f, gi, ti);
 			real_t a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
 			ug[gi] += f.bt[ti] * a;
