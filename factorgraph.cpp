@@ -182,7 +182,7 @@ void FactorGraph::set_field(int i)
 				case 2:
 					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 						nodes[i].ht[t] = (t < it) ? 1.0 : 0.0;
-						nodes[i].hg[t] = (t >= it) ? 1.0 : 0.0;
+						nodes[i].hg[t] = (t <= it) ? 1.0 : 0.0;
 					}
 				default:
 					cerr << "Error in observation " << state << endl;
