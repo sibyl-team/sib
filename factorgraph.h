@@ -10,6 +10,7 @@ typedef long double real_t;
 struct Params {
 	char const * obs_file;
 	char const * cont_file;
+	real_t mu;
 	Params(int &, char **);
 };
 
@@ -18,18 +19,19 @@ struct Neigh {
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
 	std::vector<int> times; // times of contacts
-	std::vector<float> lambdas; // times of contacts
-	std::vector<double> msg; // BP msg nij^2 or
+	std::vector<real_t> lambdas; // times of contacts
+	std::vector<real_t> msg; // BP msg nij^2 or
 };
 
 struct Node {
-	Node(int index) : index(index) {}
+	Node(int index, real_t mu) : index(index), mu(mu) {}
 	int index;
+	real_t mu;
 	std::vector<int> times;
-	std::vector<double> Ti;  // marginals infection times T[ni+2]
-	std::vector<double> Gi;  // marginals recovery times G[ni+2]
-	std::vector<double> ht;  // message infection times T[ni+2]
-	std::vector<double> hg;  // message recovery times G[ni+2]
+	std::vector<real_t> bt;  // marginals infection times T[ni+2]
+	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
+	std::vector<real_t> ht;  // message infection times T[ni+2]
+	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
 };
 
@@ -38,7 +40,7 @@ class FactorGraph {
 public:
 	int Tinf;
 	std::vector<Node> nodes;
-	std::map<int, int> idx;
+	std::map<int, int> index;
 	FactorGraph(Params const & params);
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
@@ -47,6 +49,7 @@ public:
 	void finalize();
 	real_t update(int i);
 	void showgraph();
+	Params params;
 };
 
 
