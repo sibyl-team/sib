@@ -1,15 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <time.h>
-#include <math.h>
-#include <assert.h>
-#include <string.h>
-#include <getopt.h>
-#include <stdbool.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <vector>
 #include <map>
 
@@ -19,7 +7,8 @@
 
 
 struct Params {
-	char * obs_file, * cont_file;
+	char const * obs_file;
+	char const * cont_file;
 	Params(int &, char **);
 };
 

@@ -1,9 +1,15 @@
-#include "factorgraph.h"
+#include <string.h>
+#include <getopt.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <algorithm>
+#include "factorgraph.h"
 
 using namespace std;
 
-Params::Params(int & argc, char ** argv) {
+Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null")
+{
 	int c;
 	while ((c = getopt(argc, argv, "o:c:h")) != -1 ) {
 		switch(c) {
@@ -28,6 +34,7 @@ FactorGraph::FactorGraph(Params const & params)
 {
 	char const * obs_file = params.obs_file;
 	char const * cont_file = params.cont_file;
+	Tinf = -1;
 	string line;
 
 	ifstream obs(obs_file);
@@ -37,19 +44,19 @@ FactorGraph::FactorGraph(Params const & params)
 	if (cont.is_open()) {
 		while (getline(cont,line)) {
 			nlines++;
-			if(nlines > 1) {
+			if (nlines > 1) {
 				stringstream s(line);
 				int i, j, t;
 				char g1, g2, g3;
 				double lambda;
 				s >> i >> g1 >> j >> g2 >> lambda >> g3 >> t;
-				fprintf(stdout, "%d %d %f %d\n", i,j,lambda,t);
+				cout << i << " " << j << " " << lambda << " " << t << endl;
 				add_contact(i, j, t, lambda);
 			}
 		}
 		cont.close();
 	} else {
-		fprintf(stderr, "Error opening %s\n", cont_file);
+		cerr << "Error opening " << cont_file << endl;
 		exit(EXIT_FAILURE);
 	}
 	finalize();
@@ -60,7 +67,7 @@ FactorGraph::FactorGraph(Params const & params)
 int FactorGraph::find_neighbor(int i, int j) const
 {
 	int k = 0;
-	for (; k < int(nodes[i].neighs.size()); ++j)
+	for (; k < int(nodes[i].neighs.size()); ++k)
 		if (j == nodes[i].neighs[k].index)
 			break;
 	return k;
@@ -78,14 +85,15 @@ int FactorGraph::add_node(int i)
 
 void FactorGraph::add_contact(int i, int j, int t, float lambda)
 {
+	Tinf = max(Tinf, t + 1);
 	i = add_node(i);
 	j = add_node(j);
 	int ki = find_neighbor(i, j);
 	int kj = find_neighbor(j, i);
 	if (ki == int(nodes[i].neighs.size()))
-		nodes[i].neighs.push_back(Neigh(i, kj));
+		nodes[i].neighs.push_back(Neigh(j, kj));
 	if (kj == int(nodes[j].neighs.size()))
-		nodes[j].neighs.push_back(Neigh(j, ki));
+		nodes[j].neighs.push_back(Neigh(i, ki));
 	nodes[i].neighs[ki].times.push_back(t);
 	nodes[i].neighs[ki].lambdas.push_back(lambda);
 	nodes[j].neighs[kj].times.push_back(t);
@@ -103,9 +111,9 @@ void FactorGraph::finalize_node(int i)
 	F.push_back(Tinf);
 	F.push_back(numeric_limits<int>::max());
 	nodes[i].times.push_back(-1);
-	for (int i = 0; i < int(F.size()); ++i) {
-		if (nodes[i].times.back() != F[i])
-			nodes[i].times.push_back(F[i]);
+	for (int k = 0; k < int(F.size()); ++k) {
+		if (nodes[i].times.back() != F[k])
+			nodes[i].times.push_back(F[k]);
 	}
 }
 
@@ -113,11 +121,12 @@ void FactorGraph::finalize()
 {
 	vector<int> F;
 
-	for (int i = 0; i < int(nodes.size()); i++) {
+	for (int i = 0; i < int(nodes.size()); ++i) {
+		finalize_node(i);
 		int ntimes = nodes[i].times.size();
 		nodes[i].Ti.resize(ntimes);
 		nodes[i].Gi.resize(ntimes);
-		for (int k = 0; k  < int(nodes[i].neighs.size()); k++) {
+		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
 			int nij = nodes[i].neighs[k].times.size();
 			nodes[i].neighs[k].msg.resize((nij + 2)*(nij + 2));
 		}
@@ -133,7 +142,7 @@ void FactorGraph::showgraph()
 		fprintf(stderr, "### in contact with %d nodes\n", int(nodes[i].neighs.size()));
 		vector<Neigh> const & aux = nodes[i].neighs;
 		for (int j = 0; j < int(aux.size()); j++) {
-			fprintf(stderr, "# neighbor %d\n", aux[j].index);
+			fprintf(stderr, "# neighbor %d\n", nodes[aux[j].index].index);
 			fprintf(stderr, "# in position %d\n", aux[j].pos);
 			fprintf(stderr, "# in contact %d times, in t: ", int(aux[j].times.size()));
 			for (int t = 0; t < int(aux[j].times.size()); t++)
