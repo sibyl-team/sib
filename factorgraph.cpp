@@ -172,7 +172,7 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to)
 	real_t err = 0;
 	for (int i = 0; i < n; ++i) {
 		from[i] /= s;
-		err = max(err, abs(from[i]/s - to[i]));
+		err = max(err, abs(from[i] - to[i]));
 		to[i] = from[i];
 	}
 	return err;
