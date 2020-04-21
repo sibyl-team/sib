@@ -5,6 +5,7 @@
 #define FACTORGRAPH_H
 
 
+typedef long double real_t;
 
 struct Params {
 	char const * obs_file;
@@ -27,6 +28,8 @@ struct Node {
 	std::vector<int> times;
 	std::vector<double> Ti;  // marginals infection times T[ni+2]
 	std::vector<double> Gi;  // marginals recovery times G[ni+2]
+	std::vector<double> ht;  // message infection times T[ni+2]
+	std::vector<double> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
 };
 
@@ -38,10 +41,11 @@ public:
 	std::map<int, int> idx;
 	FactorGraph(Params const & params);
 	int find_neighbor(int i, int j) const;
-	void add_contact(int i, int j, int t, float lambda);
+	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
 	void finalize_node(int i);
 	void finalize();
+	real_t update(int i);
 	void showgraph();
 };
 

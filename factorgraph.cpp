@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <functional>
 #include "factorgraph.h"
 
 using namespace std;
@@ -48,7 +49,7 @@ FactorGraph::FactorGraph(Params const & params)
 				stringstream s(line);
 				int i, j, t;
 				char g1, g2, g3;
-				double lambda;
+				real_t lambda;
 				s >> i >> g1 >> j >> g2 >> lambda >> g3 >> t;
 				cout << i << " " << j << " " << lambda << " " << t << endl;
 				add_contact(i, j, t, lambda);
@@ -83,7 +84,7 @@ int FactorGraph::add_node(int i)
 	return idx[i];
 }
 
-void FactorGraph::add_contact(int i, int j, int t, float lambda)
+void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
 	Tinf = max(Tinf, t + 1);
 	i = add_node(i);
@@ -126,13 +127,14 @@ void FactorGraph::finalize()
 		int ntimes = nodes[i].times.size();
 		nodes[i].Ti.resize(ntimes);
 		nodes[i].Gi.resize(ntimes);
+		nodes[i].ht.resize(ntimes);
+		nodes[i].hg.resize(ntimes);
 		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
 			int nij = nodes[i].neighs[k].times.size();
 			nodes[i].neighs[k].msg.resize((nij + 2)*(nij + 2));
 		}
 	}
 }
-
 
 void FactorGraph::showgraph()
 {
@@ -151,3 +153,105 @@ void FactorGraph::showgraph()
 		}
 	}
 }
+
+
+real_t FactorGraph::update(int i)
+{
+	int const n = nodes[i].neighs.size();
+
+	Node & f = nodes[i];
+
+	vector<vector<real_t> > UU(n);
+
+	vector<real_t> ut(f.Ti.size())
+	vector<real_t> ug(f.Ti.size())
+
+	for (int j = 0; j < n; ++j)
+		UU[j].resize(f.neighs[j].msg.size());
+	// proba tji >= ti for each j
+	vector<real_t> C0(n);
+	// proba tji > ti for each j
+	vector<real_t> C1(n);
+
+	Cavity<real_t> P0(C0, 1., multiplies<real_t>());
+	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
+	vector<int> min_in(n), min_out(n);
+	int const qi_ = Ti.size();
+	for (int ti = 0; ti < qi_; ++ti) {
+		for (int j = 0; j < n; ++j) {
+			Neigh & v = f.neighs[j];
+			int const qj = v.times.size();
+			min_in[j] = qj - 1;
+			min_out[j] = qj - 1;
+			for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; s--) {
+				// smallest tji >= ti
+				min_in[j] = s;
+				if (v.times[s] > f.times[ti]) {
+					// smallest tji > ti
+					min_out[j] = s;
+				}
+			}
+		}
+
+		for (int gi = ti; gi < qi_; ++gi) {
+			fill(C0.begin(), C0.end(), 0.0);
+			fill(C1.begin(), C1.end(), 0.0);
+			for (int j = 0; j < n; ++j) {
+				Neigh & v = f.neighs[j];
+				vector<real_t> & h = nodes[v.index].neighs[v.pos].msg;
+				int const qj = v.times.size();
+				for (int sji = min_in[j]; sji < qj; ++sji) {
+					real_t pi = 1;
+					for (int s = min_out[j]; s < qj - 1; ++s) {
+						int const sij = Sij(j, s, gi);
+						real_t const p = pi * v.lambdas[s] * h[idx(sij, sji, qj)];
+						C0[j] += p;
+						if (v.times[sji] > f.times[ti])
+							C1[j] += p;
+						pi *= 1 - v.lambdas[s];
+					}
+					int const sij = Sij(j, qj - 1, gi);
+					real_t const p = pi * h[idx(sij, sji, qj)];
+					C0[j] += p;
+					if (v.times[sji] > f.times[ti])
+						C1[j] += p;
+				}
+			}
+
+			P0.initialize(C0.begin(), C0.end(), 1.0, &product);
+			P1.initialize(C1.begin(), C1.end(), 1.0, &product);
+			//message to ti
+			// FIX HERE
+			//real_t g_prob = prob_obs(gi, ti);
+			real_t a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
+			ug[gi] += f.Ti[ti] * a;
+			ub[ti] += f.Gi[gi] * a;
+
+			//messages to sij, sji
+			for (int j = 0; j < n; ++j) {
+				Neigh & v = f.neighs[j];
+				int const qj = v.times.size();
+				real_t const p0 = P0[j];
+				real_t const p01 = p0 - P1[j];
+				for (int sji = min_in[j]; sji < qj; ++sji) {
+					real_t pi = f.ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
+					for (int s = min_out[j]; s < qj - 1; ++s) {
+						real_t & Uij = UU[j][idx(Sij(j, s, gi), sji, qj)];
+						Uij += pi * v.lambdas[s];
+						pi *= 1 - v.lambdas[s];
+					}
+					UU[j][idx(Sij(j, qj - 1, gi), sji, qj)] += pi;
+				}
+			}
+		}
+	}
+
+	// real_t diff = max(et->u(ub), eg->u(ug));
+	// eit = ebegin();
+	// for (int j = 0; j < n; ++j, ++eit)
+		// diff = max(diff, eit->u(UU[j]));
+
+	return diff;
+
+}
+
