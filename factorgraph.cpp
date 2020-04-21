@@ -193,9 +193,9 @@ real_t prob_obs(Node const & f, int gi, int ti) {
 
 real_t FactorGraph::update(int i)
 {
-	int const n = nodes[i].neighs.size();
-
 	Node & f = nodes[i];
+	int const n = f.neighs.size();
+
 
 	vector<vector<real_t> > UU(n);
 	int const qi_ = f.bt.size();
@@ -219,7 +219,7 @@ real_t FactorGraph::update(int i)
 			int const qj = v.times.size();
 			min_in[j] = qj - 1;
 			min_out[j] = qj - 1;
-			for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; s--) {
+			for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; --s) {
 				// smallest tji >= ti
 				min_in[j] = s;
 				if (v.times[s] > f.times[ti]) {
@@ -282,6 +282,10 @@ real_t FactorGraph::update(int i)
 		}
 	}
 
+	for (int ti = 0; ti < qi_; ++ti) {
+		ut[ti] *= f.ht[ti];
+		ug[ti] *= f.hg[ti];
+	}
 	real_t diff = max(setmes(ut, f.bt), setmes(ug, f.bg));
 	for (int j = 0; j < n; ++j)
 		diff = max(diff, setmes(UU[j], f.neighs[j].msg));
