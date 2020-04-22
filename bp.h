@@ -49,7 +49,7 @@ public:
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
 	void add_obs(int i, int state, int t);
-	void finalize_node(int i, std::vector<int> F);
+	void finalize_node(int i);
 	void finalize();
 	void init_msg();
 	void set_field(int i);

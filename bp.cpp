@@ -143,9 +143,9 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 	nodes[j].neighs[kj].lambdas.push_back(lambda);
 }
 
-void FactorGraph::finalize_node(int i, vector<int> F)
+void FactorGraph::finalize_node(int i)
 {
-	//vector<int> F;
+	vector<int> F = nodes[i].tobs;
 
 	for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
 		vector<int> const & tij = nodes[i].neighs[k].times;
@@ -214,7 +214,7 @@ void FactorGraph::finalize()
 	vector<int> F;
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
-		finalize_node(i, nodes[i].tobs);
+		finalize_node(i);
 		int ntimes = nodes[i].times.size() - 1;
 		nodes[i].bt.resize(ntimes);
 		nodes[i].bg.resize(ntimes);
