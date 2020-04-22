@@ -168,12 +168,14 @@ void FactorGraph::set_field(int i)
 	int it = 0;
 
 	int tl = 0, gl = 0;
-	int tu = nodes[i].times.size();
-	int gu = nodes[i].times.size();
+	int tu = nodes[i].times.size()-1;
+	int gu = nodes[i].times.size()-1;
+	//for (int t = 0; t < int(nodes[i].times.size()); ++t)
+	//	cout << nodes[i].times[t] << " ";
+	//cout << endl;
 	for (int k = 0; k < int(nodes[i].tobs.size()); ++k) {
 		int state = nodes[i].obs[k];
 		int tobs = nodes[i].tobs[k];
-		// I guess it is possible to write it in 1 line..
 		while (nodes[i].times[it] != tobs)
 			it++;
 		switch(state) {
@@ -193,6 +195,8 @@ void FactorGraph::set_field(int i)
 		}
 	}
 
+//	cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
+//	cout  << "R i: " << nodes[i].index << " " << "( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
 	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
