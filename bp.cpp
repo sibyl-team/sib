@@ -380,14 +380,14 @@ real_t FactorGraph::update(int i)
 					real_t pi = 1;
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						int const sij = Sij(f, j, s, gi);
-						real_t const p = pi * v.lambdas[s] * h[idx(sij, sji, qj)];
+						real_t const p = pi * v.lambdas[s] * h[idx(sji, sij, qj)];
 						C0[j] += p;
 						if (v.times[sji] > f.times[ti])
 							C1[j] += p;
 						pi *= 1 - v.lambdas[s];
 					}
 					int const sij = Sij(f, j, qj - 1, gi);
-					real_t const p = pi * h[idx(sij, sji, qj)];
+					real_t const p = pi * h[idx(sji, sij, qj)];
 					C0[j] += p;
 					if (v.times[sji] > f.times[ti])
 						C1[j] += p;
