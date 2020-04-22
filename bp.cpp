@@ -189,7 +189,7 @@ void FactorGraph::set_field(int i)
 				break;
 			case 2:
 				tu = min(tu, it - 1);
-				gu = min(gu, it);
+				gu = min(gu, it - 1);
 				break;
 
 		}
