@@ -164,49 +164,39 @@ void FactorGraph::finalize_node(int i)
 
 void FactorGraph::set_field(int i)
 {
-	if(int(nodes[i].tobs.size()) > 0) {
-		for (int k = 0; k < int(nodes[i].tobs.size()); ++k) {
-			int state = nodes[i].obs[k];
-			int tobs = nodes[i].tobs[k];
-			// I guess it is possible to write it in 1 line..
-			int it = 0;
-			while(nodes[i].times[it] != tobs)
-				it++;
-			switch(state) {
-				case 0:
-					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
-						nodes[i].ht[t] = (t >= it + 1) ? 1.0 : 0.0;
-						nodes[i].hg[t] = (t > it + 1) ? 1.0 : 0.0;
-					}
-					break;
-				case 1:
-					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
-						nodes[i].ht[t] = (t <= it) ? 1.0 : 0.0;
-						nodes[i].hg[t] = (t > it) ? 1.0 : 0.0; // abs T
-					}
-					break;
-				case 2:
-					for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
-						nodes[i].ht[t] = (t < it) ? 1.0 : 0.0;
-						nodes[i].hg[t] = (t <= it) ? 1.0 : 0.0;
-					}
-				default:
-					cerr << "Error in observation " << state << endl;
-					exit(1);
+	// this assumes ordered observation times
+	int it = 0;
 
-			}
-		}
-	} else { // unobserved ?
-		for(int k = 0; k < int(nodes[i].ht.size()); ++k) {
-			nodes[i].ht[k] = 1.0;
-			nodes[i].hg[k] = 1.0;
+	int tl = 0, gl = 0;
+	int tu = nodes[i].times.size();
+	int gu = nodes[i].times.size();
+	for (int k = 0; k < int(nodes[i].tobs.size()); ++k) {
+		int state = nodes[i].obs[k];
+		int tobs = nodes[i].tobs[k];
+		// I guess it is possible to write it in 1 line..
+		while (nodes[i].times[it] != tobs)
+			it++;
+		switch(state) {
+			case 0:
+				tl = max(tl, it + 1);
+				gl = max(gl, it + 1);
+				break;
+			case 1:
+				tu = min(tu, it);
+				gl = max(gl, it);
+				break;
+			case 2:
+				tu = min(tu, it - 1);
+				gu = min(gu, it);
+				break;
+
 		}
 	}
-// 	debug
-//	for(int k = 0; k < int(nodes[i].times.size()); ++k) {
-//		cerr << nodes[i].times[k] << " " << nodes[i].ht[k] << " " << nodes[i].hg[k] << endl;
-//	}
 
+	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
+		nodes[i].ht[t] = (tl <= t && t <= tu);
+		nodes[i].hg[t] = (gl <= t && t <= gu);
+	}
 }
 
 void FactorGraph::finalize()
@@ -228,7 +218,7 @@ void FactorGraph::finalize()
 	}
 }
 
-void FactorGraph::showgraph()
+void FactorGraph::show_graph()
 {
 	cerr << "Number of nodes " <<  int(nodes.size()) << endl;
 	for(int i = 0; i < int(nodes.size()); i++) {
@@ -248,9 +238,22 @@ void FactorGraph::showgraph()
 	}
 }
 
-void FactorGraph::showmsg()
+void FactorGraph::show_beliefs(ostream & ofs)
 {
-	ofstream msgfile("msg.dat");
+	for(int i = 0; i < int(nodes.size()); ++i) {
+		Node & f = nodes[i];
+		ofs << "node " << f.index << ":" << endl;
+		for (int t = 0; t < int(f.bt.size()); ++t) {
+			ofs << "    " << f.times[t] << " " << f.bt[t] << " " << f.bg[t] << endl;
+		}
+	}
+
+}
+
+
+
+void FactorGraph::show_msg(ostream & msgfile)
+{
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
 			for (int n = 0; n < int(nodes[i].neighs[j].msg.size()); ++n) {

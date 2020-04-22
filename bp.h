@@ -1,5 +1,6 @@
 #include <vector>
 #include <map>
+#include <iostream>
 
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
@@ -55,9 +56,10 @@ public:
 	void set_field(int i);
 	std::vector<real_t> norm_msg(std::vector<real_t> msg);
 	real_t update(int i);
-	void showgraph();
+	void show_graph();
+	void show_beliefs(std::ostream &);
 	int iterate();
-	void showmsg();
+	void show_msg(std::ostream &);
 	Params params;
 };
 
