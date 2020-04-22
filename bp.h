@@ -12,6 +12,7 @@ struct Params {
 	char const * cont_file;
 	real_t mu;
 	real_t tol;
+	int maxit;
 	Params(int &, char **);
 };
 
@@ -55,6 +56,7 @@ public:
 	std::vector<real_t> norm_msg(std::vector<real_t> msg);
 	real_t update(int i);
 	void showgraph();
+	int iterate();
 	void showmsg();
 	Params params;
 };

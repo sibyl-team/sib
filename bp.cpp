@@ -14,13 +14,16 @@ using namespace std;
 
 int const infty = 1000000;
 
-Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), tol(1e-3)
+Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), tol(1e-3), maxit(100)
 {
 	int c;
-	while ((c = getopt(argc, argv, "m:o:c:t:h")) != -1 ) {
+	while ((c = getopt(argc, argv, "i:m:o:c:t:h")) != -1 ) {
 		switch(c) {
 			case 't':
 				tol = stod(string(optarg));
+				break;
+			case 'i':
+				maxit = stod(string(optarg));
 				break;
 			case 'm':
 				mu = stod(string(optarg));
@@ -37,6 +40,7 @@ Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/de
 				cout << "-o : Observation file with format 'i,state,t' " << endl;
 				cout << "-m : mu parameter " << endl;
 				cout << "-t : tolerance for convergence " << endl;
+				cout << "-i : max iterations for convergence " << endl;
 				exit(1);
 			default:
 				exit(1);
@@ -430,3 +434,16 @@ real_t FactorGraph::update(int i)
 }
 
 
+int FactorGraph::iterate()
+{
+	int const N = nodes.size();
+	for (int it = 1; it <= params.maxit; ++it) {
+		real_t err = 0.0;
+		for(int i = 0; i < N; ++i)
+			err = max(err, update(i));
+		cout << "it: " << it << " err: " << err << endl;
+		if (err < params.tol)
+			return it;
+	}
+	return params.maxit;
+}
