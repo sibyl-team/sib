@@ -250,8 +250,6 @@ void FactorGraph::show_beliefs(ostream & ofs)
 
 }
 
-
-
 void FactorGraph::show_msg(ostream & msgfile)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
@@ -287,7 +285,7 @@ int Sij(Node const & f, int j, int sij, int gi)
 	return f.neighs[j].times[sij] <= f.times[gi] ? sij : f.neighs[j].times.size() - 1;
 }
 
-int idx(int sij, int sji, int qj) 
+int idx(int sij, int sji, int qj)
 { 
 	return sji + qj * sij; 
 }
@@ -435,7 +433,6 @@ real_t FactorGraph::update(int i)
 	return diff;
 
 }
-
 
 int FactorGraph::iterate()
 {
