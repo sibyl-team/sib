@@ -7,10 +7,12 @@
 #include <functional>
 #include <cmath>
 #include <cassert>
-#include "factorgraph.h"
+#include "bp.h"
 #include "cavity.h"
 
 using namespace std;
+
+int const infty = 1000000;
 
 Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), tol(1e-3)
 {
@@ -147,7 +149,7 @@ void FactorGraph::finalize_node(int i, vector<int> F)
 	}
 	sort(F.begin(), F.end());
 	F.push_back(Tinf);
-	F.push_back(numeric_limits<int>::max());
+	F.push_back(infty);
 	nodes[i].times.push_back(-1);
 	for (int k = 0; k < int(F.size()); ++k) {
 		if (nodes[i].times.back() != F[k])
@@ -291,6 +293,8 @@ real_t rand01()
 real_t prob_obs(Node const & f, int gi, int ti)
 {
 	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - exp(-f.mu * (f.times[gi + 1] - f.times[ti]));
+	// cout << "gprob " << f.times[ti] << " " << f.times[gi] << " " << f.times[gi+1] << " " << exp(-f.mu * (f.times[gi] - f.times[ti])) << " " << -f.mu * (f.times[gi + 1] - f.times[ti]) << endl;
+	assert(aux >= 0);
 	return aux;
 }
 
@@ -341,7 +345,7 @@ real_t FactorGraph::update(int i)
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
 	vector<int> min_in(n), min_out(n);
 	for (int ti = 0; ti < qi_; ++ti) {
-		cerr << "init: " << ut[ti] <<  endl;
+		cerr << "init t[" << ti << "]=" << ut[ti] <<  endl;
 		for (int j = 0; j < n; ++j) {
 			Neigh & v = f.neighs[j];
 			int const qj = v.times.size();
@@ -358,7 +362,7 @@ real_t FactorGraph::update(int i)
 		}
 
 		for (int gi = ti; gi < qi_; ++gi) {
-			cerr << "init " << ug[gi] << endl;
+			cerr << "    init g[" << gi << "]= " << ug[gi] << endl;
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 			for (int j = 0; j < n; ++j) {
@@ -390,7 +394,7 @@ real_t FactorGraph::update(int i)
 			//messages to ti, gi
 			real_t g_prob = prob_obs(f, gi, ti);
 			real_t a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
-			cerr  << "inside " << ut[ti] << " " << ug[gi] << endl;
+			cerr  << "    inside " << ut[ti] << " " << ug[gi] << " " << g_prob << endl;
 			ug[gi] += f.bt[ti] * a;
 			ut[ti] += f.bg[gi] * a;
 

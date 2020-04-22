@@ -9,7 +9,7 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <iostream>
-#include "factorgraph.h"
+#include "bp.h"
 
 using namespace std;
 
