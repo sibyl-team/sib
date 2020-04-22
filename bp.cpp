@@ -182,21 +182,26 @@ void FactorGraph::set_field(int i)
 			case 0:
 				tl = max(tl, it + 1);
 				gl = max(gl, it + 1);
+				//gl = max(gl, tl + 1); // Indaco
 				break;
 			case 1:
 				tu = min(tu, it);
 				gl = max(gl, it);
+				//gl = max(gl, it + 1); // Indaco
 				break;
 			case 2:
-				tu = min(tu, it - 1);
-				gu = min(gu, it - 1);
+				tu = min(tu, it); //tu = min(tu, it -1); synchro or not?
+				//gu = min(gu, it - 1); no?
+				gu = min(gu, it); // upper bound: "it" included
 				break;
 
 		}
+		cerr << "node " << nodes[i].index << " state obs " << state << " " << tobs << " ( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
+		cerr << "node " << nodes[i].index << " state obs " << state << " " << tobs << " ( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
 	}
 
-//	cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
-//	cout  << "R i: " << nodes[i].index << " " << "( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
+	cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
+	cout  << "R i: " << nodes[i].index << " " << "( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
 	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
