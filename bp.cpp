@@ -346,7 +346,7 @@ real_t FactorGraph::update(int i)
 	vector<int> min_in(n), min_out(n);
 	for (int ti = 0; ti < qi_; ++ti) {
 		for (int j = 0; j < n; ++j) {
-			Neigh & v = f.neighs[j];
+			Neigh const & v = f.neighs[j];
 			int const qj = v.times.size();
 			min_in[j] = qj - 1;
 			min_out[j] = qj - 1;
@@ -364,8 +364,8 @@ real_t FactorGraph::update(int i)
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 			for (int j = 0; j < n; ++j) {
-				Neigh & v = f.neighs[j];
-				vector<real_t> & h = nodes[v.index].neighs[v.pos].msg;
+				Neigh const & v = f.neighs[j];
+				vector<real_t> const & h = nodes[v.index].neighs[v.pos].msg;
 				int const qj = v.times.size();
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					real_t pi = 1;
@@ -415,7 +415,7 @@ real_t FactorGraph::update(int i)
 			}
 		}
 	}
-
+	//apply external fields
 	for (int ti = 0; ti < qi_; ++ti) {
 		ut[ti] *= f.ht[ti];
 		ug[ti] *= f.hg[ti];
