@@ -16,7 +16,6 @@ using namespace std;
 int main(int argc, char ** argv) {
 	FactorGraph factor(Params(argc, argv));
 	factor.init_msg();
-	// factor.show_msg(cout);
 	factor.iterate();
 	factor.show_beliefs(cout);
 	return 0;
