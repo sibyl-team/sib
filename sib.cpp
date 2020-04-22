@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
 		err = 0.0;
 		for(int i = 0; i < N; ++i) {
 			real_t err_i = factor.update(i);
-			cerr << err_i << endl;
+			// cerr << err_i << endl;
 			err = max(err, err_i);
 		}
 		cout << "it: " << it << " err: " << err << endl;

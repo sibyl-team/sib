@@ -345,7 +345,6 @@ real_t FactorGraph::update(int i)
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
 	vector<int> min_in(n), min_out(n);
 	for (int ti = 0; ti < qi_; ++ti) {
-		cerr << "init t[" << ti << "]=" << ut[ti] <<  endl;
 		for (int j = 0; j < n; ++j) {
 			Neigh & v = f.neighs[j];
 			int const qj = v.times.size();
@@ -362,7 +361,6 @@ real_t FactorGraph::update(int i)
 		}
 
 		for (int gi = ti; gi < qi_; ++gi) {
-			cerr << "    init g[" << gi << "]= " << ug[gi] << endl;
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 			for (int j = 0; j < n; ++j) {
@@ -392,11 +390,12 @@ real_t FactorGraph::update(int i)
 			P1.initialize(C1.begin(), C1.end(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t g_prob = prob_obs(f, gi, ti);
-			real_t a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
-			cerr  << "    inside " << ut[ti] << " " << ug[gi] << " " << g_prob << endl;
-			ug[gi] += f.bt[ti] * a;
-			ut[ti] += f.bg[gi] * a;
+			real_t const g_prob = prob_obs(f, gi, ti);
+			real_t const a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
+			// cerr << "    t[" << ti << "]=" << ut[ti]
+			     // << "    g[" << gi << "]=" << ug[gi] << endl;
+			ug[gi] += f.ht[ti] * a;
+			ut[ti] += f.hg[gi] * a;
 
 			//messages to sij, sji
 			for (int j = 0; j < n; ++j) {
@@ -418,18 +417,11 @@ real_t FactorGraph::update(int i)
 	}
 
 	for (int ti = 0; ti < qi_; ++ti) {
-		//cerr << ut[ti] << " " << ug[ti] << endl;
 		ut[ti] *= f.ht[ti];
 		ug[ti] *= f.hg[ti];
 	}
-	cerr  << "before ut " << endl;
-	ut = norm_msg(ut);
-	cerr  << "before ug " << endl;
-	ug = norm_msg(ug);
 	real_t diff = max(setmes(ut, f.bt), setmes(ug, f.bg));
 	for (int j = 0; j < n; ++j) {
-		cerr << "before UU " << j << endl;
-		UU[j] = norm_msg(UU[j]);
 		diff = max(diff, setmes(UU[j], f.neighs[j].msg));
 	}
 
