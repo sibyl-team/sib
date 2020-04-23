@@ -14,49 +14,23 @@ using namespace std;
 
 int const infty = 1000000;
 
-FactorGraph::FactorGraph(Params const & params) : params(params)
+
+FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
+		vector<tuple<int, int, int> > const & obs,
+		Params const & params) : params(params)
 {
 	Tinf = -1;
-	string line;
-
-	ifstream cont(params.cont_file);
-	if (!cont.is_open()) {
-		cerr << "Error opening " << params.cont_file << endl;
-		exit(EXIT_FAILURE);
+	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
+		auto t = *it;
+		add_contact(get<0>(t), get<1>(t), get<2>(t), get<3>(t));
 	}
 
-	int nlines = 0;
-	while (getline(cont, line)) {
-		nlines++;
-		if (nlines > 1) {
-			stringstream s(line);
-			int i, j, t;
-			char g1, g2, g3;
-			real_t lambda;
-			s >> i >> g1 >> j >> g2 >> lambda >> g3 >> t;
-			//cout << i << " " << j << " " << lambda << " " << t << endl;
-			add_contact(i, j, t, lambda);
-		}
+	for (auto it = obs.begin(); it != obs.end(); ++it) {
+		auto t = *it;
+		add_obs(get<0>(t),get<1>(t),get<2>(t));
 	}
-	cont.close();
 
-	ifstream obs(params.obs_file);
-	if (!obs.is_open()) {
-		cerr << "Error opening " << params.obs_file << endl;
-		exit(EXIT_FAILURE);
-	}
-	nlines = 0;
-	while (getline(obs,line)) {
-		nlines++;
-		if(nlines > 1) {
-			stringstream s(line);
-			int i, state, t;
-			char g1, g2;
-			s >> i >> g1 >> state >> g2 >> t;
-			//cout << i << state << t << endl;
-			add_obs(i, state, t);
-		}
-	}
+
 	finalize();
 	//showgraph();
 }
@@ -190,6 +164,7 @@ void FactorGraph::finalize()
 			nodes[i].neighs[k].msg.resize(nij*nij);
 		}
 	}
+	init();
 }
 
 void FactorGraph::show_graph()
@@ -223,6 +198,23 @@ void FactorGraph::show_beliefs(ostream & ofs)
 	}
 
 }
+
+vector<vector<real_t> > FactorGraph::get_tbeliefs()
+{
+	vector<vector<real_t > > b;
+	for (int i=0; i<int(nodes.size()); ++i)
+		b.push_back(nodes[i].bt);
+	return b;
+}
+
+vector<vector<real_t> > FactorGraph::get_gbeliefs()
+{
+	vector<vector<real_t > > b;
+	for (int i=0; i<int(nodes.size()); ++i)
+		b.push_back(nodes[i].bg);
+	return b;
+}
+
 
 void FactorGraph::show_msg(ostream & msgfile)
 {
@@ -299,17 +291,15 @@ ostream & operator<<(ostream & o, vector<real_t> const & m)
 	return o;
 }
 
-void FactorGraph::init_msg()
+void FactorGraph::init()
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
 			vector<real_t> & msg = nodes[i].neighs[j].msg;
-			for(int n = 0; n < int(msg.size()); ++n) 
-				msg[n] = rand01();
-			nodes[i].neighs[j].msg = norm_msg(msg);
+			for(int ss = 0; ss < int(msg.size()); ++ss) 
+				msg[ss] = 1;
 		}
 	}
-
 }
 
 real_t FactorGraph::update(int i)

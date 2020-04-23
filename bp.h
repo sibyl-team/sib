@@ -35,14 +35,16 @@ public:
 	int Tinf;
 	std::vector<Node> nodes;
 	std::map<int, int> index;
-	FactorGraph(Params const & params);
+	FactorGraph(std::vector<std::tuple<int,int,int,real_t> > const & contacts,
+		std::vector<std::tuple<int, int, int> > const & obs,
+		Params const & params);
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
 	void add_obs(int i, int state, int t);
 	void finalize_node(int i);
 	void finalize();
-	void init_msg();
+	void init();
 	void set_field(int i);
 	std::vector<real_t> norm_msg(std::vector<real_t> msg);
 	real_t update(int i);
@@ -50,6 +52,9 @@ public:
 	void show_beliefs(std::ostream &);
 	int iterate();
 	void show_msg(std::ostream &);
+
+	std::vector<std::vector<real_t> > get_tbeliefs();
+	std::vector<std::vector<real_t> > get_gbeliefs();
 	Params params;
 };
 
