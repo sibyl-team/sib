@@ -16,51 +16,46 @@ int const infty = 1000000;
 
 FactorGraph::FactorGraph(Params const & params) : params(params)
 {
-	char const * obs_file = params.obs_file;
-	char const * cont_file = params.cont_file;
-
 	Tinf = -1;
 	string line;
 
-	ifstream obs(obs_file);
-	ifstream cont(cont_file);
-
-	int nlines = 0;
-	if (cont.is_open()) {
-		while (getline(cont,line)) {
-			nlines++;
-			if (nlines > 1) {
-				stringstream s(line);
-				int i, j, t;
-				char g1, g2, g3;
-				real_t lambda;
-				s >> i >> g1 >> j >> g2 >> lambda >> g3 >> t;
-				//cout << i << " " << j << " " << lambda << " " << t << endl;
-				add_contact(i, j, t, lambda);
-			}
-		}
-		cont.close();
-	} else {
-		cerr << "Error opening " << cont_file << endl;
+	ifstream cont(params.cont_file);
+	if (!cont.is_open()) {
+		cerr << "Error opening " << params.cont_file << endl;
 		exit(EXIT_FAILURE);
 	}
 
-	nlines = 0;
-	if (obs.is_open()) {
-		while (getline(obs,line)) {
-			nlines++;
-			if(nlines > 1) {
-				stringstream s(line);
-				int i, state, t;
-				char g1, g2;
-				s >> i >> g1 >> state >> g2 >> t;
-				//cout << i << state << t << endl;
-				add_obs(i, state, t);
-			}
+	int nlines = 0;
+	while (getline(cont, line)) {
+		nlines++;
+		if (nlines > 1) {
+			stringstream s(line);
+			int i, j, t;
+			char g1, g2, g3;
+			real_t lambda;
+			s >> i >> g1 >> j >> g2 >> lambda >> g3 >> t;
+			//cout << i << " " << j << " " << lambda << " " << t << endl;
+			add_contact(i, j, t, lambda);
 		}
-	} else {
-		cerr << "Error opening " << obs_file << endl;
+	}
+	cont.close();
+
+	ifstream obs(params.obs_file);
+	if (!obs.is_open()) {
+		cerr << "Error opening " << params.obs_file << endl;
 		exit(EXIT_FAILURE);
+	}
+	nlines = 0;
+	while (getline(obs,line)) {
+		nlines++;
+		if(nlines > 1) {
+			stringstream s(line);
+			int i, state, t;
+			char g1, g2;
+			s >> i >> g1 >> state >> g2 >> t;
+			//cout << i << state << t << endl;
+			add_obs(i, state, t);
+		}
 	}
 	finalize();
 	//showgraph();
@@ -99,10 +94,12 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 	j = add_node(j);
 	int ki = find_neighbor(i, j);
 	int kj = find_neighbor(j, i);
-	if (ki == int(nodes[i].neighs.size()))
+	if (ki == int(nodes[i].neighs.size())) {
+		assert(kj == int(nodes[j].neighs.size()));
 		nodes[i].neighs.push_back(Neigh(j, kj));
-	if (kj == int(nodes[j].neighs.size()))
 		nodes[j].neighs.push_back(Neigh(i, ki));
+	}
+
 	nodes[i].neighs[ki].times.push_back(t);
 	nodes[i].neighs[ki].lambdas.push_back(lambda);
 	nodes[j].neighs[kj].times.push_back(t);
@@ -143,7 +140,7 @@ void FactorGraph::set_field(int i)
 		int tobs = nodes[i].tobs[k];
 		while (nodes[i].times[it] != tobs)
 			it++;
-		switch(state) {
+		switch (state) {
 			case 0:
 				tl = max(tl, it);
 				gl = max(gl, it);
@@ -159,14 +156,14 @@ void FactorGraph::set_field(int i)
 			case -1:
 				break;
 		}
-		if (state != -1) {
-			cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " ti in [" << nodes[i].times[tl] << "," << nodes[i].times[tu] << "]" << endl;
-			cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " gi in [" << nodes[i].times[gl] << "," << nodes[i].times[gu] << "]" << endl;
-		}
+		// if (state != -1) {
+			// cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " ti in [" << nodes[i].times[tl] << "," << nodes[i].times[tu] << "]" << endl;
+			// cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " gi in [" << nodes[i].times[gl] << "," << nodes[i].times[gu] << "]" << endl;
+		// }
 	}
 
-	cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
-	cout  << "R i: " << nodes[i].index << " " << "( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
+	// cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
+	// cout  << "R i: " << nodes[i].index << " " << "( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
 	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
@@ -256,15 +253,15 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to)
 	return err;
 }
 
-int Sij(Node const & f, int j, int sij, int gi)
+int Sij(Node const & f, Neigh const & v, int sij, int gi)
 {
 	// here gi stands for the ti + gi index
-	return f.neighs[j].times[sij] <= f.times[gi] ? sij : f.neighs[j].times.size() - 1;
+	return v.times[sij] <= f.times[gi] ? sij : v.times.size() - 1;
 }
 
 int idx(int sij, int sji, int qj)
-{ 
-	return sji + qj * sij; 
+{
+	return sji + qj * sij;
 }
 
 real_t rand01()
@@ -289,6 +286,17 @@ vector<real_t> FactorGraph::norm_msg(vector<real_t> msg)
 	for(int n = 0; n < int(msg.size()); ++n)
 		msg[n] /= S;
 	return msg;
+}
+
+
+ostream & operator<<(ostream & o, vector<real_t> const & m)
+{
+	o << "{";
+	for (int i=0; i<int(m.size()); ++i){
+		o << m[i] << " ";
+	}
+	o << "}";
+	return o;
 }
 
 void FactorGraph::init_msg()
@@ -326,6 +334,7 @@ real_t FactorGraph::update(int i)
 	Cavity<real_t> P0(C0, 1., multiplies<real_t>());
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
 	vector<int> min_in(n), min_out(n);
+	// cout << "node " <<i << endl;
 	for (int ti = 0; ti < qi_; ++ti) {
 		for (int j = 0; j < n; ++j) {
 			Neigh const & v = f.neighs[j];
@@ -345,6 +354,7 @@ real_t FactorGraph::update(int i)
 		for (int gi = ti; gi < qi_; ++gi) {
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
+
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
 				vector<real_t> const & h = nodes[v.index].neighs[v.pos].msg;
@@ -352,47 +362,53 @@ real_t FactorGraph::update(int i)
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					real_t pi = 1;
 					for (int s = min_out[j]; s < qj - 1; ++s) {
-						int const sij = Sij(f, j, s, gi);
+						int const sij = Sij(f, v, s, gi);
 						real_t const p = pi * v.lambdas[s] * h[idx(sji, sij, qj)];
 						C0[j] += p;
 						if (v.times[sji] > f.times[ti])
 							C1[j] += p;
 						pi *= 1 - v.lambdas[s];
 					}
-					int const sij = Sij(f, j, qj - 1, gi);
+					int const sij = Sij(f, v, qj - 1, gi);
 					real_t const p = pi * h[idx(sji, sij, qj)];
 					C0[j] += p;
 					if (v.times[sji] > f.times[ti])
 						C1[j] += p;
 				}
-				//cerr << C0[j] << " " << C1[j] << endl;
 			}
 
 			P0.initialize(C0.begin(), C0.end(), 1.0, multiplies<real_t>());
 			P1.initialize(C1.begin(), C1.end(), 1.0, multiplies<real_t>());
 
+			// cout << "    ti: " << ti << " gi: " << gi << endl;
+			// cout << "C0:" << C0 << endl;
+			// cout << "C1:" << C1 << endl;
+			// cout << "P0:" << P0 << endl;
+			// cout << "P1:" << P1 << endl;
 			//messages to ti, gi
 			real_t const g_prob = prob_obs(f, gi, ti);
 			real_t const a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
+
 			// cerr << "    t[" << ti << "]=" << ut[ti]
 			     // << "    g[" << gi << "]=" << ug[gi] << endl;
 			ug[gi] += f.ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 
+			// cout << "P0f:" << P0.full() << " P1f:" << P1.full() <<  " a " << a << endl;
 			//messages to sij, sji
 			for (int j = 0; j < n; ++j) {
-				Neigh & v = f.neighs[j];
+				Neigh const & v = f.neighs[j];
 				int const qj = v.times.size();
 				real_t const p0 = P0[j];
 				real_t const p01 = p0 - P1[j];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					real_t pi = f.ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
 					for (int s = min_out[j]; s < qj - 1; ++s) {
-						real_t & Uij = UU[j][idx(Sij(f, j, s, gi), sji, qj)];
+						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
 						Uij += pi * v.lambdas[s];
 						pi *= 1 - v.lambdas[s];
 					}
-					UU[j][idx(Sij(f, j, qj - 1, gi), sji, qj)] += pi;
+					UU[j][idx(Sij(f, v, qj - 1, gi), sji, qj)] += pi;
 				}
 			}
 		}
