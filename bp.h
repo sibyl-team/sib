@@ -2,6 +2,7 @@
 #include <map>
 #include <iostream>
 #include "params.h"
+#include "omp.h"
 
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
@@ -28,6 +29,7 @@ struct Node {
 	std::vector<real_t> ht;  // message infection times T[ni+2]
 	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
+	omp_lock_t lock_;
 };
 
 class FactorGraph {
@@ -43,7 +45,6 @@ public:
 	int add_node(int i);
 	void add_obs(int i, int state, int t);
 	void finalize_node(int i);
-	void finalize();
 	void init();
 	void set_field(int i);
 	std::vector<real_t> norm_msg(std::vector<real_t> msg);

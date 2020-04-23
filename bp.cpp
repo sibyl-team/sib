@@ -30,8 +30,24 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 		add_obs(get<0>(t),get<1>(t),get<2>(t));
 	}
 
-
-	finalize();
+	vector<int> F;
+	for (int i = 0; i < int(nodes.size()); ++i) {
+		omp_init_lock(&nodes[i].lock_);
+		finalize_node(i);
+		int ntimes = nodes[i].times.size() - 1;
+		nodes[i].bt.resize(ntimes);
+		nodes[i].bg.resize(ntimes);
+		nodes[i].ht.resize(ntimes);
+		nodes[i].hg.resize(ntimes);
+		set_field(i);
+		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
+			nodes[i].neighs[k].times.push_back(Tinf);
+			nodes[i].neighs[k].lambdas.push_back(0.0);
+			int nij = nodes[i].neighs[k].times.size();
+			nodes[i].neighs[k].msg.resize(nij*nij);
+		}
+	}
+	init();
 	//showgraph();
 }
 
@@ -143,28 +159,6 @@ void FactorGraph::set_field(int i)
 		nodes[i].hg[t] = (gl <= t && t <= gu);
 	}
 	nodes[i].ht[0] *= params.pseed;
-}
-
-void FactorGraph::finalize()
-{
-	vector<int> F;
-
-	for (int i = 0; i < int(nodes.size()); ++i) {
-		finalize_node(i);
-		int ntimes = nodes[i].times.size() - 1;
-		nodes[i].bt.resize(ntimes);
-		nodes[i].bg.resize(ntimes);
-		nodes[i].ht.resize(ntimes);
-		nodes[i].hg.resize(ntimes);
-		set_field(i);
-		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
-			nodes[i].neighs[k].times.push_back(Tinf);
-			nodes[i].neighs[k].lambdas.push_back(0.0);
-			int nij = nodes[i].neighs[k].times.size();
-			nodes[i].neighs[k].msg.resize(nij*nij);
-		}
-	}
-	init();
 }
 
 void FactorGraph::show_graph()
@@ -309,13 +303,19 @@ real_t FactorGraph::update(int i)
 
 
 	vector<vector<real_t> > UU(n);
+	vector<vector<real_t> > HH(n);
 	int const qi_ = f.bt.size();
 
 	vector<real_t> ut(qi_);
 	vector<real_t> ug(qi_);
 
-	for (int j = 0; j < n; ++j)
+	for (int j = 0; j < n; ++j) {
+		Neigh const & v = f.neighs[j];
+		omp_set_lock(&nodes[v.index].lock_);
+		HH[j] = nodes[v.index].neighs[v.pos].msg;
+		omp_unset_lock(&nodes[v.index].lock_);
 		UU[j].resize(f.neighs[j].msg.size());
+	}
 	// proba tji >= ti for each j
 	vector<real_t> C0(n);
 	// proba tji > ti for each j
@@ -347,7 +347,7 @@ real_t FactorGraph::update(int i)
 
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
-				vector<real_t> const & h = nodes[v.index].neighs[v.pos].msg;
+				vector<real_t> const & h = HH[j];
 				int const qj = v.times.size();
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					real_t pi = 1;
@@ -410,7 +410,9 @@ real_t FactorGraph::update(int i)
 	}
 	real_t diff = max(setmes(ut, f.bt), setmes(ug, f.bg));
 	for (int j = 0; j < n; ++j) {
+		omp_set_lock(&nodes[f.neighs[j].index].lock_);
 		diff = max(diff, setmes(UU[j], f.neighs[j].msg));
+		omp_unset_lock(&nodes[f.neighs[j].index].lock_);
 	}
 
 	return diff;
@@ -422,6 +424,7 @@ int FactorGraph::iterate()
 	int const N = nodes.size();
 	for (int it = 1; it <= params.maxit; ++it) {
 		real_t err = 0.0;
+#pragma omp parallel for reduction(max:err)
 		for(int i = 0; i < N; ++i)
 			err = max(err, update(i));
 		cout << "it: " << it << " err: " << err << endl;
