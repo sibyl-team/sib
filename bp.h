@@ -1,21 +1,11 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include "params.h"
 
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
 
-
-typedef long double real_t;
-
-struct Params {
-	char const * obs_file;
-	char const * cont_file;
-	real_t mu;
-	real_t tol;
-	int maxit;
-	Params(int &, char **);
-};
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) {}

@@ -1,5 +1,4 @@
 #include <string.h>
-#include <getopt.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,44 +8,11 @@
 #include <cassert>
 #include "bp.h"
 #include "cavity.h"
+#include "params.h"
 
 using namespace std;
 
 int const infty = 1000000;
-
-Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), tol(1e-3), maxit(100)
-{
-	int c;
-	while ((c = getopt(argc, argv, "i:m:o:c:t:h")) != -1 ) {
-		switch(c) {
-			case 't':
-				tol = stod(string(optarg));
-				break;
-			case 'i':
-				maxit = stod(string(optarg));
-				break;
-			case 'm':
-				mu = stod(string(optarg));
-				break;
-			case 'o':
-				obs_file = optarg;
-				break;
-			case 'c':
-				cont_file = optarg;
-				break;
-			case 'h':
-				cout << "SIR inference, continuous time" << endl;
-				cout << "-c : Contact file with format 'i,j,lambdaij,t' " << endl;
-				cout << "-o : Observation file with format 'i,state,t' " << endl;
-				cout << "-m : mu parameter " << endl;
-				cout << "-t : tolerance for convergence " << endl;
-				cout << "-i : max iterations for convergence " << endl;
-				exit(1);
-			default:
-				exit(1);
-		}
-	}
-}
 
 FactorGraph::FactorGraph(Params const & params) : params(params)
 {
@@ -179,22 +145,24 @@ void FactorGraph::set_field(int i)
 			it++;
 		switch(state) {
 			case 0:
-				tl = max(tl, it + 1);
-				gl = max(gl, tl + 1);
+				tl = max(tl, it);
+				gl = max(gl, it);
 				break;
 			case 1:
-				tu = min(tu, it);
-				gl = max(gl, it + 1);
+				tu = min(tu, it - 1);
+				gl = max(gl, it - 2);
 				break;
 			case 2:
-				tu = min(tu, it -1);
-				gu = min(gu, it);
+				tu = min(tu, it - 1);
+				gu = min(gu, it - 1);
 				break;
 			case -1:
 				break;
 		}
-//		cerr << "node " << nodes[i].index << " state obs " << state << " " << tobs << " ( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
-//		cerr << "node " << nodes[i].index << " state obs " << state << " " << tobs << " ( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
+		if (state != -1) {
+			cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " ti in [" << nodes[i].times[tl] << "," << nodes[i].times[tu] << "]" << endl;
+			cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " gi in [" << nodes[i].times[gl] << "," << nodes[i].times[gu] << "]" << endl;
+		}
 	}
 
 	cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
@@ -203,6 +171,7 @@ void FactorGraph::set_field(int i)
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
 	}
+	nodes[i].ht[0] *= params.pseed;
 }
 
 void FactorGraph::finalize()
@@ -250,7 +219,7 @@ void FactorGraph::show_beliefs(ostream & ofs)
 		Node & f = nodes[i];
 		ofs << "node " << f.index << ":" << endl;
 		for (int t = 0; t < int(f.bt.size()); ++t) {
-			ofs << "    " << f.times[t] << " " << f.bt[t] << " " << f.bg[t] << endl;
+			ofs << "    " << f.times[t] << " " << f.bt[t] << " (" << f.ht[t] << ") " << f.bg[t] << " (" << f.ht[t] << ")" << endl;
 		}
 	}
 
