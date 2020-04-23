@@ -147,7 +147,7 @@ void FactorGraph::set_field(int i)
 				break;
 			case 1:
 				tu = min(tu, it - 1);
-				gl = max(gl, it - 2);
+				gl = max(gl, it);
 				break;
 			case 2:
 				tu = min(tu, it - 1);
@@ -157,9 +157,9 @@ void FactorGraph::set_field(int i)
 				break;
 		}
 		// if (state != -1) {
-			// cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " ti in [" << nodes[i].times[tl] << "," << nodes[i].times[tu] << "]" << endl;
-			// cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " gi in [" << nodes[i].times[gl] << "," << nodes[i].times[gu] << "]" << endl;
-		// }
+		//	 cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " ti in [" << nodes[i].times[tl] << "," << nodes[i].times[tu] << "]" << endl;
+		//	 cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " gi in [" << nodes[i].times[gl] << "," << nodes[i].times[gu] << "]" << endl;
+		//}
 	}
 
 	// cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
