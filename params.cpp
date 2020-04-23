@@ -7,7 +7,7 @@
 using namespace std;
 
 
-Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), tol(1e-3), maxit(100)
+Params::Params(int & argc, char ** argv) : obs_file("/dev/null"), cont_file("/dev/null"), mu(1.0), pseed(1e-3), tol(1e-3), maxit(100)
 {
 	int c;
 	while ((c = getopt(argc, argv, "s:i:m:o:c:t:h")) != -1 ) {
