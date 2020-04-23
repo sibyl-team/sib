@@ -187,8 +187,10 @@ void FactorGraph::finalize()
 		nodes[i].hg.resize(ntimes);
 		set_field(i);
 		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
+			nodes[i].neighs[k].times.push_back(Tinf);
+			nodes[i].neighs[k].lambdas.push_back(0.0);
 			int nij = nodes[i].neighs[k].times.size();
-			nodes[i].neighs[k].msg.resize((nij + 2)*(nij + 2));
+			nodes[i].neighs[k].msg.resize(nij*nij);
 		}
 	}
 }
@@ -219,7 +221,7 @@ void FactorGraph::show_beliefs(ostream & ofs)
 		Node & f = nodes[i];
 		ofs << "node " << f.index << ":" << endl;
 		for (int t = 0; t < int(f.bt.size()); ++t) {
-			ofs << "    " << f.times[t] << " " << f.bt[t] << " (" << f.ht[t] << ") " << f.bg[t] << " (" << f.ht[t] << ")" << endl;
+			ofs << "    " << f.times[t] << " " << f.bt[t] << " (" << f.ht[t] << ") " << f.bg[t] << " (" << f.hg[t] << ")" << endl;
 		}
 	}
 
