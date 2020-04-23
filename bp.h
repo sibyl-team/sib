@@ -59,8 +59,8 @@ public:
 	int iterate();
 	void show_msg(std::ostream &);
 
-	std::vector<std::vector<real_t> > get_tbeliefs();
-	std::vector<std::vector<real_t> > get_gbeliefs();
+	std::map<int, std::vector<real_t> > get_tbeliefs();
+	std::map<int, std::vector<real_t> > get_gbeliefs();
 	Params params;
 };
 

@@ -200,19 +200,19 @@ void FactorGraph::show_beliefs(ostream & ofs)
 
 }
 
-vector<vector<real_t> > FactorGraph::get_tbeliefs()
+map<int, vector<real_t> > FactorGraph::get_tbeliefs()
 {
-	vector<vector<real_t > > b;
+	map<int, vector<real_t > > b;
 	for (int i=0; i<int(nodes.size()); ++i)
-		b.push_back(nodes[i].bt);
+		b[nodes[i].index] = nodes[i].bt;
 	return b;
 }
 
-vector<vector<real_t> > FactorGraph::get_gbeliefs()
+map<int, vector<real_t> > FactorGraph::get_gbeliefs()
 {
-	vector<vector<real_t > > b;
+	map<int, vector<real_t > > b;
 	for (int i=0; i<int(nodes.size()); ++i)
-		b.push_back(nodes[i].bg);
+		b[nodes[i].index] = nodes[i].bg;
 	return b;
 }
 
@@ -410,6 +410,7 @@ real_t FactorGraph::update(int i)
 			}
 		}
 	}
+	cout << ut << endl;
 	//apply external fields
 	for (int ti = 0; ti < qi_; ++ti) {
 		ut[ti] *= f.ht[ti];
