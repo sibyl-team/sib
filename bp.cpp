@@ -1,3 +1,10 @@
+// This file is part of sibilla : inference in epidemics with Belief Propagation
+// Author: Alfredo Braunstein
+// Author: Alessandro Ingrosso
+// Author: Anna Paola Muntoni
+
+
+
 #include <string.h>
 #include <iostream>
 #include <fstream>

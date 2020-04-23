@@ -1,3 +1,7 @@
+// This file is part of sibilla : inference in epidemics with Belief Propagation
+// Author: Alfredo Braunstein
+
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "bp.h"

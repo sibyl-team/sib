@@ -1,3 +1,6 @@
+// This file is part of sibilla : inference in epidemics with Belief Propagation
+// Author: Alfredo Braunstein
+
 #ifndef CAVITY_H
 #define CAVITY_H
 
