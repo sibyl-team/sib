@@ -22,6 +22,13 @@ using namespace std;
 
 int const infty = 1000000;
 
+struct Exponential : public std::function<real_t(real_t, real_t)>
+{
+	real_t const mu;
+	Exponential(real_t mu) : mu(mu) {}
+	real_t operator()(real_t delta1, real_t delta2) { return exp(-mu * delta1) - exp(-mu * delta2); }
+};
+
 
 FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
@@ -74,7 +81,7 @@ int FactorGraph::add_node(int i)
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, params.mu));
+	nodes.push_back(Node(i, Exponential(params.mu)));
 	return index[i];
 }
 
@@ -293,13 +300,6 @@ real_t rand01()
 	return ((real_t) rand() / (RAND_MAX));
 }
 
-real_t prob_obs(Node const & f, int gi, int ti)
-{
-	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - exp(-f.mu * (f.times[gi + 1] - f.times[ti]));
-	// cout << "gprob " << f.times[ti] << " " << f.times[gi] << " " << f.times[gi+1] << " " << exp(-f.mu * (f.times[gi] - f.times[ti])) << " " << -f.mu * (f.times[gi + 1] - f.times[ti]) << endl;
-	assert(aux >= 0);
-	return aux;
-}
 
 vector<real_t> FactorGraph::norm_msg(vector<real_t> msg)
 {
@@ -337,7 +337,6 @@ real_t FactorGraph::update(int i)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
-
 
 	vector<vector<real_t> > UU(n);
 	vector<vector<real_t> > HH(n);
@@ -413,7 +412,7 @@ real_t FactorGraph::update(int i)
 			// cout << "P0:" << P0 << endl;
 			// cout << "P1:" << P1 << endl;
 			//messages to ti, gi
-			real_t const g_prob = prob_obs(f, gi, ti);
+			real_t const g_prob = f.recovery(f.times[gi] - f.times[ti], f.times[gi + 1] - f.times[ti]);
 			real_t const a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
 
 			// cerr << "    t[" << ti << "]=" << ut[ti]

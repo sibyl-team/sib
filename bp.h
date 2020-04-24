@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <functional>
 #include "omp.h"
 
 #ifndef FACTORGRAPH_H
@@ -16,9 +17,10 @@ typedef long double real_t;
 struct Params {
 	real_t mu;
 	real_t pseed;
-	Params() : mu(1.0), pseed(1e-3) {}
 	Params(real_t mu, real_t pseed) : mu(mu), pseed(pseed) {}
 };
+
+std::ostream & operator<<(std::ostream &, Params const &);
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) {}
@@ -31,9 +33,9 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, real_t mu) : index(index), mu(mu) {}
+	Node(int index, std::function<real_t(real_t, real_t)> r) : index(index), recovery(r) {}
 	int index;
-	real_t mu;
+	std::function<real_t(real_t, real_t)> const recovery;
 	std::vector<int> tobs;
 	std::vector<int> obs;
 	std::vector<int> times;
