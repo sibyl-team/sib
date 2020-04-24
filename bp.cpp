@@ -54,6 +54,12 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 			int nij = nodes[i].neighs[k].times.size();
 			nodes[i].neighs[k].msg.resize(nij*nij);
 		}
+		for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
+			cout << "c: " << nodes[i].index << " " <<  nodes[nodes[i].neighs[k].index].index << endl;
+			for (int t = 0; t < int(nodes[i].neighs[k].times.size()); ++t) {
+				cout << "t: " << nodes[i].neighs[k].times[t] << " l: " <<  nodes[i].neighs[k].lambdas[t] << endl;
+			}
+		}
 	}
 	init();
 	//showgraph();
@@ -81,8 +87,21 @@ int FactorGraph::add_node(int i)
 void FactorGraph::add_obs(int i, int state, int t)
 {
 	map<int,int>::iterator mit = index.find(i);
-	nodes[mit->second].tobs.push_back(t);
-	nodes[mit->second].obs.push_back(state);
+	Node & f = nodes[mit->second];
+	if( int(f.tobs.size()) ) {
+		if (t < f.tobs.back()) {
+			auto prev = std::lower_bound(f.tobs.begin(), f.tobs.end(), t);
+			const auto pos = std::distance(f.tobs.begin(), prev);
+			f.tobs.insert(f.tobs.begin() + pos, t);
+			f.obs.insert(f.obs.begin() + pos, state);
+		} else {
+			f.tobs.push_back(t);
+			f.obs.push_back(state);
+		}
+	} else {
+		f.tobs.push_back(t);
+		f.obs.push_back(state);
+	}
 }
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
@@ -96,12 +115,39 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 		assert(kj == int(nodes[j].neighs.size()));
 		nodes[i].neighs.push_back(Neigh(j, kj));
 		nodes[j].neighs.push_back(Neigh(i, ki));
+		nodes[i].neighs[ki].times.push_back(t);
+		nodes[i].neighs[ki].lambdas.push_back(lambda);
+		nodes[j].neighs[kj].times.push_back(t);
+		nodes[j].neighs[kj].lambdas.push_back(lambda);
+	} else {
+		Neigh & ni = nodes[i].neighs[ki];
+		Neigh & nj = nodes[j].neighs[kj];
+		if (std::binary_search(ni.times.begin(), ni.times.end(), t)) {
+			cerr << "Double contact (" << nodes[i].index << ", " << nodes[j].index << ") " << "at time " << t << endl;
+		} else {
+			if (t < ni.times.back()) {
+				auto prev = std::lower_bound(ni.times.begin(), ni.times.end(), t);
+				const auto pos = std::distance(ni.times.begin(), prev);
+				//cerr << "insert" << nodes[i].index << " " << nodes[j].index << " " << t << " " << lambda;
+				ni.times.insert(ni.times.begin() + pos, t);
+				ni.lambdas.insert(ni.lambdas.begin() + pos, lambda);
+				nj.times.insert(nj.times.begin() + pos, t);
+				nj.lambdas.insert(nj.lambdas.begin() + pos, lambda);
+			} else {
+				//cerr << "adding " << nodes[i].index << " " << nodes[j].index << " " << t << " " << lambda;
+				ni.times.push_back(t);
+				ni.lambdas.push_back(lambda);
+				nj.times.push_back(t);
+				nj.lambdas.push_back(lambda);
+			}
+		}
+
 	}
 
-	nodes[i].neighs[ki].times.push_back(t);
-	nodes[i].neighs[ki].lambdas.push_back(lambda);
-	nodes[j].neighs[kj].times.push_back(t);
-	nodes[j].neighs[kj].lambdas.push_back(lambda);
+	//nodes[i].neighs[ki].times.push_back(t);
+	//nodes[i].neighs[ki].lambdas.push_back(lambda);
+	//nodes[j].neighs[kj].times.push_back(t);
+	//nodes[j].neighs[kj].lambdas.push_back(lambda);
 }
 
 void FactorGraph::finalize_node(int i)
@@ -130,9 +176,11 @@ void FactorGraph::set_field(int i)
 	int tl = 0, gl = 0;
 	int tu = nodes[i].times.size()-1;
 	int gu = nodes[i].times.size()-1;
-	//for (int t = 0; t < int(nodes[i].times.size()); ++t)
-	//	cout << nodes[i].times[t] << " ";
-	//cout << endl;
+//	cout << nodes[i].index << endl;
+//	for (int t = 0; t < int(nodes[i].tobs.size()); ++t) {
+//		cout << nodes[i].tobs[t] << " ";
+//		cout << nodes[i].obs[t] << " " << endl;
+//	}
 	for (int k = 0; k < int(nodes[i].tobs.size()); ++k) {
 		int state = nodes[i].obs[k];
 		int tobs = nodes[i].tobs[k];
