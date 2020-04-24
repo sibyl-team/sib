@@ -5,6 +5,8 @@
 #ifndef _PARAMS_H
 #define _PARAMS_H
 
+#include <ostream>
+
 typedef long double real_t;
 
 struct Params {
@@ -16,5 +18,6 @@ struct Params {
 	Params();
 };
 
+std::ostream & operator<<(std::ostream &, Params const &);
 
 #endif

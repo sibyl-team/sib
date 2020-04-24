@@ -4,12 +4,27 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <string>
+#include <sstream>
 #include "bp.h"
 #include "params.h"
 
 namespace py = pybind11;
 
 using namespace std;
+
+
+string showparams(Params const & p)
+{
+    return "sib.Param(mu=" + to_string(p.mu) +
+        ",pseed=" + to_string(p.pseed) +
+        ",tol=" + to_string(p.tol) +
+        ",maxit=" + to_string(p.maxit) + ")";
+}
+
+string showfg(FactorGraph const & f) {
+    return "sib.FactorGraph with " + to_string(f.nodes.size()) + " nodes";
+}
 
 PYBIND11_MODULE(sib, m) {
     py::class_<FactorGraph>(m, "FactorGraph")
@@ -18,6 +33,7 @@ PYBIND11_MODULE(sib, m) {
         .def("bt", &FactorGraph::get_tbeliefs)
         .def("bg", &FactorGraph::get_gbeliefs)
         .def("reset", &FactorGraph::init)
+        .def("__repr__", &showfg)
         .def_readwrite("params", &FactorGraph::params);
 
 
@@ -26,5 +42,7 @@ PYBIND11_MODULE(sib, m) {
         .def_readwrite("mu", &Params::mu)
         .def_readwrite("tol", &Params::tol)
         .def_readwrite("pseed", &Params::pseed)
-        .def_readwrite("maxit", &Params::maxit);
+        .def_readwrite("maxit", &Params::maxit)
+        .def("__repr__", &showparams);
+
 }

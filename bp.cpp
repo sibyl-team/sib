@@ -281,7 +281,6 @@ vector<real_t> FactorGraph::norm_msg(vector<real_t> msg)
 	return msg;
 }
 
-
 ostream & operator<<(ostream & o, vector<real_t> const & m)
 {
 	o << "{";
@@ -410,7 +409,7 @@ real_t FactorGraph::update(int i)
 			}
 		}
 	}
-	cout << ut << endl;
+	// cout << ut << endl;
 	//apply external fields
 	for (int ti = 0; ti < qi_; ++ti) {
 		ut[ti] *= f.ht[ti];

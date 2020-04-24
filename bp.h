@@ -64,6 +64,4 @@ public:
 	Params params;
 };
 
-
-
 #endif
