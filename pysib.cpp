@@ -52,7 +52,7 @@ get_marginals(FactorGraph const & f)
         }
         marg[n.index] = vector<tuple<real_t, real_t, real_t>>(T + 1);
         for (int t = 0; t <= T; ++t)
-            marg[n.index][t] = make_tuple(rbt[t], lbg[t-1], 1-rbt[t]-lbg[t-1]);
+            marg[n.index][t] = make_tuple(rbt[t], 1-rbt[t]-lbg[t-1], lbg[t-1]);
     }
     return marg;
 }
