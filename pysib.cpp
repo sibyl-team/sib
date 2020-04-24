@@ -15,6 +15,7 @@
 
 PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
+PYBIND11_MAKE_OPAQUE(std::vector<Node>);
 
 
 namespace py = pybind11;
@@ -91,14 +92,17 @@ int get_index(FactorGraph & f, int i)
 PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
+    py::bind_vector<std::vector<Node>>(m, "VectorNode");
 
     py::class_<FactorGraph>(m, "FactorGraph")
-        .def(py::init<vector<tuple<int,int,int,real_t> >,
-                vector<tuple<int,int,int> >,
-                Params const &>(),
+        .def(py::init<Params const &,
+                vector<tuple<int,int,int,real_t>>,
+                vector<tuple<int,int,int>>,
+                vector<tuple<int,real_t,real_t>> >(),
+                py::arg("params"),
                 py::arg("contacts"),
                 py::arg("observations"),
-                py::arg("params"))
+                py::arg("individuals") = vector<tuple<int,real_t,real_t>>())
         .def("update", &FactorGraph::iteration)
         .def("loglikelihood", &FactorGraph::loglikelihood)
         .def("reset", &FactorGraph::init)
@@ -117,8 +121,10 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("index", &Node::index);
 
     py::class_<Params>(m, "Params")
-        .def(py::init<real_t, real_t, real_t>(),
+        .def(py::init<real_t, real_t, real_t, real_t>(),
+                "Params class. mu and k parameters are defaults.",
                 py::arg("mu") = 0.01,
+                py::arg("k") = 1.0,
                 py::arg("pseed") = 0.01,
                 py::arg("damping") = 0.0)
         .def_readwrite("mu", &Params::mu)

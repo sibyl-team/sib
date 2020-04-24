@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <functional>
 #include "omp.h"
 
 #ifndef FACTORGRAPH_H
@@ -15,11 +16,16 @@ typedef long double real_t;
 
 struct Params {
 	real_t mu;
+	real_t k;
 	real_t pseed;
 	real_t damping;
-	Params() : mu(1.0), pseed(1e-3), damping(0.) {}
-	Params(real_t mu, real_t pseed, real_t damping) : mu(mu), pseed(pseed), damping(damping) {}
+	// for k=1.0, the gamma becomes exponential
+	Params() : mu(0.5), k(1.0), pseed(1e-3), damping(0.) {}
+	Params(real_t mu, real_t pseed, real_t damping) : mu(mu), k(1.0), pseed(pseed), damping(damping) {}
+	Params(real_t mu, real_t k, real_t pseed, real_t damping) : mu(mu), k(k), pseed(pseed), damping(damping) {}
 };
+
+std::ostream & operator<<(std::ostream &, Params const &);
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) {}
@@ -32,9 +38,11 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, real_t mu) : index(index), mu(mu), f_(0) {}
+	Node(int index, real_t k, real_t mu) : index(index), k_(k), mu_(mu), f_(0) {}
 	int index;
-	real_t mu;
+	real_t k_;
+	real_t mu_;
+	real_t prob_g(real_t delta) const;
 	std::vector<int> tobs;
 	std::vector<int> obs;
 	std::vector<int> times;
@@ -46,14 +54,16 @@ struct Node {
 	real_t f_;
 };
 
+
 class FactorGraph {
 public:
 	int Tinf;
 	std::vector<Node> nodes;
 	std::map<int, int> index;
-	FactorGraph(std::vector<std::tuple<int,int,int,real_t> > const & contacts,
+	FactorGraph(Params const & params,
+		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
-		Params const & params);
+		std::vector<std::tuple<int, real_t, real_t> > const & individuals = std::vector<std::tuple<int, real_t, real_t> >());
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);

@@ -11,19 +11,24 @@
 #include <sstream>
 #include <algorithm>
 #include <functional>
-#include <cmath>
 #include <cassert>
 #include <tuple>
 #include <exception>
+#include <boost/math/special_functions/gamma.hpp>
 #include "bp.h"
 #include "cavity.h"
 
 using namespace std;
 
 
-FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
+// real_t Node::prob_g(real_t dg) const { return exp(-mu * dg); }
+real_t Node::prob_g(real_t dg) const { return boost::math::gamma_p(k_,dg/mu_); }
+
+
+FactorGraph::FactorGraph(Params const & params,
+		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		Params const & params) : params(params)
+		vector<tuple<int, real_t, real_t> > const & individuals) : params(params)
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
@@ -34,6 +39,13 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 	for (auto it = obs.begin(); it != obs.end(); ++it) {
 		auto t = *it;
 		add_obs(get<0>(t),get<1>(t),get<2>(t));
+	}
+
+	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
+		auto t = *it;
+		int i = add_node(get<0>(t));
+		nodes[i].k_ = get<1>(t);
+		nodes[i].mu_ = get<2>(t);
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -82,7 +94,7 @@ int FactorGraph::add_node(int i)
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, params.mu));
+	nodes.push_back(Node(i, params.k, params.mu));
 	return index[i];
 }
 
@@ -254,11 +266,6 @@ inline int idx(int sij, int sji, int qj)
 	return sji + qj * sij;
 }
 
-//this is p(gi|ti)
-real_t prob_delay(Node const & f, int gi, int ti)
-{
-	return exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi + 1 == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
-}
 
 ostream & operator<<(ostream & o, vector<real_t> const & m)
 {
@@ -354,7 +361,7 @@ real_t FactorGraph::update(int i)
 			P1.initialize(C1.begin(), C1.end(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const g_prob = prob_delay(f, gi, ti);
+			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi_ ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
 			real_t const a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
 
 			ug[gi] += f.ht[ti] * a;
