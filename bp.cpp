@@ -13,6 +13,7 @@
 #include <functional>
 #include <cmath>
 #include <cassert>
+#include <tuple>
 #include "bp.h"
 #include "cavity.h"
 #include "params.h"
