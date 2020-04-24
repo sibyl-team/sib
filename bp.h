@@ -56,7 +56,8 @@ public:
 	real_t update(int i);
 	void show_graph();
 	void show_beliefs(std::ostream &);
-	int iterate();
+	real_t iterate();
+	real_t iteration();
 	void show_msg(std::ostream &);
 
 	std::map<int, std::vector<real_t> > get_tbeliefs();

@@ -216,7 +216,6 @@ map<int, vector<real_t> > FactorGraph::get_gbeliefs()
 	return b;
 }
 
-
 void FactorGraph::show_msg(ostream & msgfile)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
@@ -426,17 +425,25 @@ real_t FactorGraph::update(int i)
 
 }
 
-int FactorGraph::iterate()
+real_t FactorGraph::iteration()
 {
 	int const N = nodes.size();
-	for (int it = 1; it <= params.maxit; ++it) {
-		real_t err = 0.0;
+	real_t err = 0.0;
 #pragma omp parallel for reduction(max:err)
-		for(int i = 0; i < N; ++i)
-			err = max(err, update(i));
+	for(int i = 0; i < N; ++i)
+		err = max(err, update(i));
+	return err;
+}
+
+
+real_t FactorGraph::iterate()
+{
+	real_t err = std::numeric_limits<real_t>::infinity();
+	for (int it = 1; it <= params.maxit; ++it) {
+		err = iteration();
 		cout << "it: " << it << " err: " << err << endl;
 		if (err < params.tol)
-			return it;
+			break;
 	}
-	return params.maxit;
+	return err;
 }

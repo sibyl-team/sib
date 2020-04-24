@@ -16,7 +16,7 @@ using namespace std;
 
 string showparams(Params const & p)
 {
-    return "sib.Param(mu=" + to_string(p.mu) +
+    return "sib.Params(mu=" + to_string(p.mu) +
         ",pseed=" + to_string(p.pseed) +
         ",tol=" + to_string(p.tol) +
         ",maxit=" + to_string(p.maxit) + ")";
@@ -26,10 +26,10 @@ string showfg(FactorGraph const & f) {
     return "sib.FactorGraph with " + to_string(f.nodes.size()) + " nodes";
 }
 
-PYBIND11_MODULE(sib, m) {
+PYBIND11_MODULE(_sib, m) {
     py::class_<FactorGraph>(m, "FactorGraph")
         .def(py::init<vector<tuple<int,int,int,real_t> >, vector<tuple<int,int,int> >, Params const &>(), py::arg("contacts"), py::arg("observations"), py::arg("params"))
-        .def("iterate", &FactorGraph::iterate)
+        .def("update", &FactorGraph::iteration)
         .def("bt", &FactorGraph::get_tbeliefs)
         .def("bg", &FactorGraph::get_gbeliefs)
         .def("reset", &FactorGraph::init)
@@ -38,7 +38,7 @@ PYBIND11_MODULE(sib, m) {
 
 
     py::class_<Params>(m, "Params")
-        .def(py::init<real_t, real_t, real_t, int>(), py::arg("mu"), py::arg("pseed"), py::arg("tol"), py::arg("maxit"))
+        .def(py::init<real_t, real_t, real_t, int>(), py::arg("mu") = 0.01, py::arg("pseed") = 0.01, py::arg("tol") = 1e-5, py::arg("maxit")=100)
         .def_readwrite("mu", &Params::mu)
         .def_readwrite("tol", &Params::tol)
         .def_readwrite("pseed", &Params::pseed)

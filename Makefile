@@ -1,5 +1,5 @@
 CFLAGS=-Wall -fPIC -O3 -g -fopenmp -lgomp
-SO=sib$(shell python3-config --extension-suffix)
+SO=_sib$(shell python3-config --extension-suffix)
 
 all: sib ${SO}
 
