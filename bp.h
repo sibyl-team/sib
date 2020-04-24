@@ -20,6 +20,7 @@ struct Neigh {
 	std::vector<int> times; // times of contacts
 	std::vector<real_t> lambdas; // times of contacts
 	std::vector<real_t> msg; // BP msg nij^2 or
+	omp_lock_t lock_;
 };
 
 struct Node {
@@ -34,7 +35,6 @@ struct Node {
 	std::vector<real_t> ht;  // message infection times T[ni+2]
 	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
-	omp_lock_t lock_;
 };
 
 class FactorGraph {

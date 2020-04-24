@@ -40,7 +40,6 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 
 	vector<int> F;
 	for (int i = 0; i < int(nodes.size()); ++i) {
-		omp_init_lock(&nodes[i].lock_);
 		finalize_node(i);
 		int ntimes = nodes[i].times.size() - 1;
 		nodes[i].bt.resize(ntimes);
@@ -49,6 +48,7 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 		nodes[i].hg.resize(ntimes);
 		set_field(i);
 		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
+			omp_init_lock(&nodes[i].neighs[k].lock_);
 			nodes[i].neighs[k].times.push_back(Tinf);
 			nodes[i].neighs[k].lambdas.push_back(0.0);
 			int nij = nodes[i].neighs[k].times.size();
@@ -316,11 +316,11 @@ real_t FactorGraph::update(int i)
 	vector<real_t> ug(qi_);
 
 	for (int j = 0; j < n; ++j) {
-		Neigh const & v = f.neighs[j];
-		omp_set_lock(&nodes[v.index].lock_);
-		HH[j] = nodes[v.index].neighs[v.pos].msg;
-		omp_unset_lock(&nodes[v.index].lock_);
-		UU[j].resize(f.neighs[j].msg.size());
+		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
+		omp_set_lock(&v.lock_);
+		HH[j] = v.msg;
+		omp_unset_lock(&v.lock_);
+		UU[j].resize(v.msg.size());
 	}
 	// proba tji >= ti for each j
 	vector<real_t> C0(n);
@@ -417,9 +417,10 @@ real_t FactorGraph::update(int i)
 	}
 	real_t diff = max(setmes(ut, f.bt), setmes(ug, f.bg));
 	for (int j = 0; j < n; ++j) {
-		omp_set_lock(&nodes[f.neighs[j].index].lock_);
-		diff = max(diff, setmes(UU[j], f.neighs[j].msg));
-		omp_unset_lock(&nodes[f.neighs[j].index].lock_);
+		Neigh & v = f.neighs[j];
+		omp_set_lock(&v.lock_);
+		diff = max(diff, setmes(UU[j], v.msg));
+		omp_unset_lock(&v.lock_);
 	}
 
 	return diff;
