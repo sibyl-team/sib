@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cassert>
 #include <tuple>
+#include <exception>
 #include "bp.h"
 #include "cavity.h"
 #include "params.h"
@@ -40,7 +41,6 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 
 	vector<int> F;
 	for (int i = 0; i < int(nodes.size()); ++i) {
-		omp_init_lock(&nodes[i].lock_);
 		finalize_node(i);
 		int ntimes = nodes[i].times.size() - 1;
 		nodes[i].bt.resize(ntimes);
@@ -49,6 +49,7 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 		nodes[i].hg.resize(ntimes);
 		set_field(i);
 		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
+			omp_init_lock(&nodes[i].neighs[k].lock_);
 			nodes[i].neighs[k].times.push_back(Tinf);
 			nodes[i].neighs[k].lambdas.push_back(0.0);
 			int nij = nodes[i].neighs[k].times.size();
@@ -81,9 +82,20 @@ int FactorGraph::add_node(int i)
 void FactorGraph::add_obs(int i, int state, int t)
 {
 	map<int,int>::iterator mit = index.find(i);
-	nodes[mit->second].tobs.push_back(t);
-	nodes[mit->second].obs.push_back(state);
+	Node & f = nodes[mit->second];
+	if (int(f.tobs.size())) {
+		if (t > f.tobs.back()) {
+			f.tobs.push_back(t);
+			f.obs.push_back(state);
+		} else {
+			throw invalid_argument("time of observations should be ordered");
+		}
+	} else {
+		f.tobs.push_back(t);
+		f.obs.push_back(state);
+	}
 }
+
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
@@ -96,12 +108,29 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 		assert(kj == int(nodes[j].neighs.size()));
 		nodes[i].neighs.push_back(Neigh(j, kj));
 		nodes[j].neighs.push_back(Neigh(i, ki));
-	}
+		nodes[i].neighs[ki].times.push_back(t);
+		nodes[i].neighs[ki].lambdas.push_back(lambda);
+		nodes[j].neighs[kj].times.push_back(t);
+		nodes[j].neighs[kj].lambdas.push_back(lambda);
+	} else {
+		Neigh & ni = nodes[i].neighs[ki];
+		Neigh & nj = nodes[j].neighs[kj];
+		if (std::binary_search(ni.times.begin(), ni.times.end(), t)) {
+			throw invalid_argument(("double contact ("
+						+ to_string(nodes[i].index) + "," + to_string(nodes[j].index)
+						+ ") at time" + to_string(t)).c_str());
+		} else {
+			if (t < ni.times.back()) {
+				throw invalid_argument("time of contacts should be ordered");
+			} else {
+				ni.times.push_back(t);
+				ni.lambdas.push_back(lambda);
+				nj.times.push_back(t);
+				nj.lambdas.push_back(lambda);
+			}
+		}
 
-	nodes[i].neighs[ki].times.push_back(t);
-	nodes[i].neighs[ki].lambdas.push_back(lambda);
-	nodes[j].neighs[kj].times.push_back(t);
-	nodes[j].neighs[kj].lambdas.push_back(lambda);
+	}
 }
 
 void FactorGraph::finalize_node(int i)
@@ -130,9 +159,12 @@ void FactorGraph::set_field(int i)
 	int tl = 0, gl = 0;
 	int tu = nodes[i].times.size()-1;
 	int gu = nodes[i].times.size()-1;
-	//for (int t = 0; t < int(nodes[i].times.size()); ++t)
-	//	cout << nodes[i].times[t] << " ";
-	//cout << endl;
+//	cout << nodes[i].index << " ";
+//	for (int t = 0; t < int(nodes[i].tobs.size()); ++t) {
+//		cout << nodes[i].tobs[t] << " ";
+//		cout << nodes[i].obs[t] << " " << endl;
+//	}
+//	cout << endl;
 	for (int k = 0; k < int(nodes[i].tobs.size()); ++k) {
 		int state = nodes[i].obs[k];
 		int tobs = nodes[i].tobs[k];
@@ -316,11 +348,11 @@ real_t FactorGraph::update(int i)
 	vector<real_t> ug(qi_);
 
 	for (int j = 0; j < n; ++j) {
-		Neigh const & v = f.neighs[j];
-		omp_set_lock(&nodes[v.index].lock_);
-		HH[j] = nodes[v.index].neighs[v.pos].msg;
-		omp_unset_lock(&nodes[v.index].lock_);
-		UU[j].resize(f.neighs[j].msg.size());
+		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
+		omp_set_lock(&v.lock_);
+		HH[j] = v.msg;
+		omp_unset_lock(&v.lock_);
+		UU[j].resize(v.msg.size());
 	}
 	// proba tji >= ti for each j
 	vector<real_t> C0(n);
@@ -417,9 +449,10 @@ real_t FactorGraph::update(int i)
 	}
 	real_t diff = max(setmes(ut, f.bt), setmes(ug, f.bg));
 	for (int j = 0; j < n; ++j) {
-		omp_set_lock(&nodes[f.neighs[j].index].lock_);
-		diff = max(diff, setmes(UU[j], f.neighs[j].msg));
-		omp_unset_lock(&nodes[f.neighs[j].index].lock_);
+		Neigh & v = f.neighs[j];
+		omp_set_lock(&v.lock_);
+		diff = max(diff, setmes(UU[j], v.msg));
+		omp_unset_lock(&v.lock_);
 	}
 
 	return diff;
@@ -437,13 +470,13 @@ real_t FactorGraph::iteration()
 }
 
 
-real_t FactorGraph::iterate()
+real_t FactorGraph::iterate(int maxit, real_t tol)
 {
 	real_t err = std::numeric_limits<real_t>::infinity();
-	for (int it = 1; it <= params.maxit; ++it) {
+	for (int it = 1; it <= maxit; ++it) {
 		err = iteration();
 		cout << "it: " << it << " err: " << err << endl;
-		if (err < params.tol)
+		if (err < tol)
 			break;
 	}
 	return err;
