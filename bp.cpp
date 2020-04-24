@@ -122,7 +122,7 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 		} else {
 			if (t < ni.times.back()) {
 				throw invalid_argument("time of contacts should be ordered");
-			 } else {
+			} else {
 				ni.times.push_back(t);
 				ni.lambdas.push_back(lambda);
 				nj.times.push_back(t);
