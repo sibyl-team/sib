@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cassert>
 #include <tuple>
+#include <exception>
 #include "bp.h"
 #include "cavity.h"
 #include "params.h"
@@ -87,8 +88,7 @@ void FactorGraph::add_obs(int i, int state, int t)
 			f.tobs.push_back(t);
 			f.obs.push_back(state);
 		} else {
-			cerr << "Error: Insert ordered observations" << endl;
-			exit(1);
+			throw invalid_argument("time of observations should be ordered");
 		}
 	} else {
 		f.tobs.push_back(t);
@@ -116,11 +116,12 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 		Neigh & ni = nodes[i].neighs[ki];
 		Neigh & nj = nodes[j].neighs[kj];
 		if (std::binary_search(ni.times.begin(), ni.times.end(), t)) {
-			cerr << "Ignoring double contact (" << nodes[i].index << ", " << nodes[j].index << ") " << "at time " << t << endl;
+			throw invalid_argument(("double contact ("
+						+ to_string(nodes[i].index) + "," + to_string(nodes[j].index)
+						+ ") at time" + to_string(t)).c_str());
 		} else {
 			if (t < ni.times.back()) {
-				cerr << "Error: Insert ordered contacts" << endl;
-				exit(1);
+				throw invalid_argument("time of contacts should be ordered");
 			 } else {
 				ni.times.push_back(t);
 				ni.lambdas.push_back(lambda);
