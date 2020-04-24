@@ -67,7 +67,7 @@ read_files(char const * cont_file, char const * obs_file)
 	return make_pair(contacts,observations);
 }
 
-tuple<Params,char const *, char const *>
+tuple<Params,char const *, char const *, int, real_t>
 parse_opt(int & argc, char ** argv)
 {
 	Params p;
@@ -75,13 +75,16 @@ parse_opt(int & argc, char ** argv)
 	char const * cont_file = "/dev/null";
 	int c;
 
+	real_t tol = 1e-3;
+	int maxit = 100;
+
 	while ((c = getopt(argc, argv, "s:i:m:o:c:t:h")) != -1 ) {
 		switch(c) {
 			case 't':
-				p.tol = stod(string(optarg));
+				tol = stod(string(optarg));
 				break;
 			case 'i':
-				p.maxit = stod(string(optarg));
+				maxit = stod(string(optarg));
 				break;
 			case 'm':
 				p.mu = stod(string(optarg));
@@ -107,7 +110,7 @@ parse_opt(int & argc, char ** argv)
 				exit(1);
 		}
 	}
-	return make_tuple(p, cont_file, obs_file);
+	return make_tuple(p, cont_file, obs_file, maxit, tol);
 }
 
 
@@ -116,7 +119,7 @@ int main(int argc, char ** argv) {
 	auto co = read_files(get<1>(r), get<2>(r));
 	FactorGraph factor(get<0>(co), get<1>(co), get<0>(r));
 	factor.init();
-	factor.iterate();
+	factor.iterate(get<3>(r), get<4>(r));
 	factor.show_beliefs(cout);
 	return 0;
 }

@@ -470,13 +470,13 @@ real_t FactorGraph::iteration()
 }
 
 
-real_t FactorGraph::iterate()
+real_t FactorGraph::iterate(int maxit, real_t tol)
 {
 	real_t err = std::numeric_limits<real_t>::infinity();
-	for (int it = 1; it <= params.maxit; ++it) {
+	for (int it = 1; it <= maxit; ++it) {
 		err = iteration();
 		cout << "it: " << it << " err: " << err << endl;
-		if (err < params.tol)
+		if (err < tol)
 			break;
 	}
 	return err;

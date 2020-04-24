@@ -56,7 +56,7 @@ public:
 	real_t update(int i);
 	void show_graph();
 	void show_beliefs(std::ostream &);
-	real_t iterate();
+	real_t iterate(int maxit, real_t tol);
 	real_t iteration();
 	void show_msg(std::ostream &);
 
