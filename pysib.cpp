@@ -14,6 +14,7 @@
 #include <pybind11/stl_bind.h>
 
 PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
+PYBIND11_MAKE_OPAQUE(std::vector<int>);
 
 
 namespace py = pybind11;
@@ -69,6 +70,7 @@ int get_index(FactorGraph & f, int i)
 
 PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
+    py::bind_vector<std::vector<int>>(m, "VectorInt");
 
     py::class_<FactorGraph>(m, "FactorGraph")
         .def(py::init<vector<tuple<int,int,int,real_t> >,
@@ -100,5 +102,5 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("mu", &Params::mu)
         .def_readwrite("pseed", &Params::pseed)
         .def("__repr__", &show_params);
-
+    m.def("set_num_threads", &omp_set_num_threads);
 }
