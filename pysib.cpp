@@ -40,12 +40,9 @@ get_times(FactorGraph const & f) {
     return times;
 }
 
-map<int, vector<tuple<real_t, real_t, real_t> > >
-get_marginals(FactorGraph const & f)
+vector<tuple<real_t, real_t, real_t>>
+get_marginal(Node const & n)
 {
-    map<int, vector<tuple<real_t, real_t, real_t> > > marg;
-    for (int i = 0; i < int(f.nodes.size()); ++i) {
-        Node const & n = f.nodes[i];
         vector<real_t> rbt(n.bt.size());
         vector<real_t> lbg(n.bg.size());
         int const T = n.bt.size() - 1;
@@ -55,12 +52,10 @@ get_marginals(FactorGraph const & f)
             lbg[t] = lbg[t-1] + n.bg[t];
             rbt[T - t] = rbt[T - t + 1] + n.bt[T - t];
         }
-        marg[n.index] = vector<tuple<real_t, real_t, real_t>>(T + 1);
-        marg[n.index][0] = make_tuple(rbt[0], 0.0, 1.0 - rbt[0]); // this is (1,0,0)
-        for (int t = 1; t <= T; ++t)
-            marg[n.index][t] = make_tuple(rbt[t], lbg[t-1], 1-rbt[t]-lbg[t-1]);
-    }
-    return marg;
+        auto marg = vector<tuple<real_t, real_t, real_t>>(T-1);
+        for (int t = 1; t < T; ++t)
+            marg[t-1] = make_tuple(rbt[t], lbg[t-1], 1-rbt[t]-lbg[t-1]);
+        return marg;
 }
 
 int get_index(FactorGraph & f, int i)
@@ -90,6 +85,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("params", &FactorGraph::params);
 
     py::class_<Node>(m, "Node")
+        .def("marginal", &get_marginal)
         .def_readwrite("ht", &Node::ht)
         .def_readwrite("hg", &Node::hg)
         .def_readonly("bt", &Node::bt)
