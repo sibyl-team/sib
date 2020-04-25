@@ -100,10 +100,11 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<Params>(m, "Params")
         .def(py::init<real_t, real_t, real_t>(),
                 py::arg("mu") = 0.01,
-                py::arg("damping") = 0.0,
-                py::arg("pseed") = 0.01)
+                py::arg("pseed") = 0.01,
+                py::arg("damping") = 0.0)
         .def_readwrite("mu", &Params::mu)
         .def_readwrite("pseed", &Params::pseed)
+        .def_readwrite("damping", &Params::damping)
         .def("__repr__", &show_params);
     m.def("set_num_threads", &omp_set_num_threads);
 }
