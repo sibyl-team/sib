@@ -9,7 +9,6 @@
 #include <numeric>
 #include <iterator>
 #include "bp.h"
-#include "params.h"
 
 namespace py = pybind11;
 
@@ -51,8 +50,9 @@ get_marginals(FactorGraph const & f)
             rbt[T - t] = rbt[T - t + 1] + n.bt[T - t];
         }
         marg[n.index] = vector<tuple<real_t, real_t, real_t>>(T + 1);
-        for (int t = 0; t <= T; ++t)
-            marg[n.index][t] = make_tuple(rbt[t], 1-rbt[t]-lbg[t-1], lbg[t-1]);
+        marg[n.index][0] = make_tuple(rbt[0], 0.0, 1.0 - rbt[0]); // this is (1,0,0)
+        for (int t = 1; t <= T; ++t)
+            marg[n.index][t] = make_tuple(rbt[t], lbg[t-1], 1-rbt[t]-lbg[t-1]);
     }
     return marg;
 }
