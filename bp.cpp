@@ -39,7 +39,7 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 	vector<int> F;
 	for (int i = 0; i < int(nodes.size()); ++i) {
 		finalize_node(i);
-		int ntimes = nodes[i].times.size() - 1;
+		int ntimes = nodes[i].times.size();
 		nodes[i].bt.resize(ntimes);
 		nodes[i].bg.resize(ntimes);
 		nodes[i].ht.resize(ntimes);
@@ -81,7 +81,7 @@ void FactorGraph::add_obs(int i, int state, int t)
 	map<int,int>::iterator mit = index.find(i);
 	Node & f = nodes[mit->second];
 	if (int(f.tobs.size())) {
-		if (t > f.tobs.back()) {
+		if (t >= f.tobs.back()) {
 			f.tobs.push_back(t);
 			f.obs.push_back(state);
 		} else {
@@ -153,8 +153,8 @@ void FactorGraph::set_field(int i)
 	// this assumes ordered observation times
 	int it = 0;
 	int tl = 0, gl = 0;
-	int tu = nodes[i].times.size()-1;
-	int gu = nodes[i].times.size()-1;
+	int tu = nodes[i].times.size();
+	int gu = nodes[i].times.size();
 //	cout << nodes[i].index << " ";
 //	for (int t = 0; t < int(nodes[i].tobs.size()); ++t) {
 //		cout << nodes[i].tobs[t] << " ";
@@ -276,7 +276,7 @@ real_t rand01()
 
 real_t prob_obs(Node const & f, int gi, int ti)
 {
-	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
+	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi + 1 == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
 	// cout << "gprob " << f.times[ti] << " " << f.times[gi] << " " << f.times[gi+1] << " " << exp(-f.mu * (f.times[gi] - f.times[ti])) << " " << -f.mu * (f.times[gi + 1] - f.times[ti]) << endl;
 	assert(aux >= 0);
 	return aux;
