@@ -25,7 +25,9 @@ using namespace std;
 string show_params(Params const & p)
 {
     return "sib.Params(mu=" + to_string(p.mu) +
-        ",pseed=" + to_string(p.pseed) + ")";
+        ",pseed=" + to_string(p.pseed) +
+        ",damping=" + to_string(p.damping) + ")";
+
 }
 
 string show_fg(FactorGraph const & f) {
@@ -96,8 +98,9 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("index", &Node::index);
 
     py::class_<Params>(m, "Params")
-        .def(py::init<real_t, real_t>(),
+        .def(py::init<real_t, real_t, real_t>(),
                 py::arg("mu") = 0.01,
+                py::arg("damping") = 0.0,
                 py::arg("pseed") = 0.01)
         .def_readwrite("mu", &Params::mu)
         .def_readwrite("pseed", &Params::pseed)

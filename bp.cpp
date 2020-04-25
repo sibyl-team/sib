@@ -242,7 +242,7 @@ void FactorGraph::show_msg(ostream & msgfile)
 	}
 }
 
-real_t setmes(vector<real_t> & from, vector<real_t> & to)
+real_t setmes(vector<real_t> & from, vector<real_t> & to, real_t damp)
 {
 	int n = from.size();
 	real_t s = 0;
@@ -253,7 +253,7 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to)
 	for (int i = 0; i < n; ++i) {
 		from[i] /= s;
 		err = max(err, abs(from[i] - to[i]));
-		to[i] = from[i];
+		to[i] = damp*to[i] + (1-damp)*from[i];
 	}
 	return err;
 }
@@ -427,11 +427,11 @@ real_t FactorGraph::update(int i)
 		ut[ti] *= f.ht[ti];
 		ug[ti] *= f.hg[ti];
 	}
-	real_t diff = max(setmes(ut, f.bt), setmes(ug, f.bg));
+	real_t diff = max(setmes(ut, f.bt, params.damping), setmes(ug, f.bg, params.damping));
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = f.neighs[j];
 		omp_set_lock(&v.lock_);
-		diff = max(diff, setmes(UU[j], v.msg));
+		diff = max(diff, setmes(UU[j], v.msg, params.damping));
 		omp_unset_lock(&v.lock_);
 	}
 

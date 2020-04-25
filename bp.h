@@ -16,8 +16,9 @@ typedef long double real_t;
 struct Params {
 	real_t mu;
 	real_t pseed;
-	Params() : mu(1.0), pseed(1e-3) {}
-	Params(real_t mu, real_t pseed) : mu(mu), pseed(pseed) {}
+	real_t damping;
+	Params() : mu(1.0), pseed(1e-3), damping(0.) {}
+	Params(real_t mu, real_t pseed, real_t damping) : mu(mu), pseed(pseed), damping(damping) {}
 };
 
 struct Neigh {
