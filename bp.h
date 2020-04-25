@@ -6,12 +6,19 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include "params.h"
 #include "omp.h"
 
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
 
+typedef long double real_t;
+
+struct Params {
+	real_t mu;
+	real_t pseed;
+	Params() : mu(1.0), pseed(1e-3) {}
+	Params(real_t mu, real_t pseed) : mu(mu), pseed(pseed) {}
+};
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) {}

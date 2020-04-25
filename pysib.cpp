@@ -9,7 +9,6 @@
 #include <numeric>
 #include <iterator>
 #include "bp.h"
-#include "params.h"
 
 namespace py = pybind11;
 

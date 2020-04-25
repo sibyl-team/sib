@@ -17,7 +17,6 @@
 #include <exception>
 #include "bp.h"
 #include "cavity.h"
-#include "params.h"
 
 using namespace std;
 
