@@ -8,7 +8,13 @@
 #include <sstream>
 #include <numeric>
 #include <iterator>
+#include <exception>
 #include "bp.h"
+
+#include <pybind11/stl_bind.h>
+
+PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
+
 
 namespace py = pybind11;
 
@@ -57,8 +63,18 @@ get_marginals(FactorGraph const & f)
     return marg;
 }
 
+int get_index(FactorGraph & f, int i)
+{
+    auto it = f.index.find(i);
+    if (it == f.index.end())
+       throw py::key_error("key not found");
+    return it->second;
+}
+
 
 PYBIND11_MODULE(_sib, m) {
+    py::bind_vector<std::vector<real_t>>(m, "VectorReal");
+
     py::class_<FactorGraph>(m, "FactorGraph")
         .def(py::init<vector<tuple<int,int,int,real_t> >,
                 vector<tuple<int,int,int> >,
@@ -67,14 +83,19 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("observations"),
                 py::arg("params"))
         .def("update", &FactorGraph::iteration)
-        .def("bt", &FactorGraph::get_tbeliefs)
-        .def("bg", &FactorGraph::get_gbeliefs)
-        .def("marginals", &get_marginals)
         .def("reset", &FactorGraph::init)
-        .def("times", &get_times)
+        .def("get_index", &get_index)
         .def("__repr__", &show_fg)
-        .def_readwrite("params", &FactorGraph::params);
+        .def_readwrite("nodes", &FactorGraph::nodes)
+        .def_readonly("params", &FactorGraph::params);
 
+    py::class_<Node>(m, "Node")
+        .def_readwrite("ht", &Node::ht)
+        .def_readwrite("hg", &Node::hg)
+        .def_readonly("bt", &Node::bt)
+        .def_readonly("bg", &Node::bg)
+        .def_readonly("times", &Node::times)
+        .def_readonly("index", &Node::index);
 
     py::class_<Params>(m, "Params")
         .def(py::init<real_t, real_t>(),

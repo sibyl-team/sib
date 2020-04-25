@@ -20,8 +20,6 @@
 
 using namespace std;
 
-int const infty = 1000000;
-
 
 FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
@@ -142,7 +140,6 @@ void FactorGraph::finalize_node(int i)
 	}
 	sort(F.begin(), F.end());
 	F.push_back(Tinf);
-	F.push_back(infty);
 	nodes[i].times.push_back(-1);
 	for (int k = 0; k < int(F.size()); ++k) {
 		if (nodes[i].times.back() != F[k])
@@ -232,22 +229,6 @@ void FactorGraph::show_beliefs(ostream & ofs)
 
 }
 
-map<int, vector<real_t> > FactorGraph::get_tbeliefs()
-{
-	map<int, vector<real_t > > b;
-	for (int i=0; i<int(nodes.size()); ++i)
-		b[nodes[i].index] = nodes[i].bt;
-	return b;
-}
-
-map<int, vector<real_t> > FactorGraph::get_gbeliefs()
-{
-	map<int, vector<real_t > > b;
-	for (int i=0; i<int(nodes.size()); ++i)
-		b[nodes[i].index] = nodes[i].bg;
-	return b;
-}
-
 void FactorGraph::show_msg(ostream & msgfile)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
@@ -295,7 +276,7 @@ real_t rand01()
 
 real_t prob_obs(Node const & f, int gi, int ti)
 {
-	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - exp(-f.mu * (f.times[gi + 1] - f.times[ti]));
+	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
 	// cout << "gprob " << f.times[ti] << " " << f.times[gi] << " " << f.times[gi+1] << " " << exp(-f.mu * (f.times[gi] - f.times[ti])) << " " << -f.mu * (f.times[gi + 1] - f.times[ti]) << endl;
 	assert(aux >= 0);
 	return aux;
@@ -467,7 +448,6 @@ real_t FactorGraph::iteration()
 		err = max(err, update(i));
 	return err;
 }
-
 
 real_t FactorGraph::iterate(int maxit, real_t tol)
 {
