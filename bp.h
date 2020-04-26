@@ -6,7 +6,6 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include <functional>
 #include "omp.h"
 
 #ifndef FACTORGRAPH_H
