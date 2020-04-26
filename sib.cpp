@@ -35,7 +35,7 @@ read_files(char const * cont_file, char const * obs_file)
 	int nlines = 0;
 	while (getline(cont, line)) {
 		nlines++;
-		if (nlines > 1) {
+		if (nlines > 1) { // waring: firrst line (header) is silently ignored!!
 			stringstream s(line);
 			int i, j, t;
 			char g1, g2, g3;
