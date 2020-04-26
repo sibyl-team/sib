@@ -441,7 +441,7 @@ real_t FactorGraph::iteration()
 	return err;
 }
 
-real_t FactorGraph::likelihood() const
+real_t FactorGraph::loglikelihood() const
 {
 	real_t L = 0;
 	for(auto nit = nodes.begin(), nend = nodes.end(); nit != nend; ++nit)

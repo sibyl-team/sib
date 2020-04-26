@@ -66,7 +66,7 @@ public:
 	void show_beliefs(std::ostream &);
 	real_t iterate(int maxit, real_t tol);
 	real_t iteration();
-	real_t likelihood() const;
+	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
 
 	std::map<int, std::vector<real_t> > get_tbeliefs();
