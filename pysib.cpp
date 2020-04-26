@@ -30,8 +30,26 @@ string show_params(Params const & p)
 
 }
 
-string show_fg(FactorGraph const & f) {
-    return "sib.FactorGraph with " + to_string(f.nodes.size()) + " nodes";
+string show_fg(FactorGraph const & f)
+{
+	int nasym = 0;
+	int nedge = 0;
+	int ncont = 0;
+	for(auto nit = f.nodes.begin(); nit != f.nodes.end(); ++nit) {
+		for (auto vit = nit->neighs.begin(); vit != nit->neighs.end(); ++vit) {
+                        if (vit->index < nit->index)
+                                continue;
+			++nedge;
+			ncont += vit->lambdas.size() - 1;
+			if (vit->lambdas != f.nodes[vit->index].neighs[vit->pos].lambdas)
+				++nasym;
+		}
+	}
+
+	return "sib.FactorGraph\n"
+                  "            nodes: " + to_string(f.nodes.size()) + "\n"
+		+ "            edges: " + to_string(nedge) + " (" + to_string(nasym) + " assymetric)\n"
+		+ "    time contacts: " + to_string(ncont);
 }
 
 map<int, vector<int> >

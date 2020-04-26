@@ -36,9 +36,19 @@ FactorGraph::FactorGraph(vector<tuple<int,int,int,real_t> > const & contacts,
 		add_obs(get<0>(t),get<1>(t),get<2>(t));
 	}
 
-	vector<int> F;
 	for (int i = 0; i < int(nodes.size()); ++i) {
-		finalize_node(i);
+		vector<int> F = nodes[i].tobs;
+		for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
+			vector<int> const & tij = nodes[i].neighs[k].times;
+			F.insert(F.end(), tij.begin(), tij.end());
+		}
+		sort(F.begin(), F.end());
+		F.push_back(Tinf);
+		nodes[i].times.push_back(-1);
+		for (int k = 0; k < int(F.size()); ++k) {
+			if (nodes[i].times.back() != F[k])
+				nodes[i].times.push_back(F[k]);
+		}
 		int ntimes = nodes[i].times.size();
 		nodes[i].bt.resize(ntimes);
 		nodes[i].bg.resize(ntimes);
@@ -98,47 +108,19 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 		assert(kj == int(nodes[j].neighs.size()));
 		nodes[i].neighs.push_back(Neigh(j, kj));
 		nodes[j].neighs.push_back(Neigh(i, ki));
-		nodes[i].neighs[ki].times.push_back(t);
-		nodes[i].neighs[ki].lambdas.push_back(lambda);
-		nodes[j].neighs[kj].times.push_back(t);
-		nodes[j].neighs[kj].lambdas.push_back(lambda);
+	}
+	Neigh & ni = nodes[i].neighs[ki];
+	Neigh & nj = nodes[j].neighs[kj];
+	if (ni.times.empty() || t > ni.times.back()) {
+		ni.times.push_back(t);
+		ni.lambdas.push_back(lambda);
+		nj.times.push_back(t);
+		nj.lambdas.push_back(0.0);
+	} else if (t == ni.times.back()) {
+		ni.lambdas.back() = lambda;
 	} else {
-		Neigh & ni = nodes[i].neighs[ki];
-		Neigh & nj = nodes[j].neighs[kj];
-		if (std::binary_search(ni.times.begin(), ni.times.end(), t)) {
-			throw invalid_argument(("double contact ("
-						+ to_string(nodes[i].index) + "," + to_string(nodes[j].index)
-						+ ") at time" + to_string(t)).c_str());
-		} else {
-			if (t < ni.times.back()) {
-				throw invalid_argument("time of contacts should be ordered");
-			} else {
-				ni.times.push_back(t);
-				ni.lambdas.push_back(lambda);
-				nj.times.push_back(t);
-				nj.lambdas.push_back(lambda);
-			}
-		}
-
+		throw invalid_argument("time of contacts should be ordered");
 	}
-}
-
-void FactorGraph::finalize_node(int i)
-{
-	vector<int> F = nodes[i].tobs;
-
-	for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
-		vector<int> const & tij = nodes[i].neighs[k].times;
-		F.insert(F.end(), tij.begin(), tij.end());
-	}
-	sort(F.begin(), F.end());
-	F.push_back(Tinf);
-	nodes[i].times.push_back(-1);
-	for (int k = 0; k < int(F.size()); ++k) {
-		if (nodes[i].times.back() != F[k])
-			nodes[i].times.push_back(F[k]);
-	}
-
 }
 
 void FactorGraph::set_field(int i)
@@ -277,7 +259,6 @@ real_t prob_delay(Node const & f, int gi, int ti)
 {
 	return exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi + 1 == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
 }
-
 
 ostream & operator<<(ostream & o, vector<real_t> const & m)
 {

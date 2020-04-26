@@ -58,7 +58,6 @@ public:
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
 	void add_obs(int i, int state, int t);
-	void finalize_node(int i);
 	void init();
 	void set_field(int i);
 	real_t update(int i);
@@ -73,5 +72,6 @@ public:
 	std::map<int, std::vector<real_t> > get_gbeliefs();
 	Params params;
 };
+
 
 #endif
