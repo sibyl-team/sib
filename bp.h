@@ -61,7 +61,6 @@ public:
 	void finalize_node(int i);
 	void init();
 	void set_field(int i);
-	std::vector<real_t> norm_msg(std::vector<real_t> msg);
 	real_t update(int i);
 	void show_graph();
 	void show_beliefs(std::ostream &);
