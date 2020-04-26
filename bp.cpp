@@ -78,18 +78,12 @@ int FactorGraph::add_node(int i)
 
 void FactorGraph::add_obs(int i, int state, int t)
 {
-	map<int,int>::iterator mit = index.find(i);
-	Node & f = nodes[mit->second];
-	if (int(f.tobs.size())) {
-		if (t >= f.tobs.back()) {
-			f.tobs.push_back(t);
-			f.obs.push_back(state);
-		} else {
-			throw invalid_argument("time of observations should be ordered");
-		}
-	} else {
+	Node & f = nodes[add_node(i)];
+	if (f.tobs.empty() || t >= f.tobs.back()) {
 		f.tobs.push_back(t);
 		f.obs.push_back(state);
+	} else {
+		throw invalid_argument("time of observations should be ordered");
 	}
 }
 
@@ -273,7 +267,7 @@ int Sij(Node const & f, Neigh const & v, int sij, int gi)
 	return v.times[sij] <= f.times[gi] ? sij : v.times.size() - 1;
 }
 
-int idx(int sij, int sji, int qj)
+inline int idx(int sij, int sji, int qj)
 {
 	return sji + qj * sij;
 }
@@ -281,10 +275,7 @@ int idx(int sij, int sji, int qj)
 //this is p(gi|ti)
 real_t prob_delay(Node const & f, int gi, int ti)
 {
-	real_t aux = exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi + 1 == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
-	// cout << "gprob " << f.times[ti] << " " << f.times[gi] << " " << f.times[gi+1] << " " << exp(-f.mu * (f.times[gi] - f.times[ti])) << " " << -f.mu * (f.times[gi + 1] - f.times[ti]) << endl;
-	assert(aux >= 0);
-	return aux;
+	return exp(-f.mu * (f.times[gi] - f.times[ti])) - (gi + 1 == int(f.times.size()) ? 0.0 : exp(-f.mu * (f.times[gi + 1] - f.times[ti])));
 }
 
 
