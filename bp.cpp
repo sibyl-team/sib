@@ -318,8 +318,6 @@ real_t FactorGraph::update(int i)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
-
-
 	vector<vector<real_t> > UU(n);
 	vector<vector<real_t> > HH(n);
 	int const qi_ = f.bt.size();
@@ -343,6 +341,11 @@ real_t FactorGraph::update(int i)
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
 	vector<int> min_in(n), min_out(n);
 	// cout << "node " <<i << endl;
+	real_t za = 0.0;
+	vector<real_t> ht = f.ht;
+	norm_msg(ht);
+	vector<real_t> hg = f.hg;
+	norm_msg(hg);
 	for (int ti = 0; ti < qi_; ++ti) {
 		for (int j = 0; j < n; ++j) {
 			Neigh const & v = f.neighs[j];
@@ -399,8 +402,9 @@ real_t FactorGraph::update(int i)
 
 			// cerr << "    t[" << ti << "]=" << ut[ti]
 			     // << "    g[" << gi << "]=" << ug[gi] << endl;
-			ug[gi] += f.ht[ti] * a;
-			ut[ti] += f.hg[gi] * a;
+			ug[gi] += ht[ti] * a;
+			ut[ti] += hg[gi] * a;
+			za += ht[ti] * hg[gi] * a;
 
 			// cout << "P0f:" << P0.full() << " P1f:" << P1.full() <<  " a " << a << endl;
 			//messages to sij, sji
@@ -410,7 +414,7 @@ real_t FactorGraph::update(int i)
 				real_t const p0 = P0[j];
 				real_t const p01 = p0 - P1[j];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
-					real_t pi = f.ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
+					real_t pi = ht[ti] * hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
 						Uij += pi * v.lambdas[s];
@@ -423,16 +427,39 @@ real_t FactorGraph::update(int i)
 	}
 	// cout << ut << endl;
 	//apply external fields
-	for (int ti = 0; ti < qi_; ++ti) {
-		ut[ti] *= f.ht[ti];
-		ug[ti] *= f.hg[ti];
+	f.f_ = -log(za);
+	real_t zat = 0.0, zag = 0.0; // z_{a->t_i}, z_{a->g_i}
+	real_t zit = 0.0, zig = 0.0; // z_{t_i}, z_{g_i}
+	for (int t = 0; t < qi_; ++t) {
+		zat += ut[t];
+		zag += ug[t];
+		ut[t] *= ht[t];
+		ug[t] *= hg[t];
+		zit += ut[t];
+		zig += ut[t];
 	}
 	real_t diff = max(setmes(ut, f.bt, params.damping), setmes(ug, f.bg, params.damping));
+	real_t zati = 0.0, zagi = 0.0; // z_{a,t_i}, z_{a,g_i}
+	for (int t = 0; t < qi_; ++t) {
+		zati += f.bt[t] * zat;
+		zagi += f.bg[t] * zag;
+	}
+	f.f_ += log(zati) + log(zagi);
+	f.f_ += -log(zit) - log(zig);
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = f.neighs[j];
 		omp_set_lock(&v.lock_);
 		diff = max(diff, setmes(UU[j], v.msg, params.damping));
 		omp_unset_lock(&v.lock_);
+
+		real_t zj = 0; // z_{(sij,sji)}}
+		int const qj = v.times.size();
+		for (int sij = 0; sij < qj; ++sij) {
+			for (int sji = 0; sji < qj; ++sji) {
+				zj += HH[j][idx(sij, sji, qj)]*v.msg[idx(sji, sij, qj)];
+			}
+		}
+		f.f_ += 0.5*log(zj); // half is cancelled by terms z_{a,(sij,sji)}
 	}
 
 	return diff;
@@ -443,10 +470,22 @@ real_t FactorGraph::iteration()
 {
 	int const N = nodes.size();
 	real_t err = 0.0;
+	vector<int> perm(N);
+	for(int i = 0; i < N; ++i)
+		perm[i] = i;
+	random_shuffle(perm.begin(), perm.end());
 #pragma omp parallel for reduction(max:err)
 	for(int i = 0; i < N; ++i)
-		err = max(err, update(i));
+		err = max(err, update(perm[i]));
 	return err;
+}
+
+real_t FactorGraph::likelihood() const
+{
+	real_t L = 0;
+	for(auto nit = nodes.begin(), nend = nodes.end(); nit != nend; ++nit)
+		L -= nit->f_;
+	return L;
 }
 
 real_t FactorGraph::iterate(int maxit, real_t tol)

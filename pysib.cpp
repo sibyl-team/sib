@@ -82,6 +82,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("observations"),
                 py::arg("params"))
         .def("update", &FactorGraph::iteration)
+        .def("likelihood", &FactorGraph::likelihood)
         .def("reset", &FactorGraph::init)
         .def("get_index", &get_index)
         .def("__repr__", &show_fg)

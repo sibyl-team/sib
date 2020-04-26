@@ -32,7 +32,7 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, real_t mu) : index(index), mu(mu) {}
+	Node(int index, real_t mu) : index(index), mu(mu), f_(0) {}
 	int index;
 	real_t mu;
 	std::vector<int> tobs;
@@ -43,6 +43,7 @@ struct Node {
 	std::vector<real_t> ht;  // message infection times T[ni+2]
 	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
+	real_t f_;
 };
 
 class FactorGraph {
@@ -66,6 +67,7 @@ public:
 	void show_beliefs(std::ostream &);
 	real_t iterate(int maxit, real_t tol);
 	real_t iteration();
+	real_t likelihood() const;
 	void show_msg(std::ostream &);
 
 	std::map<int, std::vector<real_t> > get_tbeliefs();
