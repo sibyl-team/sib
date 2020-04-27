@@ -2,6 +2,8 @@
 *.o
 *.so
 sib
+.ipynb_checkpoints/
+__pycache__/
 
 ## Text editors
 .vscode
