@@ -174,7 +174,6 @@ void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const &
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
 	}
-	nodes[i].ht[0] *= params.pseed;
 }
 
 void FactorGraph::show_graph()
@@ -307,7 +306,7 @@ real_t FactorGraph::update(int i, real_t damping)
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
 	vector<real_t> ht = f.ht;
 	ht[0] *= params.pseed;
-	for (int t = 0; t < qi; ++t)
+	for (int t = 1; t < qi - 1; ++t)
 		ht[t] *= 1 - params.pseed - params.psus;
 	ht[qi-1] *= params.psus;
 
