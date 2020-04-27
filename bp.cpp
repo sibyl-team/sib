@@ -22,7 +22,7 @@ using namespace std;
 
 
 // real_t Node::prob_g(real_t dg) const { return exp(-mu * dg); }
-real_t Node::prob_g(real_t dg) const { return real_t(1)-boost::math::gamma_p(k_,dg*mu_); }
+real_t Node::prob_g(real_t dg) const { return real_t(1) - boost::math::gamma_p(k_,dg*mu_); }
 
 
 FactorGraph::FactorGraph(Params const & params,
@@ -296,41 +296,42 @@ void FactorGraph::init()
 
 real_t FactorGraph::update(int i)
 {
-	Node & f = nodes[i];
-	int const n = f.neighs.size();
-	vector<vector<real_t> > UU(n);
-	vector<vector<real_t> > HH(n);
-	int const qi_ = f.bt.size();
+	Node & fac_node = nodes[i];
+	int const num_neighs = fac_node.neighs.size();
+	vector<vector<real_t> > UU(num_neighs);
+	vector<vector<real_t> > HH(num_neighs);
+	int const qi_ = fac_node.bt.size();
 
 	vector<real_t> ut(qi_);
 	vector<real_t> ug(qi_);
 
-	for (int j = 0; j < n; ++j) {
-		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
+	for (int j = 0; j < num_neighs; ++j) {
+		Neigh & v = nodes[fac_node.neighs[j].index]
+						.neighs[fac_node.neighs[j].pos];
 		omp_set_lock(&v.lock_);
 		HH[j] = v.msg;
 		omp_unset_lock(&v.lock_);
 		UU[j].resize(v.msg.size());
 	}
 	// proba tji >= ti for each j
-	vector<real_t> C0(n);
+	vector<real_t> C0(num_neighs);
 	// proba tji > ti for each j
-	vector<real_t> C1(n);
+	vector<real_t> C1(num_neighs);
 
-	Cavity<real_t> P0(C0, 1., multiplies<real_t>());
+	Cavity<real_t> P0(C0, 1., multiplies<real_t>()); //multiplies is C++14 std syntax, operator *
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
-	vector<int> min_in(n), min_out(n);
+	vector<int> min_in(num_neighs), min_out(num_neighs);
 	real_t za = 0.0;
 	for (int ti = 0; ti < qi_; ++ti) {
-		for (int j = 0; j < n; ++j) {
-			Neigh const & v = f.neighs[j];
+		for (int j = 0; j < num_neighs; ++j) {
+			Neigh const & v = fac_node.neighs[j];
 			int const qj = v.times.size();
 			min_in[j] = qj - 1;
 			min_out[j] = qj - 1;
-			for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; --s) {
+			for (int s = qj - 1; s >= 0 && v.times[s] >= fac_node.times[ti]; --s) {
 				// smallest tji >= ti
 				min_in[j] = s;
-				if (v.times[s] > f.times[ti]) {
+				if (v.times[s] > fac_node.times[ti]) {
 					// smallest tji > ti
 					min_out[j] = s;
 				}
@@ -341,24 +342,24 @@ real_t FactorGraph::update(int i)
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 
-			for (int j = 0; j < n; ++j) {
-				Neigh const & v = f.neighs[j];
+			for (int j = 0; j < num_neighs; ++j) {
+				Neigh const & v = fac_node.neighs[j];
 				vector<real_t> const & h = HH[j];
 				int const qj = v.times.size();
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					real_t pi = 1;
 					for (int s = min_out[j]; s < qj - 1; ++s) {
-						int const sij = Sij(f, v, s, gi);
+						int const sij = Sij(fac_node, v, s, gi);
 						real_t const p = pi * v.lambdas[s] * h[idx(sji, sij, qj)];
 						C0[j] += p;
-						if (v.times[sji] > f.times[ti])
+						if (v.times[sji] > fac_node.times[ti])
 							C1[j] += p;
 						pi *= 1 - v.lambdas[s];
 					}
-					int const sij = Sij(f, v, qj - 1, gi);
+					int const sij = Sij(fac_node, v, qj - 1, gi);
 					real_t const p = pi * h[idx(sji, sij, qj)];
 					C0[j] += p;
-					if (v.times[sji] > f.times[ti])
+					if (v.times[sji] > fac_node.times[ti])
 						C1[j] += p;
 				}
 			}
@@ -367,41 +368,42 @@ real_t FactorGraph::update(int i)
 			P1.initialize(C1.begin(), C1.end(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi_ ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
+			real_t const g_prob = fac_node.prob_g(fac_node.times[gi] - fac_node.times[ti]) - (gi + 1 == qi_ ? 0.0 : fac_node.prob_g(fac_node.times[gi + 1] - fac_node.times[ti]));
 			real_t const a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
 
-			ug[gi] += f.ht[ti] * a;
-			ut[ti] += f.hg[gi] * a;
-			za += f.ht[ti] * f.hg[gi] * a;
+			ug[gi] += fac_node.ht[ti] * a;
+			ut[ti] += fac_node.hg[gi] * a;
+			za += fac_node.ht[ti] * fac_node.hg[gi] * a;
 
 			//messages to sij, sji
-			for (int j = 0; j < n; ++j) {
-				Neigh const & v = f.neighs[j];
+			for (int j = 0; j < num_neighs; ++j) {
+				Neigh const & v = fac_node.neighs[j];
 				int const qj = v.times.size();
 				real_t const p0 = P0[j];
 				real_t const p01 = p0 - P1[j];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
-					real_t pi = f.ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
+					real_t pi = fac_node.ht[ti] * fac_node.hg[gi] * g_prob * (ti == 0 || v.times[sji] == fac_node.times[ti] ? p0 : p01);
 					for (int s = min_out[j]; s < qj - 1; ++s) {
-						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
+						real_t & Uij = UU[j][idx(Sij(fac_node, v, s, gi), sji, qj)];
 						Uij += pi * v.lambdas[s];
 						pi *= 1 - v.lambdas[s];
 					}
-					UU[j][idx(Sij(f, v, qj - 1, gi), sji, qj)] += pi;
+					UU[j][idx(Sij(fac_node, v, qj - 1, gi), sji, qj)] += pi;
 				}
 			}
 		}
 	}
-	f.f_ = -log(za);
+	fac_node.f_ = -log(za);
 	//apply external fields on t,h
 	for (int t = 0; t < qi_; ++t) {
-		ut[t] *= f.ht[t];
-		ug[t] *= f.hg[t];
+		ut[t] *= fac_node.ht[t];
+		ug[t] *= fac_node.hg[t];
 	}
 	//compute marginals on t,g
-	real_t diff = max(setmes(ut, f.bt, params.damping), setmes(ug, f.bg, params.damping));
-	for (int j = 0; j < n; ++j) {
-		Neigh & v = f.neighs[j];
+	real_t diff = max(setmes(ut, fac_node.bt, params.damping), 
+						setmes(ug, fac_node.bg, params.damping));
+	for (int j = 0; j < num_neighs; ++j) {
+		Neigh & v = fac_node.neighs[j];
 		omp_set_lock(&v.lock_);
 		// diff = max(diff, setmes(UU[j], v.msg, params.damping));
 		setmes(UU[j], v.msg, params.damping);
@@ -414,7 +416,7 @@ real_t FactorGraph::update(int i)
 				zj += HH[j][idx(sij, sji, qj)]*v.msg[idx(sji, sij, qj)];
 			}
 		}
-		f.f_ += 0.5*log(zj); // half is cancelled by z_{a,(sij,sji)}
+		fac_node.f_ += 0.5*log(zj); // half is cancelled by z_{a,(sij,sji)}
 	}
 
 	return diff;

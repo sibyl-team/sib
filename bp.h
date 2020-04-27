@@ -45,10 +45,10 @@ struct Node {
 	std::vector<int> tobs;
 	std::vector<int> obs;
 	std::vector<int> times;
-	std::vector<real_t> bt;  // marginals infection times T[ni+2]
-	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
-	std::vector<real_t> ht;  // message infection times T[ni+2]
-	std::vector<real_t> hg;  // message recovery times G[ni+2]
+	std::vector<real_t> bt;  // marginals infection times T [ni+2]
+	std::vector<real_t> bg;  // marginals recovery times G [ni+2]
+	std::vector<real_t> ht;  // message infection times T [ni+2]
+	std::vector<real_t> hg;  // message recovery times G [ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 };

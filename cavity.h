@@ -23,10 +23,17 @@ public:
 	{
 		initialize(beg, end, init, convolute);
 	}
+	/**
+	 * Resize to the current container size, init to 1,
+	 * then set each element such that each element of the vector
+	 * is the result of the operation 'convolute' applied to all the other elements 
+	 * of the original container
+	 */
 	template<class iterator_t, typename C>
 	void initialize(iterator_t const & beg, iterator_t const & end, T const & init, C const & convolute)
 	{
 		Cavity & me = *this;
+		//resize and set all values to #init
 		std::vector<T>::resize(distance(beg, end), init);
 		int const n = std::vector<T>::size();
 		if (n == 0) {
@@ -35,7 +42,7 @@ public:
 		}
 
 		if (n == 1) {
-			me[0] = init;
+			me[0] = init; //this is kinda useless...
 			full_ = *beg;
 			return;
 		}
