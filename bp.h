@@ -7,6 +7,8 @@
 #include <map>
 #include <iostream>
 #include "omp.h"
+#include <boost/math/special_functions/gamma.hpp>
+
 
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
@@ -36,12 +38,35 @@ struct Neigh {
 	omp_lock_t lock_;
 };
 
+
+
+struct Uniform
+{
+	Uniform(real_t p) : p(p) {}
+	real_t p;
+	real_t operator()(real_t d) const { return p; }
+};
+
+struct Exponential
+{
+	Exponential(real_t mu) : mu(mu) {}
+	real_t mu;
+	real_t operator()(real_t d) const { return exp(-mu*d); }
+};
+
+struct Gamma
+{
+	real_t k;
+	real_t mu;
+	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
+	real_t operator()(real_t d) const { return 1-boost::math::gamma_p(k,d*mu); }
+};
+
 struct Node {
-	Node(int index, real_t k, real_t mu) : index(index), k_(k), mu_(mu), f_(0) {}
+	Node(int index, real_t k, real_t mu) : index(index), prob_g(k, mu), prob_i(1.0), f_(0) {}
 	int index;
-	real_t k_;
-	real_t mu_;
-	real_t prob_g(real_t delta) const;
+	Gamma prob_g;
+	Uniform prob_i;
 	std::vector<int> tobs;
 	std::vector<int> obs;
 	std::vector<int> times;

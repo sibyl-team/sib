@@ -14,15 +14,12 @@
 #include <cassert>
 #include <tuple>
 #include <exception>
-#include <boost/math/special_functions/gamma.hpp>
 #include "bp.h"
 #include "cavity.h"
 
 using namespace std;
 
 
-// real_t Node::prob_g(real_t dg) const { return exp(-mu * dg); }
-real_t Node::prob_g(real_t dg) const { return real_t(1)-boost::math::gamma_p(k_,dg*mu_); }
 
 
 FactorGraph::FactorGraph(Params const & params,
@@ -51,8 +48,8 @@ FactorGraph::FactorGraph(Params const & params,
 		real_t k, mu;
 		tie(i,k,mu) = *it;
 		int a = add_node(i);
-		nodes[a].k_ = k;
-		nodes[a].mu_ = mu;
+		nodes[a].prob_g = Gamma(k, mu);
+		nodes[a].prob_i = Uniform(1.0);
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -240,7 +237,8 @@ void norm_msg(vector<real_t> & msg)
 	real_t S = 0;
 	for(int n = 0; n < int(msg.size()); ++n)
 		S += msg[n];
-	assert(S > 0);
+	if (!(S > 0))
+		throw domain_error("singularity error");
 	for(int n = 0; n < int(msg.size()); ++n)
 		msg[n] /= S;
 }
@@ -349,11 +347,12 @@ real_t FactorGraph::update(int i)
 					real_t pi = 1;
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						int const sij = Sij(f, v, s, gi);
-						real_t const p = pi * v.lambdas[s] * h[idx(sji, sij, qj)];
+						real_t const l = v.lambdas[s] * f.prob_i(v.times[s]-v.times[min_out[j]]);
+						real_t const p = pi * l * h[idx(sji, sij, qj)];
 						C0[j] += p;
 						if (v.times[sji] > f.times[ti])
 							C1[j] += p;
-						pi *= 1 - v.lambdas[s];
+						pi *= 1 -  l;
 					}
 					int const sij = Sij(f, v, qj - 1, gi);
 					real_t const p = pi * h[idx(sji, sij, qj)];
@@ -384,8 +383,9 @@ real_t FactorGraph::update(int i)
 					real_t pi = f.ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
-						Uij += pi * v.lambdas[s];
-						pi *= 1 - v.lambdas[s];
+						real_t const l = f.prob_i(v.times[s]-v.times[min_out[j]]) *  v.lambdas[s];
+						Uij += pi * l;
+						pi *= 1 - l;
 					}
 					UU[j][idx(Sij(f, v, qj - 1, gi), sji, qj)] += pi;
 				}
