@@ -70,7 +70,7 @@ read_files(char const * cont_file, char const * obs_file)
 tuple<Params,char const *, char const *, int, real_t>
 parse_opt(int & argc, char ** argv)
 {
-	Params p(0.1, 0.1, 0.0);
+	Params p(1.0, 0.1, 0.01, 1.0);
 	char const * obs_file = "/dev/null";
 	char const * cont_file = "/dev/null";
 	int c;
@@ -119,7 +119,7 @@ int main(int argc, char ** argv) {
 	auto co = read_files(get<1>(r), get<2>(r));
 	FactorGraph factor(get<0>(r), get<0>(co), get<1>(co));
 	factor.init();
-	factor.iterate(get<3>(r), get<4>(r));
+	factor.iterate(get<3>(r), get<4>(r), 0.0);
 	factor.show_beliefs(cout);
 	return 0;
 }

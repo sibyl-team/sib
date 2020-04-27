@@ -14,9 +14,9 @@ def marginal(n):
         marg.append((rbt[t], 1-rbt[t]-lbg[t-1], lbg[t-1]))
     return marg;
 
-def iterate(f, maxit=100, tol=1e-3, callback=(lambda t, err, f: print(t, err, flush=True))):
+def iterate(f, maxit=100, tol=1e-3, damping=0.0, callback=(lambda t, err, f: print(t, err, flush=True))):
     for t in range(maxit):
-        err = f.update()
+        err = f.update(damping)
         if callback(t, err, f) == False:
             break;
         if err < tol:

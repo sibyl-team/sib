@@ -16,15 +16,11 @@
 typedef double real_t;
 
 struct Params {
-	real_t mu;
 	real_t k;
+	real_t mu;
 	real_t pseed;
-	real_t pinf;
-	real_t damping;
-	// for k=1.0, the gamma becomes exponential
-	Params() : mu(0.5), k(1.0), pseed(1.0), pinf(1.0), damping(0.) {}
-	Params(real_t mu, real_t pseed, real_t damping) : mu(mu), k(1.0), pseed(pseed), damping(damping) {}
-	Params(real_t mu, real_t k, real_t pseed, real_t damping) : mu(mu), k(k), pseed(pseed), damping(damping) {}
+	real_t psus;
+	Params(real_t k, real_t mu, real_t pseed, real_t psus) : k(k), mu(mu), pseed(pseed), psus(psus) {}
 };
 
 std::ostream & operator<<(std::ostream &, Params const &);
@@ -92,11 +88,11 @@ public:
 	int add_node(int i);
 	void init();
 	void set_field(int i, std::vector<int> const & tobs, std::vector<int> const & sobs);
-	real_t update(int i);
+	real_t update(int i, real_t damping);
 	void show_graph();
 	void show_beliefs(std::ostream &);
-	real_t iterate(int maxit, real_t tol);
-	real_t iteration();
+	real_t iterate(int maxit, real_t tol, real_t damping);
+	real_t iteration(real_t damping);
 	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
 

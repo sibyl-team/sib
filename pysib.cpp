@@ -28,8 +28,7 @@ string show_params(Params const & p)
     return "sib.Params(k=" + to_string(p.k) +
         ",mu=" + to_string(p.mu) +
         ",pseed=" + to_string(p.pseed) +
-        ",damping=" + to_string(p.damping) + ")";
-
+        ",psus=" + to_string(p.psus)+")";
 }
 
 string show_fg(FactorGraph const & f)
@@ -124,13 +123,14 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<Params>(m, "Params")
         .def(py::init<real_t, real_t, real_t, real_t>(),
                 "Params class. mu and k parameters are defaults.",
-                py::arg("mu") = 0.01,
                 py::arg("k") = 1.0,
+                py::arg("mu") = 0.01,
                 py::arg("pseed") = 0.01,
-                py::arg("damping") = 0.0)
+                py::arg("psus") = 1.0)
+        .def_readwrite("k", &Params::k)
         .def_readwrite("mu", &Params::mu)
         .def_readwrite("pseed", &Params::pseed)
-        .def_readwrite("damping", &Params::damping)
+        .def_readwrite("psus", &Params::psus)
         .def("__repr__", &show_params);
     m.def("set_num_threads", &omp_set_num_threads);
 }
