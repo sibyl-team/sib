@@ -32,20 +32,27 @@ FactorGraph::FactorGraph(Params const & params,
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
-		auto t = *it;
-		add_contact(get<0>(t), get<1>(t), get<2>(t), get<3>(t));
+		int i,j,t;
+		real_t lambda;
+		tie(i,j,t,lambda) = *it;
+		Tinf = max(Tinf, t + 1);
+		add_contact(i, j, t, lambda);
 	}
 
 	for (auto it = obs.begin(); it != obs.end(); ++it) {
-		auto t = *it;
-		add_obs(get<0>(t),get<1>(t),get<2>(t));
+		int i,s,t;
+		tie(i,s,t) = *it;
+		Tinf = max(Tinf, t + 1);
+		add_obs(i, s, t);
 	}
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
-		auto t = *it;
-		int i = add_node(get<0>(t));
-		nodes[i].k_ = get<1>(t);
-		nodes[i].mu_ = get<2>(t);
+		int i;
+		real_t k, mu;
+		tie(i,k,mu) = *it;
+		int a = add_node(i);
+		nodes[a].k_ = k;
+		nodes[a].mu_ = mu;
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -111,7 +118,6 @@ void FactorGraph::add_obs(int i, int state, int t)
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
-	Tinf = max(Tinf, t + 1);
 	i = add_node(i);
 	j = add_node(j);
 	int ki = find_neighbor(i, j);

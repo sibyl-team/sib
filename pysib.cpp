@@ -25,7 +25,8 @@ using namespace std;
 
 string show_params(Params const & p)
 {
-    return "sib.Params(mu=" + to_string(p.mu) +
+    return "sib.Params(k=" + to_string(p.k) +
+        ",mu=" + to_string(p.mu) +
         ",pseed=" + to_string(p.pseed) +
         ",damping=" + to_string(p.damping) + ")";
 
