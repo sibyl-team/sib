@@ -19,9 +19,10 @@ struct Params {
 	real_t mu;
 	real_t k;
 	real_t pseed;
+	real_t pinf;
 	real_t damping;
 	// for k=1.0, the gamma becomes exponential
-	Params() : mu(0.5), k(1.0), pseed(1e-3), damping(0.) {}
+	Params() : mu(0.5), k(1.0), pseed(1.0), pinf(1.0), damping(0.) {}
 	Params(real_t mu, real_t pseed, real_t damping) : mu(mu), k(1.0), pseed(pseed), damping(damping) {}
 	Params(real_t mu, real_t k, real_t pseed, real_t damping) : mu(mu), k(k), pseed(pseed), damping(damping) {}
 };

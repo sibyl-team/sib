@@ -305,6 +305,10 @@ real_t FactorGraph::update(int i)
 
 	Cavity<real_t> P0(C0, 1., multiplies<real_t>());
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
+	vector<real_t> ht = f.ht;
+	ht[0] *= params.pseed;
+	ht.back() *= params.pinf;
+
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
 	for (int ti = 0; ti < qi_; ++ti) {
@@ -357,9 +361,9 @@ real_t FactorGraph::update(int i)
 			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi_ ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
 			real_t const a = g_prob  * (ti == 0 || ti == qi_ - 1 ? P0.full() : P0.full() - P1.full());
 
-			ug[gi] += f.ht[ti] * a;
+			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
-			za += f.ht[ti] * f.hg[gi] * a;
+			za += ht[ti] * f.hg[gi] * a;
 
 			//messages to sij, sji
 			for (int j = 0; j < n; ++j) {
@@ -368,7 +372,7 @@ real_t FactorGraph::update(int i)
 				real_t const p0 = P0[j];
 				real_t const p01 = p0 - P1[j];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
-					real_t pi = f.ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
+					real_t pi = ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
 						real_t const l = f.prob_i(v.times[s]-v.times[min_out[j]]) *  v.lambdas[s];
@@ -383,7 +387,7 @@ real_t FactorGraph::update(int i)
 	f.f_ = -log(za);
 	//apply external fields on t,h
 	for (int t = 0; t < qi_; ++t) {
-		ut[t] *= f.ht[t];
+		ut[t] *= ht[t];
 		ug[t] *= f.hg[t];
 	}
 	//compute marginals on t,g
