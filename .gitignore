@@ -3,5 +3,7 @@
 *.so
 sib
 
+__pycache__
+
 ## Text editors
 .vscode
