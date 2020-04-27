@@ -22,7 +22,7 @@ using namespace std;
 
 
 // real_t Node::prob_g(real_t dg) const { return exp(-mu * dg); }
-real_t Node::prob_g(real_t dg) const { return boost::math::gamma_p(k_,dg/mu_); }
+real_t Node::prob_g(real_t dg) const { return real_t(1)-boost::math::gamma_p(k_,dg/mu_); }
 
 
 FactorGraph::FactorGraph(Params const & params,
