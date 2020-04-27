@@ -11,7 +11,7 @@
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
 
-typedef long double real_t;
+typedef double real_t;
 
 struct Params {
 	real_t mu;
