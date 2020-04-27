@@ -36,11 +36,24 @@ FactorGraph::FactorGraph(Params const & params,
 		add_contact(i, j, t, lambda);
 	}
 
+	vector<vector<int> > tobs(nodes.size());
+	vector<vector<int> > sobs(nodes.size());
 	for (auto it = obs.begin(); it != obs.end(); ++it) {
 		int i,s,t;
 		tie(i,s,t) = *it;
 		Tinf = max(Tinf, t + 1);
-		add_obs(i, s, t);
+		i = add_node(i);
+		if (nodes.size() > tobs.size()) {
+			tobs.resize(nodes.size());
+			sobs.resize(nodes.size());
+		}
+
+		if (tobs[i].empty() || t >= tobs[i].back()) {
+			tobs[i].push_back(t);
+			sobs[i].push_back(s);
+		} else {
+			throw invalid_argument("time of observations should be ordered");
+		}
 	}
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
@@ -53,7 +66,7 @@ FactorGraph::FactorGraph(Params const & params,
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
-		vector<int> F = nodes[i].tobs;
+		vector<int> F = tobs[i];
 		for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
 			vector<int> const & tij = nodes[i].neighs[k].times;
 			F.insert(F.end(), tij.begin(), tij.end());
@@ -70,7 +83,7 @@ FactorGraph::FactorGraph(Params const & params,
 		nodes[i].bg.resize(ntimes);
 		nodes[i].ht.resize(ntimes);
 		nodes[i].hg.resize(ntimes);
-		set_field(i);
+		set_field(i, tobs[i], sobs[i]);
 		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
 			omp_init_lock(&nodes[i].neighs[k].lock_);
 			nodes[i].neighs[k].times.push_back(Tinf);
@@ -102,17 +115,6 @@ int FactorGraph::add_node(int i)
 	return index[i];
 }
 
-void FactorGraph::add_obs(int i, int state, int t)
-{
-	Node & f = nodes[add_node(i)];
-	if (f.tobs.empty() || t >= f.tobs.back()) {
-		f.tobs.push_back(t);
-		f.obs.push_back(state);
-	} else {
-		throw invalid_argument("time of observations should be ordered");
-	}
-}
-
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
 	i = add_node(i);
@@ -138,48 +140,36 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 	}
 }
 
-void FactorGraph::set_field(int i)
+void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const & sobs)
 {
 	// this assumes ordered observation times
-	int it = 0;
 	int tl = 0, gl = 0;
 	int tu = nodes[i].times.size();
 	int gu = nodes[i].times.size();
-//	cout << nodes[i].index << " ";
-//	for (int t = 0; t < int(nodes[i].tobs.size()); ++t) {
-//		cout << nodes[i].tobs[t] << " ";
-//		cout << nodes[i].obs[t] << " " << endl;
-//	}
-//	cout << endl;
-	for (int k = 0; k < int(nodes[i].tobs.size()); ++k) {
-		int state = nodes[i].obs[k];
-		int tobs = nodes[i].tobs[k];
-		while (nodes[i].times[it] != tobs)
-			it++;
+	int t = 0;
+	for (int k = 0; k < int(tobs.size()); ++k) {
+		int state = sobs[k];
+		int to = tobs[k];
+		while (nodes[i].times[t] != to)
+			t++;
 		switch (state) {
 			case 0:
-				tl = max(tl, it);
-				gl = max(gl, it);
+				tl = max(tl, t);
+				gl = max(gl, t);
 				break;
 			case 1:
-				tu = min(tu, it - 1);
-				gl = max(gl, it);
+				tu = min(tu, t - 1);
+				gl = max(gl, t);
 				break;
 			case 2:
-				tu = min(tu, it - 1);
-				gu = min(gu, it - 1);
+				tu = min(tu, t - 1);
+				gu = min(gu, t - 1);
 				break;
 			case -1:
 				break;
 		}
-		// if (state != -1) {
-		//	 cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " ti in [" << nodes[i].times[tl] << "," << nodes[i].times[tu] << "]" << endl;
-		//	 cerr << "node " << nodes[i].index << " state obs " << state << " time " << tobs << " gi in [" << nodes[i].times[gl] << "," << nodes[i].times[gu] << "]" << endl;
-		//}
 	}
 
-	// cout  << "I i: " << nodes[i].index << " " << "( " << nodes[i].times[tl] << ", " << nodes[i].times[tu] << ")" << endl;
-	// cout  << "R i: " << nodes[i].index << " " << "( " << nodes[i].times[gl] << ", " << nodes[i].times[gu] << ")" << endl;
 	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
@@ -194,8 +184,6 @@ void FactorGraph::show_graph()
 		cerr << "### index " << nodes[i].index << "###" << endl;
 		cerr << "### in contact with " <<  int(nodes[i].neighs.size()) << "nodes" << endl;
 		vector<Neigh> const & aux = nodes[i].neighs;
-		for (int t = 0; t < int(nodes[i].tobs.size()); ++t)
-			cerr << "### observed at time " << nodes[i].tobs[t] << endl;
 		for (int j = 0; j < int(aux.size()); j++) {
 			cerr << "# neighbor " << nodes[aux[j].index].index << endl;
 			cerr << "# in position " << aux[j].pos << endl;

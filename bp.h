@@ -67,8 +67,6 @@ struct Node {
 	int index;
 	Gamma prob_g;
 	Uniform prob_i;
-	std::vector<int> tobs;
-	std::vector<int> obs;
 	std::vector<int> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
@@ -91,9 +89,8 @@ public:
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
-	void add_obs(int i, int state, int t);
 	void init();
-	void set_field(int i);
+	void set_field(int i, std::vector<int> const & tobs, std::vector<int> const & sobs);
 	real_t update(int i);
 	void show_graph();
 	void show_beliefs(std::ostream &);
