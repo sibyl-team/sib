@@ -78,7 +78,7 @@ parse_opt(int & argc, char ** argv)
 	real_t tol = 1e-3;
 	int maxit = 100;
 
-	while ((c = getopt(argc, argv, "s,i:m,o:c,t:h")) != -1 ) {
+	while ((c = getopt(argc, argv, "s:i:m:o:c:t:h")) != -1 ) {
 		switch(c) {
 			case 't':
 				tol = stod(string(optarg));
