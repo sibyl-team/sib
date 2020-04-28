@@ -40,7 +40,7 @@ read_files(char const * cont_file, char const * obs_file)
 			int i, j, t;
 			char g1, g2, g3;
 			real_t lambda;
-			s >> i >> g1 >> j >> g2 >> lambda >> g3 >> t;
+			s >> i >> g1 >> j >> g2 >> t >> g3 >> lambda;
 			//cout << i << " " << j << " " << lambda << " " << t << endl;
 			contacts.push_back(make_tuple(i,j,t,lambda));
 		}
@@ -100,7 +100,7 @@ parse_opt(int & argc, char ** argv)
 				break;
 			case 'h':
 				cout << "SIR inference, continuous time" << endl;
-				cout << "-c : Contact file with format 'i,j,lambdaij,t' " << endl;
+				cout << "-c : Contact file with format 'i,j,t,lambdaij' " << endl;
 				cout << "-o : Observation file with format 'i,state,t' " << endl;
 				cout << "-m : mu parameter " << endl;
 				cout << "-t : tolerance for convergence " << endl;
