@@ -72,17 +72,17 @@ PYBIND11_MODULE(_sib, m) {
         .def(py::init<Params const &,
                 vector<tuple<int,int,int,real_t>>,
                 vector<tuple<int,int,int>>,
-                vector<tuple<int,real_t,real_t>> >(),
+                vector<tuple<int,Pi,Pr>> >(),
                 py::arg("params"),
                 py::arg("contacts"),
                 py::arg("observations"),
-                py::arg("individuals") = vector<tuple<int,real_t,real_t>>())
+                py::arg("individuals") = vector<tuple<int,Pi,Pr>>())
         .def("update", &FactorGraph::iteration)
         .def("loglikelihood", &FactorGraph::loglikelihood)
         .def("reset", &FactorGraph::init)
         .def("get_index", &get_index)
         .def("__repr__", &print<FactorGraph>)
-        .def_readwrite("nodes", &FactorGraph::nodes)
+        .def_readonly("nodes", &FactorGraph::nodes)
         .def_readonly("params", &FactorGraph::params);
 
     py::class_<Node>(m, "Node")
@@ -116,7 +116,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("prob_i") = Pi(1.0),
                 py::arg("prob_r") = Pr(1.0, 0.1),
                 py::arg("pseed") = 0.01,
-                py::arg("psus") = 1.0)
+                py::arg("psus") = 0.5)
         .def_readwrite("prob_r", &Params::prob_r)
         .def_readwrite("prob_i", &Params::prob_i)
         .def_readwrite("pseed", &Params::pseed)

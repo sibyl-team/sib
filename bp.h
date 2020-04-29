@@ -50,7 +50,7 @@ public:
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
-		std::vector<std::tuple<int, real_t, real_t> > const & individuals = std::vector<std::tuple<int, real_t, real_t> >());
+		std::vector<std::tuple<int, Pi, Pr> > const & individuals = std::vector<std::tuple<int, Pi, Pr> >());
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);

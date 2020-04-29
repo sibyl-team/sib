@@ -25,7 +25,7 @@ using namespace std;
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		vector<tuple<int, real_t, real_t> > const & individuals) : params(params)
+		vector<tuple<int, Pi, Pr> > const & individuals) : params(params)
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
@@ -57,12 +57,9 @@ FactorGraph::FactorGraph(Params const & params,
 	}
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
-		int i;
-		real_t k, mu;
-		tie(i,k,mu) = *it;
-		int a = add_node(i);
-		nodes[a].prob_g = Gamma(k, mu);
-		nodes[a].prob_i = Uniform(1.0);
+		int a = add_node(get<0>(*it));
+		nodes[a].prob_i = get<1>(*it);
+		nodes[a].prob_g = get<2>(*it);
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -79,8 +76,8 @@ FactorGraph::FactorGraph(Params const & params,
 				nodes[i].times.push_back(F[k]);
 		}
 		int ntimes = nodes[i].times.size();
-		nodes[i].bt.resize(ntimes);
-		nodes[i].bg.resize(ntimes);
+		nodes[i].bt.resize(ntimes, 1./ntimes);
+		nodes[i].bg.resize(ntimes, 1./ntimes);
 		nodes[i].ht.resize(ntimes);
 		nodes[i].hg.resize(ntimes);
 		set_field(i, tobs[i], sobs[i]);
@@ -278,8 +275,29 @@ void FactorGraph::init()
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
 			vector<real_t> & msg = nodes[i].neighs[j].msg;
-			for(int ss = 0; ss < int(msg.size()); ++ss) 
+			for(int ss = 0; ss < int(msg.size()); ++ss)
 				msg[ss] = 1;
+		}
+		fill(nodes[i].bt.begin(), nodes[i].bt.end(), 1./nodes[i].bt.size());
+		fill(nodes[i].bg.begin(), nodes[i].bg.end(), 1./nodes[i].bg.size());
+	}
+}
+
+void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & min_out)
+{
+	int n = min_in.size();
+	for (int j = 0; j < n; ++j) {
+		Neigh const & v = f.neighs[j];
+		int const qj = v.times.size();
+		min_in[j] = qj - 1;
+		min_out[j] = qj - 1;
+		for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; --s) {
+			// smallest tji >= ti
+			min_in[j] = s;
+			if (v.times[s] > f.times[ti]) {
+				// smallest tji > ti
+				min_out[j] = s;
+			}
 		}
 	}
 }
@@ -317,23 +335,9 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
-	for (int ti = 0; ti < qi; ++ti) {
-		for (int j = 0; j < n; ++j) {
-			Neigh const & v = f.neighs[j];
-			int const qj = v.times.size();
-			min_in[j] = qj - 1;
-			min_out[j] = qj - 1;
-			for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; --s) {
-				// smallest tji >= ti
-				min_in[j] = s;
-				if (v.times[s] > f.times[ti]) {
-					// smallest tji > ti
-					min_out[j] = s;
-				}
-			}
-		}
-
-		for (int gi = ti; gi < qi; ++gi) {
+	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
+		update_limits(ti, f, min_in, min_out);
+		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 
