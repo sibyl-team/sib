@@ -3,6 +3,7 @@
 
 #include <boost/math/special_functions/gamma.hpp>
 #include <iostream>
+#include <exception>
 
 
 typedef double real_t;
@@ -52,7 +53,10 @@ struct Params {
 	Pr prob_r;
 	real_t pseed;
 	real_t psus;
-	Params(Pi const & pi, Pr const & pr, real_t pseed, real_t psus) : prob_i(pi), prob_r(pr), pseed(pseed), psus(psus) {}
+	Params(Pi const & pi, Pr const & pr, real_t pseed, real_t psus) : prob_i(pi), prob_r(pr), pseed(pseed), psus(psus) {
+		if (pseed + psus > 1)
+			throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
+	}
 };
 
 std::ostream & operator<<(std::ostream &, Params const &);
