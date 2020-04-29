@@ -24,9 +24,6 @@ struct Neigh {
 	omp_lock_t lock_;
 };
 
-
-
-
 struct Node {
 	Node(int index, Pi const & prob_i, Pr const & prob_g) : index(index), prob_g(prob_g), prob_i(prob_i), f_(0) {}
 	int index;
@@ -40,7 +37,6 @@ struct Node {
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 };
-
 
 class FactorGraph {
 public:
@@ -63,9 +59,6 @@ public:
 	real_t iteration(real_t damping);
 	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
-
-	std::map<int, std::vector<real_t> > get_tbeliefs();
-	std::map<int, std::vector<real_t> > get_gbeliefs();
 	Params params;
 };
 
