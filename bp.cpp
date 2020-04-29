@@ -237,8 +237,13 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to, real_t damp)
 	}
 	real_t err = 0;
 	for (int i = 0; i < n; ++i) {
-		from[i] /= s;
-		err = max(err, abs(from[i] - to[i]));
+        if (!(s > 0)){
+            from[i] = 1./n;
+            err = numeric_limits<real_t>::infinity();
+        } else {
+            from[i] /= s;
+            err = max(err, abs(from[i] - to[i]));
+        }
 		to[i] = damp*to[i] + (1-damp)*from[i];
 	}
 	return err;
