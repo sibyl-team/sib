@@ -279,6 +279,25 @@ void FactorGraph::init()
 	}
 }
 
+void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & min_out)
+{
+	int n = min_in.size();
+	for (int j = 0; j < n; ++j) {
+		Neigh const & v = f.neighs[j];
+		int const qj = v.times.size();
+		min_in[j] = qj - 1;
+		min_out[j] = qj - 1;
+		for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; --s) {
+			// smallest tji >= ti
+			min_in[j] = s;
+			if (v.times[s] > f.times[ti]) {
+				// smallest tji > ti
+				min_out[j] = s;
+			}
+		}
+	}
+}
+
 real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
@@ -313,22 +332,11 @@ real_t FactorGraph::update(int i, real_t damping)
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
 	for (int ti = 0; ti < qi; ++ti) {
-		for (int j = 0; j < n; ++j) {
-			Neigh const & v = f.neighs[j];
-			int const qj = v.times.size();
-			min_in[j] = qj - 1;
-			min_out[j] = qj - 1;
-			for (int s = qj - 1; s >= 0 && v.times[s] >= f.times[ti]; --s) {
-				// smallest tji >= ti
-				min_in[j] = s;
-				if (v.times[s] > f.times[ti]) {
-					// smallest tji > ti
-					min_out[j] = s;
-				}
-			}
-		}
+		update_limits(ti, f, min_in, min_out);
 
 		for (int gi = ti; gi < qi; ++gi) {
+			if (f.hg[gi] * f.ht[ti] == 0)
+				continue;
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 
