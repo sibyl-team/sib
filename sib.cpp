@@ -70,7 +70,7 @@ read_files(char const * cont_file, char const * obs_file)
 tuple<Params,char const *, char const *, int, real_t>
 parse_opt(int & argc, char ** argv)
 {
-	Params p(1.0, 0.1, 0.01, 1.0);
+	Params p(Pi(1.0), Pr(1.0,0.01), 0.01, 1.0);
 	char const * obs_file = "/dev/null";
 	char const * cont_file = "/dev/null";
 	int c;
@@ -87,7 +87,7 @@ parse_opt(int & argc, char ** argv)
 				maxit = stod(string(optarg));
 				break;
 			case 'm':
-				p.mu = stod(string(optarg));
+				p.prob_r.mu = stod(string(optarg));
 				break;
 			case 's':
 				p.pseed = stod(string(optarg));

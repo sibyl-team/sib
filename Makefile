@@ -6,12 +6,14 @@ CXX=g++
 
 all: sib ${SO}
 
+params.o: params.cpp params.h
+	${CXX} ${CFLAGS} -c params.cpp -o $@
 bp.o: bp.cpp bp.h cavity.h
 	${CXX} ${CFLAGS} -c bp.cpp -o $@
 sib: bp.o sib.cpp
 	${CXX} ${CFLAGS} bp.o sib.cpp ${LINK} -o $@
-${SO}: bp.o pysib.cpp
-	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} pysib.cpp bp.o -o $@
+${SO}: bp.o params.o pysib.cpp
+	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o pysib.cpp -o $@
 
 clean:
 	rm -f sib ${SO} *.o

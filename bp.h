@@ -6,24 +6,13 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include "omp.h"
-#include <boost/math/special_functions/gamma.hpp>
+#include <omp.h>
+
+#include "params.h"
 
 
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
-
-typedef double real_t;
-
-struct Params {
-	real_t k;
-	real_t mu;
-	real_t pseed;
-	real_t psus;
-	Params(real_t k, real_t mu, real_t pseed, real_t psus) : k(k), mu(mu), pseed(pseed), psus(psus) {}
-};
-
-std::ostream & operator<<(std::ostream &, Params const &);
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) {}
@@ -37,33 +26,12 @@ struct Neigh {
 
 
 
-struct Uniform
-{
-	Uniform(real_t p) : p(p) {}
-	real_t p;
-	real_t operator()(real_t d) const { return p; }
-};
-
-struct Exponential
-{
-	Exponential(real_t mu) : mu(mu) {}
-	real_t mu;
-	real_t operator()(real_t d) const { return exp(-mu*d); }
-};
-
-struct Gamma
-{
-	real_t k;
-	real_t mu;
-	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
-	real_t operator()(real_t d) const { return 1-boost::math::gamma_p(k,d*mu); }
-};
 
 struct Node {
-	Node(int index, real_t k, real_t mu) : index(index), prob_g(k, mu), prob_i(1.0), f_(0) {}
+	Node(int index, Pi const & prob_i, Pr const & prob_g) : index(index), prob_g(prob_g), prob_i(prob_i), f_(0) {}
 	int index;
-	Gamma prob_g;
-	Uniform prob_i;
+	Pr prob_g;
+	Pi prob_i;
 	std::vector<int> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
@@ -101,5 +69,6 @@ public:
 	Params params;
 };
 
+std::ostream & operator<<(std::ostream &, FactorGraph const &);
 
 #endif

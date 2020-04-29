@@ -111,7 +111,7 @@ int FactorGraph::add_node(int i)
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, params.k, params.mu));
+	nodes.push_back(Node(i, params.prob_i, params.prob_r));
 	return index[i];
 }
 
@@ -447,3 +447,28 @@ real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping)
 	}
 	return err;
 }
+
+
+
+ostream & operator<<(ostream & ost, FactorGraph const & f)
+{
+	int nasym = 0;
+	int nedge = 0;
+	int ncont = 0;
+	for(auto nit = f.nodes.begin(); nit != f.nodes.end(); ++nit) {
+		for (auto vit = nit->neighs.begin(); vit != nit->neighs.end(); ++vit) {
+                        if (vit->index < nit->index)
+                                continue;
+			++nedge;
+			ncont += vit->lambdas.size() - 1;
+			if (vit->lambdas != f.nodes[vit->index].neighs[vit->pos].lambdas)
+				++nasym;
+		}
+	}
+
+	return ost << "FactorGraph\n"
+                << "            nodes: " << f.nodes.size() << "\n"
+		<< "            edges: " << nedge << " ("  << nasym <<  " assymetric)\n"
+		<< "    time contacts: " << ncont;
+}
+
