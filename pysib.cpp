@@ -72,11 +72,11 @@ PYBIND11_MODULE(_sib, m) {
         .def(py::init<Params const &,
                 vector<tuple<int,int,int,real_t>>,
                 vector<tuple<int,int,int>>,
-                vector<tuple<int,real_t,real_t>> >(),
+                vector<tuple<int,Pi,Pr>> >(),
                 py::arg("params"),
                 py::arg("contacts"),
                 py::arg("observations"),
-                py::arg("individuals") = vector<tuple<int,real_t,real_t>>())
+                py::arg("individuals") = vector<tuple<int,Pi,Pr>>())
         .def("update", &FactorGraph::iteration)
         .def("loglikelihood", &FactorGraph::loglikelihood)
         .def("reset", &FactorGraph::init)

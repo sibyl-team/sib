@@ -25,7 +25,7 @@ using namespace std;
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		vector<tuple<int, real_t, real_t> > const & individuals) : params(params)
+		vector<tuple<int, Pi, Pr> > const & individuals) : params(params)
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
@@ -57,12 +57,9 @@ FactorGraph::FactorGraph(Params const & params,
 	}
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
-		int i;
-		real_t k, mu;
-		tie(i,k,mu) = *it;
-		int a = add_node(i);
-		nodes[a].prob_g = Gamma(k, mu);
-		nodes[a].prob_i = Uniform(1.0);
+		int a = add_node(get<0>(*it));
+		nodes[a].prob_i = get<1>(*it);
+		nodes[a].prob_g = get<2>(*it);
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
