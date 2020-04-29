@@ -10,8 +10,8 @@ params.o: params.cpp params.h
 	${CXX} ${CFLAGS} -c params.cpp -o $@
 bp.o: bp.cpp bp.h cavity.h
 	${CXX} ${CFLAGS} -c bp.cpp -o $@
-sib: bp.o sib.cpp
-	${CXX} ${CFLAGS} bp.o sib.cpp ${LINK} -o $@
+sib: bp.o params.o sib.cpp 
+	${CXX} ${CFLAGS} params.o bp.o sib.cpp ${LINK} -o $@
 ${SO}: bp.o params.o pysib.cpp
 	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o pysib.cpp -o $@
 
