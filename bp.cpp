@@ -76,8 +76,8 @@ FactorGraph::FactorGraph(Params const & params,
 				nodes[i].times.push_back(F[k]);
 		}
 		int ntimes = nodes[i].times.size();
-		nodes[i].bt.resize(ntimes);
-		nodes[i].bg.resize(ntimes);
+		nodes[i].bt.resize(ntimes, 1./ntimes);
+		nodes[i].bg.resize(ntimes, 1./ntimes);
 		nodes[i].ht.resize(ntimes);
 		nodes[i].hg.resize(ntimes);
 		set_field(i, tobs[i], sobs[i]);
@@ -270,9 +270,11 @@ void FactorGraph::init()
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
 			vector<real_t> & msg = nodes[i].neighs[j].msg;
-			for(int ss = 0; ss < int(msg.size()); ++ss) 
+			for(int ss = 0; ss < int(msg.size()); ++ss)
 				msg[ss] = 1;
 		}
+		fill(nodes[i].bt.begin(), nodes[i].bt.end(), 1./nodes[i].bt.size());
+		fill(nodes[i].bg.begin(), nodes[i].bg.end(), 1./nodes[i].bg.size());
 	}
 }
 
