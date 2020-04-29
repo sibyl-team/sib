@@ -331,12 +331,9 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
-	for (int ti = 0; ti < qi; ++ti) {
+	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
 		update_limits(ti, f, min_in, min_out);
-
-		for (int gi = ti; gi < qi; ++gi) {
-			if (f.hg[gi] * f.ht[ti] == 0)
-				continue;
+		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			fill(C0.begin(), C0.end(), 0.0);
 			fill(C1.begin(), C1.end(), 0.0);
 
