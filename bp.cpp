@@ -478,7 +478,7 @@ ostream & operator<<(ostream & ost, FactorGraph const & f)
 
 	return ost << "FactorGraph\n"
                 << "            nodes: " << f.nodes.size() << "\n"
-		<< "            edges: " << nedge << " ("  << nasym <<  " assymetric)\n"
+		<< "            edges: " << nedge << " ("  << nasym <<  " asymmetric)\n"
 		<< "    time contacts: " << ncont;
 }
 
