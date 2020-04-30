@@ -50,7 +50,7 @@ class SibillaTest(unittest.TestCase):
         self.obs_all_sib = []
         for ob in self.data[2]:
             df_obs = data_load.convert_obs_to_df(ob)
-            df_obs = df_obs[["i","t","st"]]
+            df_obs = df_obs[["i","st","t"]]
             obs_sib = list(df_obs.to_records(index=False))
             self.obs_all_sib.append(obs_sib)
 
@@ -59,16 +59,24 @@ class SibillaTest(unittest.TestCase):
     def test_inference(self):
         print("Executing run 1")
         probs1 = np.stack([self.find_sources_sib(obs,epi)[0] for obs,epi in zip(self.obs_all_sib,self.data[3])])
-        print(probs1[3][0])
+        #print(probs1[3][0])
         self.assertEqual(np.any(probs1 == np.inf),False)
 
         print("\nExecuting run 2")
         probs2 = np.stack([self.find_sources_sib(obs,epi)[0] for obs,epi in zip(self.obs_all_sib,self.data[3])])
 
         print("")
-        self.assertEqual(np.all( (probs1-probs2) < 1e-5 ),True)
+        self.assertEqual(np.all( (probs1-probs2) == 0 ),True)
+
+    def test_accuracy(self):
+        print("Test accuracy")
+        accu_all = np.stack([self.find_sources_sib(obs,epi)[1] for obs,epi in zip(self.obs_all_sib,self.data[3])])
+        accu_curve = accu_all.mean(0)
+
+        accu_meas = accu_curve.cumsum().sum()/self.params["n"]
+        self.assertGreaterEqual(accu_meas,12,msg="The accuracy does not correspond. Maybe the observations have the wrong order?")
     
     #def test_
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(failfast=True)
