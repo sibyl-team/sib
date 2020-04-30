@@ -365,7 +365,7 @@ real_t FactorGraph::update(int i, real_t damping)
 					}
 					int const sij = Sij(f, v, qj - 1, gi);
 					real_t const dp = pi * h[idx(sji, sij, qj)];
-					real_t const p = dp * params.lambda;
+					real_t const p = dp;
 					C0[j] += p;
 					dC0[j] += dp;
 					if (v.times[sji] > f.times[ti]) {
@@ -401,7 +401,7 @@ real_t FactorGraph::update(int i, real_t damping)
 					real_t pi = ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
-						real_t const l = f.prob_i(v.times[s]-v.times[min_out[j]]) *  v.lambdas[s];
+						real_t const l = params.lambda * f.prob_i(v.times[s]-v.times[min_out[j]]) *  v.lambdas[s];
 						Uij += pi * l;
 						pi *= 1 - l;
 					}
