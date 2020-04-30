@@ -12,13 +12,7 @@ T cavity(iterator_t const & beg, iterator_t const &end, iterator_t const & dest,
 {
 	if (beg == end)
 		return init;
-
-	if (std::next(beg) == end) {
-		*dest = init;
-		return *beg;
-	}
 	std::partial_sum(beg, end, dest, op);
-
 	iterator_t dest2 = std::next(dest, std::distance(beg, end) - 1);
 	T full = *dest2;
 	T right = init;
