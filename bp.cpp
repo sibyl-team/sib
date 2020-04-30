@@ -371,11 +371,6 @@ real_t FactorGraph::update(int i, real_t damping)
 			}
 		}
 
-
-		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
-			// fill(C0.begin(), C0.end(), 0.0);
-			// fill(C1.begin(), C1.end(), 0.0);
-
 /*
              .-----min_out
              |   .-- min_out_g
@@ -394,6 +389,7 @@ sji. . . . . . . . .
 C0 = a + c + b' + d'
 C1 = c + d'
 */
+		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			for (int j = 0; j < n; ++j) {
 				vector<real_t> & m = M[j];
 				vector<real_t> & r = R[j];
@@ -403,25 +399,6 @@ C1 = c + d'
 				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
 				C0[j] = m[idx(min_in[j], min_out[j], qj)] - m[idx(min_in[j], min_out_g, qj)] + r[idx(min_in[j], min_out_g, qj)];
 				C1[j] = m[idx(min_out[j], min_out[j], qj)] - m[idx(min_out[j], min_out_g, qj)] + r[idx(min_out[j], min_out_g, qj)];
-/*
-				for (int sji = min_in[j]; sji < qj; ++sji) {
-					real_t pi = 1;
-					for (int s = min_out[j]; s < qj - 1; ++s) {
-						int const sij = Sij(f, v, s, gi);
-						real_t const l = v.lambdas[s] * f.prob_i(v.times[s]-v.times[min_out[j]]);
-						real_t const p = pi * l * h[idx(sji, sij, qj)];
-						C0[j] += p;
-						if (v.times[sji] > f.times[ti])
-							C1[j] += p;
-						pi *= 1 -  l;
-					}
-					int const sij = Sij(f, v, qj - 1, gi);
-					real_t const p = pi * h[idx(sji, sij, qj)];
-					C0[j] += p;
-					if (v.times[sji] > f.times[ti])
-						C1[j] += p;
-				}
-*/
 			}
 
 			real_t p0full = cavity(C0.begin(), C0.end(), P0.begin(), 1.0, multiplies<real_t>());
