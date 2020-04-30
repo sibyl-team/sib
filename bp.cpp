@@ -316,12 +316,10 @@ real_t FactorGraph::update(int i, real_t damping)
 		UU[j].resize(v.msg.size());
 	}
 	// proba tji >= ti for each j
-	vector<real_t> C0(n);
+	vector<real_t> C0(n), P0(n);
 	// proba tji > ti for each j
-	vector<real_t> C1(n);
+	vector<real_t> C1(n), P1(n);
 
-	Cavity<real_t> P0(C0, 1., multiplies<real_t>());
-	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
 	vector<real_t> ht = f.ht;
 	ht[0] *= params.pseed;
 	for (int t = 1; t < qi - 1; ++t)
@@ -366,12 +364,12 @@ real_t FactorGraph::update(int i, real_t damping)
 				}
 			}
 
-			P0.initialize(C0.begin(), C0.end(), 1.0, multiplies<real_t>());
-			P1.initialize(C1.begin(), C1.end(), 1.0, multiplies<real_t>());
+			real_t p0full = cavity(C0.begin(), C0.end(), P0.begin(), 1.0, multiplies<real_t>());
+			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
 			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
-			real_t const a = g_prob  * (ti == 0 || ti == qi - 1 ? P0.full() : P0.full() - P1.full());
+			real_t const a = g_prob  * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
