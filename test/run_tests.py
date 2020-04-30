@@ -3,7 +3,6 @@
 # Author: Fabio Mazza
 
 from pathlib import Path
-import sib
 import unittest
 import sys
 import numpy as np
@@ -13,7 +12,7 @@ import data_load
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(1, dir_path+"/..")
-
+import sib
 script_path = Path(dir_path)
 
 FOLDER = script_path / "data_tree"
