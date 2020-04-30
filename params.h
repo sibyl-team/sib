@@ -42,6 +42,7 @@ struct Gamma
 	real_t mu;
 	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
 	real_t operator()(real_t d) const { return 1-boost::math::gamma_p(k,d*mu); }
+	real_t der(real_t d) const { return (d-k/mu)*boost::math::gamma_p(k,d*mu); }
 	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
 };
 
@@ -53,7 +54,9 @@ struct Params {
 	Pr prob_r;
 	real_t pseed;
 	real_t psus;
-	Params(Pi const & pi, Pr const & pr, real_t pseed, real_t psus) : prob_i(pi), prob_r(pr), pseed(pseed), psus(psus) {
+	real_t lambda;
+	real_t learn_rate;
+	Params(Pi const & pi, Pr const & pr, real_t pseed, real_t psus) : prob_i(pi), prob_r(pr), pseed(pseed), psus(psus), lambda(1.0), learn_rate(0.0) {
 		if (pseed + psus > 1)
 			throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
 	}

@@ -121,6 +121,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("prob_i", &Params::prob_i)
         .def_readwrite("pseed", &Params::pseed)
         .def_readwrite("psus", &Params::psus)
+        .def_readwrite("learn_rate", &Params::learn_rate)
         .def("__repr__", &print<Params>);
     m.def("set_num_threads", &omp_set_num_threads);
 }

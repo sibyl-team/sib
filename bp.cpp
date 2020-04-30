@@ -322,9 +322,9 @@ real_t FactorGraph::update(int i, real_t damping)
 		UU[j].resize(v.msg.size());
 	}
 	// proba tji >= ti for each j
-	vector<real_t> C0(n);
+	vector<real_t> C0(n), dC0(n);
 	// proba tji > ti for each j
-	vector<real_t> C1(n);
+	vector<real_t> C1(n), dC1(n);
 
 	Cavity<real_t> P0(C0, 1., multiplies<real_t>());
 	Cavity<real_t> P1(C1, 1., multiplies<real_t>());
@@ -336,6 +336,8 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
+	real_t dzlam = 0.0;
+	real_t dzmu = 0.0;
 	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
 		update_limits(ti, f, min_in, min_out);
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
@@ -351,17 +353,25 @@ real_t FactorGraph::update(int i, real_t damping)
 					for (int s = min_out[j]; s < qj - 1; ++s) {
 						int const sij = Sij(f, v, s, gi);
 						real_t const l = v.lambdas[s] * f.prob_i(v.times[s]-v.times[min_out[j]]);
-						real_t const p = pi * l * h[idx(sji, sij, qj)];
+						real_t const dp = pi * l * h[idx(sji, sij, qj)];
+						real_t const p = dp * params.lambda;
 						C0[j] += p;
-						if (v.times[sji] > f.times[ti])
+						dC0[j] += dp;
+						if (v.times[sji] > f.times[ti]) {
 							C1[j] += p;
+							dC1[j] += dp;
+						}
 						pi *= 1 -  l;
 					}
 					int const sij = Sij(f, v, qj - 1, gi);
-					real_t const p = pi * h[idx(sji, sij, qj)];
+					real_t const dp = pi * h[idx(sji, sij, qj)];
+					real_t const p = dp * params.lambda;
 					C0[j] += p;
-					if (v.times[sji] > f.times[ti])
+					dC0[j] += dp;
+					if (v.times[sji] > f.times[ti]) {
 						C1[j] += p;
+						dC1[j] += dp;
+					}
 				}
 			}
 
@@ -370,11 +380,16 @@ real_t FactorGraph::update(int i, real_t damping)
 
 			//messages to ti, gi
 			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
-			real_t const a = g_prob  * (ti == 0 || ti == qi - 1 ? P0.full() : P0.full() - P1.full());
+			real_t const dg_prob = f.prob_g.der(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g.der(f.times[gi + 1] - f.times[ti]));
+			real_t const s = (ti == 0 || ti == qi - 1 ? P0.full() : P0.full() - P1.full());
+			real_t const sg = g_prob * (ti == 0 || ti == qi - 1 ? P0.full() : P0.full() - P1.full());
 
-			ug[gi] += ht[ti] * a;
-			ut[ti] += f.hg[gi] * a;
-			za += ht[ti] * f.hg[gi] * a;
+			ug[gi] += ht[ti] * sg;
+			ut[ti] += f.hg[gi] * sg;
+			za += ht[ti] * f.hg[gi] * sg;
+			dzmu += ht[ti] * f.hg[gi] * s * dg_prob;
+			for (int j = 0; j < n; ++j)
+				dzlam += sg * ht[ti] * f.hg[gi] * (ti == 0 || ti == qi - 1 ? P0[j]*dC0[j] : P0[j]*dC0[j] - P1[j]*dC1[j]);
 
 			//messages to sij, sji
 			for (int j = 0; j < n; ++j) {
@@ -400,6 +415,11 @@ real_t FactorGraph::update(int i, real_t damping)
 	for (int t = 0; t < qi; ++t) {
 		ut[t] *= ht[t];
 		ug[t] *= f.hg[t];
+	}
+	if (za) {
+#pragma omp critical
+		params.lambda += params.learn_rate * max(dzlam/za, 0.0);
+		params.prob_r.mu += params.learn_rate * max(dzmu/za, 0.0);
 	}
 	//compute marginals on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
@@ -478,7 +498,7 @@ ostream & operator<<(ostream & ost, FactorGraph const & f)
 
 	return ost << "FactorGraph\n"
                 << "            nodes: " << f.nodes.size() << "\n"
-		<< "            edges: " << nedge << " ("  << nasym <<  " assymetric)\n"
+		<< "            edges: " << nedge << " ("  << nasym <<  " asymmetric)\n"
 		<< "    time contacts: " << ncont;
 }
 
