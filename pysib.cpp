@@ -5,6 +5,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 #include <string>
 #include <sstream>
 #include <numeric>
@@ -17,6 +18,7 @@
 PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
 PYBIND11_MAKE_OPAQUE(std::vector<Node>);
+//PYBIND11_MAKE_OPAQUE(std::vector<tuple<real_t, real_t, real_t>>);
 
 
 namespace py = pybind11;
@@ -50,9 +52,15 @@ get_marginal(Node const & n)
         }
         auto marg = vector<tuple<real_t, real_t, real_t>>(T-1);
         for (int t = 1; t < T; ++t)
-            marg[t-1] = make_tuple(rbt[t], lbg[t-1], 1-rbt[t]-lbg[t-1]);
+            marg[t-1] = make_tuple(rbt[t], 1-rbt[t]-lbg[t-1], lbg[t-1]);
         return marg;
 }
+
+tuple<real_t, real_t, real_t> get_marginal_t(Node const & n, int t)
+{
+        return get_marginal(n)[t];
+}
+
 
 int get_index(FactorGraph & f, int i)
 {
@@ -67,6 +75,8 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
+    //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
+
 
     py::class_<FactorGraph>(m, "FactorGraph")
         .def(py::init<Params const &,
@@ -87,6 +97,7 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<Node>(m, "Node")
         .def("marginal", &get_marginal)
+        .def("marginal_t", &get_marginal_t)
         .def_readwrite("ht", &Node::ht)
         .def_readwrite("hg", &Node::hg)
         .def_readonly("bt", &Node::bt)
