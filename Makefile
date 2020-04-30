@@ -15,5 +15,9 @@ sib: bp.o params.o sib.cpp
 ${SO}: bp.o params.o pysib.cpp
 	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o pysib.cpp -o $@
 
+test: all
+	python3 test/run_tests.py
+
+
 clean:
 	rm -f sib ${SO} *.o
