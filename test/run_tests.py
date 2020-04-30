@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import unittest
 import sys
 import numpy as np
@@ -66,7 +67,7 @@ class SibillaTest(unittest.TestCase):
         probs2 = np.stack([self.find_sources_sib(obs,epi)[0] for obs,epi in zip(self.obs_all_sib,self.data[3])])
 
         print("")
-        self.assertEqual(np.all( (probs1-probs2) == 0 ),True)
+        self.assertEqual(np.all( (probs1-probs2) < 1e-7 ),True)
 
     def test_accuracy(self):
         print("Test accuracy")
