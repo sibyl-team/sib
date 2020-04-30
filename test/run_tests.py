@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+## Author: Fabio Mazza
 import unittest
 import sys
 import numpy as np
