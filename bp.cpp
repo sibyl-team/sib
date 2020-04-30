@@ -291,9 +291,10 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 	for (int j = 0; j < n; ++j) {
 		Neigh const & v = f.neighs[j];
 		int const *b = &v.times[0];
-		int const *e = &v.times[0] + v.times.size();
-		min_in[j] = std::lower_bound(b, e, f.times[ti]) - b;
-		min_out[j] = std::upper_bound(b + min_in[j], e, f.times[ti]) - b;
+		int qj = v.times.size();
+		int const *e = &v.times[0] + qj;
+		min_in[j] = min(qj - 1, int(std::lower_bound(b, e, f.times[ti]) - b));
+		min_out[j] = min(qj - 1, int(std::upper_bound(b + min_in[j], e, f.times[ti]) - b));
 	}
 }
 
@@ -308,13 +309,16 @@ real_t FactorGraph::update(int i, real_t damping)
 	vector<real_t> ut(qi);
 	vector<real_t> ug(qi);
 
+
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
 		omp_set_lock(&v.lock_);
 		HH[j] = v.msg;
 		omp_unset_lock(&v.lock_);
 		UU[j].resize(v.msg.size());
+
 	}
+	vector<vector<real_t>> M = UU, R = UU;
 	// proba tji >= ti for each j
 	vector<real_t> C0(n), P0(n);
 	// proba tji > ti for each j
@@ -329,22 +333,77 @@ real_t FactorGraph::update(int i, real_t damping)
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
 
-
-
-
 	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
 		update_limits(ti, f, min_in, min_out);
 
+		for (int j = 0; j < n; ++j) {
+			vector<real_t> & m = M[j];
+			vector<real_t> & r = R[j];
+			fill(m.begin(), m.end(), 0.0);
+			fill(r.begin(), r.end(), 0.0);
+			Neigh const & v = f.neighs[j];
+			vector<real_t> const & h = HH[j];
+			int const qj = v.times.size();
+			for (int sji = min_in[j]; sji < qj; ++sji) {
+				real_t pi = 1;
+				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
+					real_t const l = v.lambdas[sij] * f.prob_i(v.times[sij]-v.times[min_out[j]]);
+					m[idx(sji, sij, qj)] = l * pi * h[idx(sji, sij, qj)];
+					r[idx(sji, sij, qj)] = l * pi * h[idx(sji, qj - 1, qj)];;
+					pi *= 1 - l;
+				}
+				m[idx(sji, qj - 1, qj)] = pi * h[idx(sji, qj - 1, qj)];
+				r[idx(sji, qj - 1, qj)] = pi * h[idx(sji, qj - 1, qj)];
+			}
+			// accumulate
+			for (int sji = qj - 2; sji >=  min_in[j]; --sji) {
+				for (int sij = qj - 1; sij >= min_out[j]; --sij) {
+					m[idx(sji, sij, qj)] += m[idx(sji + 1, sij, qj)];
+					r[idx(sji, sij, qj)] += r[idx(sji + 1, sij, qj)];
+				}
+			}
+
+			for (int sji = qj - 1; sji >=  min_in[j]; --sji) {
+				for (int sij = qj - 2; sij >= min_out[j]; --sij) {
+					m[idx(sji, sij, qj)] += m[idx(sji, sij + 1, qj)];
+					r[idx(sji, sij, qj)] += r[idx(sji, sij + 1, qj)];
+				}
+			}
+		}
 
 
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
-			fill(C0.begin(), C0.end(), 0.0);
-			fill(C1.begin(), C1.end(), 0.0);
+			// fill(C0.begin(), C0.end(), 0.0);
+			// fill(C1.begin(), C1.end(), 0.0);
 
+/*
+             .-----min_out
+             |   .-- min_out_g
+   sij       v   v
+   . . . . . . . . .
+sji. . . . . . . . .
+   . . . . . . . . .
+   . . . . . a a b b <- min_in
+   . . . . . a a b b
+   . . . . . c c d d <- min_out
+   . . . . . c c d d
+   . . . . . c c d d
+   . . . . . c c d d
+
+
+C0 = a + c + b' + d'
+C1 = c + d'
+*/
 			for (int j = 0; j < n; ++j) {
+				vector<real_t> & m = M[j];
+				vector<real_t> & r = R[j];
 				Neigh const & v = f.neighs[j];
-				vector<real_t> const & h = HH[j];
 				int const qj = v.times.size();
+				int const * b = &v.times[0];
+				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
+				C0[j] = m[idx(min_in[j], min_out[j], qj)] - m[idx(min_in[j], min_out_g, qj)] + r[idx(min_in[j], min_out_g, qj)];
+				C1[j] = m[idx(min_out[j], min_out[j], qj)] - m[idx(min_out[j], min_out_g, qj)] + r[idx(min_out[j], min_out_g, qj)];
+/*
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					real_t pi = 1;
 					for (int s = min_out[j]; s < qj - 1; ++s) {
@@ -362,6 +421,7 @@ real_t FactorGraph::update(int i, real_t damping)
 					if (v.times[sji] > f.times[ti])
 						C1[j] += p;
 				}
+*/
 			}
 
 			real_t p0full = cavity(C0.begin(), C0.end(), P0.begin(), 1.0, multiplies<real_t>());
