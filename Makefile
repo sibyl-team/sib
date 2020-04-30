@@ -17,6 +17,10 @@ ${SO}: bp.o params.o pysib.cpp
 test:
 	python3 test/run_tests.py
 
+test: all
+	python3 test/run_tests.py
+
+
 clean:
 	rm -f sib ${SO} *.o
 

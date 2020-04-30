@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-## Author: Fabio Mazza
+# This file is part of sibilla : inference in epidemics with Belief Propagation
+# Author: Fabio Mazza
+
 import unittest
 import sys
 import numpy as np
@@ -29,7 +31,6 @@ class SibillaTest(unittest.TestCase):
         sib_fg = sib.FactorGraph(sib_pars,self.contacts_sib,obs_sib)
 
         sib.iterate(sib_fg,maxit=1000,tol=6e-6,callback=callback)
-        
         #print("\n",end="")
         #iterate_damp(sib_fg,2000,callback,0.5)
 
@@ -57,7 +58,7 @@ class SibillaTest(unittest.TestCase):
             self.obs_all_sib.append(obs_sib)
 
         sib.set_num_threads(NUM_CPUS)
-    
+
     def test_inference(self):
         print("Executing run 1")
         probs1 = np.stack([self.find_sources_sib(obs,epi)[0] for obs,epi in zip(self.obs_all_sib,self.data[3])])
