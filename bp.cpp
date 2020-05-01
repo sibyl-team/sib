@@ -21,6 +21,19 @@
 
 using namespace std;
 
+void cumsum(Mes & m, int a, int b)
+{
+	for (int sji = m.qj - 2; sji >= a; --sji) {
+		for (int sij = m.qj - 1; sij >= b; --sij) {
+			m(sji, sij) += m(sji + 1, sij);
+		}
+	}
+	for (int sji = m.qj - 1; sji >= a; --sji) {
+		for (int sij = m.qj - 2; sij >= b; --sij) {
+			m(sji, sij) += m(sji, sij + 1);
+		}
+	}
+}
 
 
 FactorGraph::FactorGraph(Params const & params,
@@ -288,13 +301,10 @@ real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
-	vector<Mes> UU(n);
-	vector<Mes> HH(n);
+	vector<Mes> UU(n), HH(n);
 	int const qi = f.bt.size();
-
 	vector<real_t> ut(qi);
 	vector<real_t> ug(qi);
-
 
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
@@ -303,6 +313,7 @@ real_t FactorGraph::update(int i, real_t damping)
 		omp_unset_lock(&v.lock_);
 		UU[j].reset(v.times.size());
 	}
+
 	vector<Mes> M = UU, R = UU;
 	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
 	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
@@ -317,15 +328,14 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
-
 	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
 		update_limits(ti, f, min_in, min_out);
 
 		for (int j = 0; j < n; ++j) {
 			Mes & m = M[j];
 			Mes & r = R[j];
-			fill(m.begin(), m.end(), 0.0);
-			fill(r.begin(), r.end(), 0.0);
+			m.clear();
+			r.clear();
 			fill(CG0[j].begin(), CG0[j].end(), 0.0);
 			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			Neigh const & v = f.neighs[j];
@@ -342,20 +352,8 @@ real_t FactorGraph::update(int i, real_t damping)
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
 			}
-			// accumulate
-			for (int sji = qj - 2; sji >=  min_in[j]; --sji) {
-				for (int sij = qj - 1; sij >= min_out[j]; --sij) {
-					m(sji, sij) += m(sji + 1, sij);
-					r(sji, sij) += r(sji + 1, sij);
-				}
-			}
-			for (int sji = qj - 1; sji >=  min_in[j]; --sji) {
-				for (int sij = qj - 2; sij >= min_out[j]; --sij) {
-					m(sji, sij) += m(sji, sij + 1);
-					r(sji, sij) += r(sji, sij + 1);
-				}
-			}
-
+			cumsum(m, min_in[j], min_out[j]);
+			cumsum(r, min_in[j], min_out[j]);
 		}
 
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
