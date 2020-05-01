@@ -250,12 +250,6 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to, real_t damp)
 	return err;
 }
 
-int Sij(Node const & f, Neigh const & v, int sij, int gi)
-{
-	// here gi stands for the ti + gi index
-	return v.times[sij] <= f.times[gi] ? sij : v.times.size() - 1;
-}
-
 inline int idx(int sij, int sji, int qj)
 {
 	return sji + qj * sij;
@@ -440,11 +434,10 @@ real_t FactorGraph::update(int i, real_t damping)
 					c += (CG[0] - CG[ming]) * pi * l;
 					pi *= 1 - l;
 				}
-				//there is a hidden log cost here, should we cache this?
 				UU[j][idx(qj - 1, sji, qj)] += c + CG[ming + 1] * pi;
-			} //sji
-		} //j
-	} //ti
+			}
+		}
+	}
 	f.f_ = -log(za);
 	//apply external fields on t,h
 	for (int t = 0; t < qi; ++t) {
