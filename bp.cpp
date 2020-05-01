@@ -373,24 +373,6 @@ real_t FactorGraph::update(int i, real_t damping)
 
 		}
 
-/*
-             .-----min_out
-             |   .-- min_out_g
-   sij       v   v
-   . . . . . . . . .
-sji. . . . . . . . .
-   . . . . . . . . .
-   . . . . . a a b b <- min_in
-   . . . . . a a b b
-   . . . . . c c d d <- min_out
-   . . . . . c c d d
-   . . . . . c c d d
-   . . . . . c c d d
-
-
-C0 = a + c + b' + d'
-C1 = c + d'
-*/
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			for (int j = 0; j < n; ++j) {
 				vector<real_t> & m = M[j];
@@ -400,6 +382,25 @@ C1 = c + d'
 				int const * b = &v.times[0];
 				//there is a hidden log cost here, should we cache this?
 				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
+
+				/*
+				   .-----min_out
+				   |   .-- min_out_g
+				   sij       v   v
+				   . . . . . . . . .
+				   sji. . . . . . . . .
+				   . . . . . . . . .
+				   . . . . . a a b b <- min_in
+				   . . . . . a a b b
+				   . . . . . c c d d <- min_out
+				   . . . . . c c d d
+				   . . . . . c c d d
+				   . . . . . c c d d
+
+
+				   C0 = a + c + b' + d'
+				   C1 = c + d'
+				*/
 				C0[j] = m[idx(min_in[j], min_out[j], qj)] - m[idx(min_in[j], min_out_g, qj)] + r[idx(min_in[j], min_out_g, qj)];
 				C1[j] = m[idx(min_out[j], min_out[j], qj)] - m[idx(min_out[j], min_out_g, qj)] + r[idx(min_out[j], min_out_g, qj)];
 			}
