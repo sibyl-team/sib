@@ -14,14 +14,27 @@
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
 
+struct Mes : public std::vector<real_t>
+{
+	Mes() : qj(0) {}
+	Mes(size_t qj) : vector<real_t>(qj*qj), qj(qj) {}
+	void clear() { for (auto it=begin(); it != end(); ++it) *it = 0.0; }
+	size_t dim() const { return qj;}
+	real_t & operator()(int sij, int sji) { return operator[](qj * sij + sji); }
+	real_t operator()(int sij, int sji) const { return operator[](qj * sij + sji); }
+	size_t qj;
+};
+
 struct Neigh {
-	Neigh(int index, int pos) : index(index), pos(pos) {}
+	Neigh(int index, int pos) : index(index), pos(pos) { omp_init_lock(&lock_); }
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
 	std::vector<int> times; // times of contacts
 	std::vector<real_t> lambdas; // times of contacts
-	std::vector<real_t> msg; // BP msg nij^2 or
-	omp_lock_t lock_;
+	Mes msg; // BP msg nij^2 or
+	void lock() const { omp_set_lock(&lock_); }
+	void unlock() const { omp_unset_lock(&lock_); }
+	mutable omp_lock_t lock_;
 };
 
 struct Node {
