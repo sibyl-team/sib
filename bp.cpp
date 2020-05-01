@@ -384,22 +384,22 @@ real_t FactorGraph::update(int i, real_t damping)
 				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
 
 				/*
-				   .-----min_out
-				   |   .-- min_out_g
-				   sij       v   v
-				   . . . . . . . . .
+				                .-----min_out[j]
+				                |   .-- min_out_g
+				      sij       v   v
+				      . . . . . . . . .
 				   sji. . . . . . . . .
-				   . . . . . . . . .
-				   . . . . . a a b b <- min_in
-				   . . . . . a a b b
-				   . . . . . c c d d <- min_out
-				   . . . . . c c d d
-				   . . . . . c c d d
-				   . . . . . c c d d
+				      . . . . . . . . .
+				      . . . . . a a b b <- min_in[j]
+				      . . . . . a a b b
+				      . . . . . c c d d <- min_out[j]
+				      . . . . . c c d d
+				      . . . . . c c d d
+				      . . . . . c c d d
 
 
-				   C0 = a + c + b' + d'
-				   C1 = c + d'
+				   C0 = a + c + b' + d' = (a + c + b + d) - (b + d) + (b' + d')
+				   C1 = c + d'          = c + d           - d       + d'
 				*/
 				C0[j] = m[idx(min_in[j], min_out[j], qj)] - m[idx(min_in[j], min_out_g, qj)] + r[idx(min_in[j], min_out_g, qj)];
 				C1[j] = m[idx(min_out[j], min_out[j], qj)] - m[idx(min_out[j], min_out_g, qj)] + r[idx(min_out[j], min_out_g, qj)];
@@ -420,7 +420,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				CG0[j][gi] += P0[j] * ht[ti] * f.hg[gi] * pg;
 				CG01[j][gi] += (P0[j]-P1[j]) * ht[ti] * f.hg[gi] * pg;
 			}
-		}
+		} //gi
 		//messages to sij, sji
 		for (int j = 0; j < n; ++j) {
 			partial_sum(CG0[j].rbegin(), CG0[j].rend(), CG0[j].rbegin());
@@ -431,19 +431,20 @@ real_t FactorGraph::update(int i, real_t damping)
 				vector<real_t> const & CG = ti == 0 || v.times[sji] == f.times[ti] ? CG0[j] : CG01[j];
 				real_t pi = 1;
 				real_t c = 0;
+				int ming = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					int ming = lower_bound(f.times.begin(), f.times.end(), v.times[sij]) - f.times.begin();
+					//there is a hidden log cost here, should we cache this?
+					ming = lower_bound(f.times.begin() + ming, f.times.end(), v.times[sij]) - f.times.begin();
 					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
 					UU[j][idx(sij, sji, qj)] += CG[ming] * pi * l;
 					c += (CG[0] - CG[ming]) * pi * l;
 					pi *= 1 - l;
 				}
 				//there is a hidden log cost here, should we cache this?
-				int ming = lower_bound(f.times.begin(), f.times.end(), v.times[min_out[j]]) - f.times.begin();
-				UU[j][idx(qj - 1, sji, qj)] += c + CG[ming] * pi;
-			}
-		}
-	}
+				UU[j][idx(qj - 1, sji, qj)] += c + CG[ming + 1] * pi;
+			} //sji
+		} //j
+	} //ti
 	f.f_ = -log(za);
 	//apply external fields on t,h
 	for (int t = 0; t < qi; ++t) {
