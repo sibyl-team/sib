@@ -398,6 +398,7 @@ C1 = c + d'
 				Neigh const & v = f.neighs[j];
 				int const qj = v.times.size();
 				int const * b = &v.times[0];
+				//there is a hidden log cost here, should we cache this?
 				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
 				C0[j] = m[idx(min_in[j], min_out[j], qj)] - m[idx(min_in[j], min_out_g, qj)] + r[idx(min_in[j], min_out_g, qj)];
 				C1[j] = m[idx(min_out[j], min_out[j], qj)] - m[idx(min_out[j], min_out_g, qj)] + r[idx(min_out[j], min_out_g, qj)];
@@ -436,7 +437,7 @@ C1 = c + d'
 					c += (CG[0] - CG[ming]) * pi * l;
 					pi *= 1 - l;
 				}
-
+				//there is a hidden log cost here, should we cache this?
 				int ming = lower_bound(f.times.begin(), f.times.end(), v.times[min_out[j]]) - f.times.begin();
 				UU[j][idx(qj - 1, sji, qj)] += c + CG[ming] * pi;
 			}
