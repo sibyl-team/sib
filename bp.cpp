@@ -319,10 +319,10 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	}
 	vector<vector<real_t>> M = UU, R = UU;
-	// proba tji >= ti for each j
-	vector<real_t> C0(n), P0(n);
-	// proba tji > ti for each j
-	vector<real_t> C1(n), P1(n);
+	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
+	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
+	vector<vector<real_t>> CG0(n, vector<real_t>(qi));
+	vector<vector<real_t>> CG01(n, vector<real_t>(qi));
 
 	vector<real_t> ht = f.ht;
 	ht[0] *= params.pseed;
@@ -341,6 +341,8 @@ real_t FactorGraph::update(int i, real_t damping)
 			vector<real_t> & r = R[j];
 			fill(m.begin(), m.end(), 0.0);
 			fill(r.begin(), r.end(), 0.0);
+			fill(CG0[j].begin(), CG0[j].end(), 0.0);
+			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			Neigh const & v = f.neighs[j];
 			vector<real_t> const & h = HH[j];
 			int const qj = v.times.size();
@@ -362,13 +364,13 @@ real_t FactorGraph::update(int i, real_t damping)
 					r[idx(sji, sij, qj)] += r[idx(sji + 1, sij, qj)];
 				}
 			}
-
 			for (int sji = qj - 1; sji >=  min_in[j]; --sji) {
 				for (int sij = qj - 2; sij >= min_out[j]; --sij) {
 					m[idx(sji, sij, qj)] += m[idx(sji, sij + 1, qj)];
 					r[idx(sji, sij, qj)] += r[idx(sji, sij + 1, qj)];
 				}
 			}
+
 		}
 
 /*
@@ -405,29 +407,38 @@ C1 = c + d'
 			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
-			real_t const a = g_prob  * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
+			real_t const pg = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
+			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
 
-			//messages to sij, sji
 			for (int j = 0; j < n; ++j) {
-				Neigh const & v = f.neighs[j];
-				int const qj = v.times.size();
-				real_t const p0 = P0[j];
-				real_t const p01 = p0 - P1[j];
-				for (int sji = min_in[j]; sji < qj; ++sji) {
-					real_t pi = ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
-					for (int s = min_out[j]; s < qj - 1; ++s) {
-						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
-						real_t const l = f.prob_i(v.times[s]-f.times[ti]) *  v.lambdas[s];
-						Uij += pi * l;
-						pi *= 1 - l;
-					}
-					UU[j][idx(Sij(f, v, qj - 1, gi), sji, qj)] += pi;
+				CG0[j][gi] += P0[j] * ht[ti] * f.hg[gi] * pg;
+				CG01[j][gi] += (P0[j]-P1[j]) * ht[ti] * f.hg[gi] * pg;
+			}
+		}
+		//messages to sij, sji
+		for (int j = 0; j < n; ++j) {
+			partial_sum(CG0[j].rbegin(), CG0[j].rend(), CG0[j].rbegin());
+			partial_sum(CG01[j].rbegin(), CG01[j].rend(), CG01[j].rbegin());
+			Neigh const & v = f.neighs[j];
+			int const qj = v.times.size();
+			for (int sji = min_in[j]; sji < qj; ++sji) {
+				vector<real_t> const & CG = ti == 0 || v.times[sji] == f.times[ti] ? CG0[j] : CG01[j];
+				real_t pi = 1;
+				real_t c = 0;
+				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
+					int ming = lower_bound(f.times.begin(), f.times.end(), v.times[sij]) - f.times.begin();
+					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
+					UU[j][idx(sij, sji, qj)] += CG[ming] * pi * l;
+					c += (CG[0] - CG[ming]) * pi * l;
+					pi *= 1 - l;
 				}
+
+				int ming = lower_bound(f.times.begin(), f.times.end(), v.times[min_out[j]]) - f.times.begin();
+				UU[j][idx(qj - 1, sji, qj)] += c + CG[ming] * pi;
 			}
 		}
 	}
