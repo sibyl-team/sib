@@ -29,7 +29,7 @@ sys.path.insert(1, dir_path+"/..")
 import sib
 script_path = Path(dir_path)
 
-FOLDER = script_path / "data_tree"
+FOLDER = script_path / "data" / "tree_check"
 NUM_CPUS = 10
 
 BELIEFS_FILE = "beliefs_tree.npz"
