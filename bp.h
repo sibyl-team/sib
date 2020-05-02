@@ -29,8 +29,8 @@ struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) { omp_init_lock(&lock_); }
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
-	std::vector<int> times; // times of contacts
-	std::vector<real_t> lambdas; // times of contacts
+	std::vector<int> t; // time index of contacts
+	std::vector<real_t> lambdas; // transmission probability
 	Mes msg; // BP msg nij^2 or
 	void lock() const { omp_set_lock(&lock_); }
 	void unlock() const { omp_unset_lock(&lock_); }
@@ -42,7 +42,7 @@ struct Node {
 	int index;
 	Pr prob_g;
 	Pi prob_i;
-	std::vector<int> times;
+	std::vector<int> times;  // event times
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
 	std::vector<real_t> ht;  // message infection times T[ni+2]

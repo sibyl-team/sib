@@ -81,7 +81,7 @@ FactorGraph::FactorGraph(Params const & params,
 		int const n = f.neighs.size();
 		vector<int> F = tobs[i];
 		for (int k = 0; k < n; ++k) {
-			vector<int> const & tij = f.neighs[k].times;
+			vector<int> const & tij = f.neighs[k].t;
 			F.insert(F.end(), tij.begin(), tij.end());
 		}
 		sort(F.begin(), F.end());
@@ -100,12 +100,12 @@ FactorGraph::FactorGraph(Params const & params,
 		for (int k = 0; k  < n; ++k) {
 			Neigh & v = f.neighs[k];
 			omp_init_lock(&v.lock_);
-			v.times.push_back(Tinf);
+			v.t.push_back(Tinf);
 			v.lambdas.push_back(0.0);
-			int nij = v.times.size();
+			int nij = v.t.size();
 			nodes[i].neighs[k].msg = Mes(nij);
 			for (int s = 0; s < nij; ++s)
-				v.times[s] = lower_bound(&f.times[0], &f.times[0] + qi, v.times[s]) - &f.times[0];
+				v.t[s] = lower_bound(&f.times[0], &f.times[0] + qi, v.t[s]) - &f.times[0];
 		}
 	}
 	init();
@@ -144,12 +144,12 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 	}
 	Neigh & ni = nodes[i].neighs[ki];
 	Neigh & nj = nodes[j].neighs[kj];
-	if (ni.times.empty() || t > ni.times.back()) {
-		ni.times.push_back(t);
+	if (ni.t.empty() || t > ni.t.back()) {
+		ni.t.push_back(t);
 		ni.lambdas.push_back(lambda);
-		nj.times.push_back(t);
+		nj.t.push_back(t);
 		nj.lambdas.push_back(0.0);
-	} else if (t == ni.times.back()) {
+	} else if (t == ni.t.back()) {
 		ni.lambdas.back() = lambda;
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
@@ -202,9 +202,9 @@ void FactorGraph::show_graph()
 		for (int j = 0; j < int(aux.size()); j++) {
 			cerr << "# neighbor " << nodes[aux[j].index].index << endl;
 			cerr << "# in position " << aux[j].pos << endl;
-			cerr << "# in contact " << int(aux[j].times.size()) << " times, in t: ";
-			for (int t = 0; t < int(aux[j].times.size()); t++)
-				cerr << aux[j].times[t] << " ";
+			cerr << "# in contact " << int(aux[j].t.size()) << " times, in t: ";
+			for (int s = 0; s < int(aux[j].t.size()); s++)
+				cerr << aux[j].t[s] << " ";
 			cerr << " " << endl;
 		}
 	}
@@ -294,11 +294,11 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 	int n = min_in.size();
 	for (int j = 0; j < n; ++j) {
 		Neigh const & v = f.neighs[j];
-		int qj = v.times.size();
-		int const *b = &v.times[0];
-		int const *e = &v.times[0] + qj - 1;
+		int qj = v.t.size();
+		int const *b = &v.t[0];
+		int const *e = &v.t[0] + qj - 1;
 		min_in[j] = std::lower_bound(b + min_in[j], e, ti) - b;
-		min_out[j] = min_in[j] + (v.times[min_in[j]] == ti && min_in[j] < qj - 1);
+		min_out[j] = min_in[j] + (v.t[min_in[j]] == ti && min_in[j] < qj - 1);
 	}
 }
 
@@ -316,9 +316,9 @@ real_t FactorGraph::update(int i, real_t damping)
 		v.lock();
 		HH.push_back(v.msg);
 		v.unlock();
-		UU.push_back(Mes(v.times.size()));
-		R.push_back(Mes(v.times.size()));
-		M.push_back(Mes(v.times.size()));
+		UU.push_back(Mes(v.t.size()));
+		R.push_back(Mes(v.t.size()));
+		M.push_back(Mes(v.t.size()));
 	}
 
 	// allocate buffers
@@ -347,11 +347,11 @@ real_t FactorGraph::update(int i, real_t damping)
 			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			Neigh const & v = f.neighs[j];
 			Mes const & h = HH[j];
-			int const qj = v.times.size();
+			int const qj = v.t.size();
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					real_t const l = v.lambdas[sij] * f.prob_i(f.times[v.times[sij]]-f.times[ti]);
+					real_t const l = v.lambdas[sij] * f.prob_i(f.times[v.t[sij]]-f.times[ti]);
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);;
 					pi *= 1 - l;
@@ -368,8 +368,8 @@ real_t FactorGraph::update(int i, real_t damping)
 				Mes & m = M[j];
 				Mes & r = R[j];
 				Neigh const & v = f.neighs[j];
-				int const qj = v.times.size();
-				int const * b = &v.times[0];
+				int const qj = v.t.size();
+				int const * b = &v.t[0];
 				int const min_out_g = std::upper_bound(b + min_out[j], b + qj - 1, gi) - b;
 
 				/*
@@ -415,14 +415,14 @@ real_t FactorGraph::update(int i, real_t damping)
 			partial_sum(CG0[j].rbegin(), CG0[j].rend(), CG0[j].rbegin());
 			partial_sum(CG01[j].rbegin(), CG01[j].rend(), CG01[j].rbegin());
 			Neigh const & v = f.neighs[j];
-			int const qj = v.times.size();
+			int const qj = v.t.size();
 			for (int sji = min_in[j]; sji < qj; ++sji) {
-				vector<real_t> const & CG = ti == 0 || ti == v.times[sji] ? CG0[j] : CG01[j];
+				vector<real_t> const & CG = ti == 0 || ti == v.t[sji] ? CG0[j] : CG01[j];
 				real_t pi = 1;
 				real_t c = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					int const tij = v.times[sij];
-					real_t const l = f.prob_i(f.times[tij]-f.times[ti]) *  v.lambdas[sij];
+					int const tij = v.t[sij];
+					real_t const l = f.prob_i(f.times[tij] - f.times[ti]) *  v.lambdas[sij];
 					UU[j](sij, sji) += CG[tij] * pi * l;
 					c += (CG[ti] - CG[tij]) * pi * l;
 					pi *= 1 - l;
@@ -441,13 +441,13 @@ real_t FactorGraph::update(int i, real_t damping)
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = f.neighs[j];
-		omp_set_lock(&v.lock_);
+		v.lock();
 		// diff = max(diff, setmes(UU[j], v.msg, damping));
 		setmes(UU[j], v.msg, damping);
-		omp_unset_lock(&v.lock_);
+		v.unlock();
 
 		real_t zj = 0; // z_{(sij,sji)}}
-		int const qj = v.times.size();
+		int const qj = v.t.size();
 		for (int sij = 0; sij < qj; ++sij) {
 			for (int sji = 0; sji < qj; ++sji) {
 				zj += HH[j](sij, sji)*v.msg(sji, sij);
