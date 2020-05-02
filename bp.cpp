@@ -301,7 +301,7 @@ real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
-	vector<Mes> UU(n), HH(n);
+	vector<Mes> UU, HH;
 	int const qi = f.bt.size();
 	vector<real_t> ut(qi);
 	vector<real_t> ug(qi);
@@ -309,24 +309,25 @@ real_t FactorGraph::update(int i, real_t damping)
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
 		omp_set_lock(&v.lock_);
-		HH[j] = v.msg;
+		HH.push_back(v.msg);
 		omp_unset_lock(&v.lock_);
-		UU[j].reset(v.times.size());
+		UU.push_back(Mes(v.times.size()));
 	}
 
+	// allocate buffers
 	vector<Mes> M = UU, R = UU;
 	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
 	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
 	vector<vector<real_t>> CG0(n, vector<real_t>(qi));
 	vector<vector<real_t>> CG01(n, vector<real_t>(qi));
-
+	vector<int> min_in(n), min_out(n);
 	vector<real_t> ht = f.ht;
+
 	ht[0] *= params.pseed;
 	for (int t = 1; t < qi - 1; ++t)
 		ht[t] *= 1 - params.pseed - params.psus;
 	ht[qi-1] *= params.psus;
 
-	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
 	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
 		update_limits(ti, f, min_in, min_out);

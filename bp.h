@@ -20,7 +20,6 @@ struct Mes : public std::vector<real_t>
 	Mes(size_t qj) : vector<real_t>(qj*qj), qj(qj) {}
 	void clear() { for (auto it=begin(); it != end(); ++it) *it = 0.0; }
 	size_t dim() const { return qj;}
-	void reset(size_t q) { qj = q; resize(q*q); }
 	real_t & operator()(int sij, int sji) { return operator[](qj * sij + sji); }
 	real_t operator()(int sij, int sji) const { return operator[](qj * sij + sji); }
 	size_t qj;
