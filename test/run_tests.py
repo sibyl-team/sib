@@ -124,7 +124,9 @@ class SibillaTest(unittest.TestCase):
         new_all_beliefs = [self.calc_beliefs(i) for i in range(self.n_inst)]
         for i in range(self.n_inst):
             for n in range(self.num_nodes):
-                self.assertEqual(np.all(new_all_beliefs[i][n] == self.loaded_beliefs[i][n]),True)
+                #with self.subTest(inst=i,node=n):
+                msg_fail = "Test on inst {} for node {} failed".format(i,n)
+                self.assertEqual(np.all(new_all_beliefs[i][n] == self.loaded_beliefs[i][n]),True,msg_fail)
 
 
 if __name__ == '__main__':
