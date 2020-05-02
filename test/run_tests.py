@@ -113,8 +113,8 @@ class SibillaTest(unittest.TestCase):
 
         sib.set_num_threads(NUM_CPUS)
         ## LOAD BELIEFS
-        self.loaded_beliefs = load_run_data(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
-        self.loaded_fields = load_run_data(script_path/FIELDS_FILE,self.n_inst,self.num_nodes)
+        self.loaded_beliefs = load_run_data(FOLDER/BELIEFS_FILE,self.n_inst,self.num_nodes)
+        self.loaded_fields = load_run_data(FOLDER/FIELDS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
         print("\n--- Executing trial runs ---")
