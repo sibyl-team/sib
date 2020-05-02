@@ -33,6 +33,7 @@ FOLDER = script_path / "data_tree"
 NUM_CPUS = 10
 
 BELIEFS_FILE = "beliefs_tree.npz"
+FIELDS_FILE = "fields_tree.npz"
 
 
 def callback(t, err, f):
@@ -63,14 +64,15 @@ class SibillaTest(unittest.TestCase):
 
         return sib_fg
 
-    def calc_beliefs(self,inst):
+    def calc_beliefs_fields(self,inst):
         fg = self.run_sib_instance(inst)
 
-        beliefs = []
+        data = []
         for n in fg.nodes:
             res = (np.array(n.bt),np.array(n.bg))
-            beliefs.append(np.stack(res))
-        return beliefs
+            fields = (np.array(n.ht),np.array(n.hg))
+            data.append((np.stack(res),np.stack(fields)))
+        return data
 
     def find_sources_sib(self,inst):
         src = self.sources[inst]
@@ -112,6 +114,7 @@ class SibillaTest(unittest.TestCase):
         sib.set_num_threads(NUM_CPUS)
         ## LOAD BELIEFS
         self.loaded_beliefs = load_run_data(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
+        self.loaded_fields = load_run_data(script_path/FIELDS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
         print("\n--- Executing trial runs ---")
@@ -124,7 +127,7 @@ class SibillaTest(unittest.TestCase):
         probs2 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
 
         print("")
-        self.assertEqual(np.all((probs1-probs2) < 1e-7), True)
+        self.assertEqual(np.all((probs1-probs2) < 1e-12), True)
 
     def test_accuracy(self):
         print("\n--- Testing accuracy ---")
@@ -135,17 +138,19 @@ class SibillaTest(unittest.TestCase):
         self.assertGreaterEqual(
             accu_meas, 12, msg="The accuracy does not correspond. Maybe the observations have the wrong order?")
 
-    def test_beliefs(self):
+    def test_beliefs_fields(self):
         print("\n--- Testing beliefs ---")
-        new_all_beliefs = [self.calc_beliefs(i) for i in range(self.n_inst)]
-        v = 1e-60
+        beliefs_fields = [self.calc_beliefs_fields(i) for i in range(self.n_inst)]
+        
         for i in range(self.n_inst):
             for n in range(self.num_nodes):
                 #with self.subTest(inst=i,node=n):
                 msg_fail = "Test on inst {} for node {} failed".format(i,n)
-                v = max(v,np.max(new_all_beliefs[i][n]-self.loaded_beliefs[i][n]))
-                self.assertEqual(np.all(new_all_beliefs[i][n] - self.loaded_beliefs[i][n] < 1e-12),True,msg_fail)
-        print(v)
+                
+                self.assertEqual(np.all(beliefs_fields[i][n][0] - self.loaded_beliefs[i][n] < 1e-12),True,msg_fail)
+                
+                self.assertEqual(np.all(beliefs_fields[i][n][1] == self.loaded_fields[i][n]),True,msg_fail)
+
 
 if __name__ == '__main__':
     unittest.main(failfast=False)
