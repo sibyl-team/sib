@@ -70,7 +70,7 @@ read_files(char const * cont_file, char const * obs_file)
 tuple<Params,char const *, char const *, int, real_t>
 parse_opt(int & argc, char ** argv)
 {
-	Params p(Pi(1.0), Pr(1.0,0.01), 0.01, 0.5);
+	Params p(Pi(1.0,0.01), Pr(1.0,0.01), 0.01, 0.5);
 	char const * obs_file = "/dev/null";
 	char const * cont_file = "/dev/null";
 	int c;

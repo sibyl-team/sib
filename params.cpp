@@ -1,6 +1,8 @@
 #include "params.h"
 
 std::ostream & operator<<(std::ostream & ost, Gamma const & g) { return ost << "Gamma(" << g.k << "," << g.mu << ")"; }
+std::ostream & operator<<(std::ostream & ost, GammaInc const & g) { return ost << "GammaInc(" << g.k << "," << g.mu << ")"; }
+std::ostream & operator<<(std::ostream & ost, ExpGammaInc const & g) { return ost << "ExpGammaInc(" << g.k << "," << g.mu << ")"; }
 std::ostream & operator<<(std::ostream & ost, Exponential const & e) { return ost << "Exp("<< e.mu << ")"; }
 std::ostream & operator<<(std::ostream & ost, Uniform const & u) { return ost << "Uniform(" << u.p << ")"; }
 

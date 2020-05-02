@@ -7,11 +7,15 @@
 
 
 typedef double real_t;
+
 class Uniform;
 class Exponential;
 class Gamma;
+class GammaInc;
+class ExpGammaInc;
+
 typedef Gamma Pr;
-typedef Uniform Pi;
+typedef ExpGammaInc Pi;
 
 
 struct Uniform
@@ -36,6 +40,7 @@ struct Exponential
 
 std::ostream & operator<<(std::ostream & ost, Exponential const & e);
 
+
 struct Gamma
 {
 	real_t k;
@@ -46,6 +51,40 @@ struct Gamma
 };
 
 std::ostream & operator<<(std::ostream & ost, Gamma const & g);
+
+
+struct GammaInc
+{
+	real_t k;
+	real_t mu;
+	GammaInc(real_t k, real_t mu) : k(k), mu(mu) {}
+	real_t operator()(real_t d) const {
+		double l = boost::math::gamma_p(k,d * mu);
+		if (d > 0)
+			l -= boost::math::gamma_p(k,(d - 1) * mu);
+		return l;
+	}
+	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
+};
+
+std::ostream & operator<<(std::ostream & ost, GammaInc const & g);
+
+
+struct ExpGammaInc
+{
+	real_t k;
+	real_t mu;
+	ExpGammaInc(real_t k, real_t mu) : k(k), mu(mu) {}
+	real_t operator()(real_t d) const {
+		double l = boost::math::gamma_p(k,d * mu);
+		if (l > 0)
+			l -= boost::math::gamma_p(k,(d - 1) * mu);
+		return exp(1 - l);
+	}
+	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
+};
+
+std::ostream & operator<<(std::ostream & ost, ExpGammaInc const & g);
 
 
 struct Params {

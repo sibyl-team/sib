@@ -121,10 +121,22 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("mu", &Gamma::mu)
         .def("__repr__", &print<Gamma>);
 
+    py::class_<GammaInc>(m, "GammaInc")
+        .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
+        .def_readwrite("k", &GammaInc::k)
+        .def_readwrite("mu", &GammaInc::mu)
+        .def("__repr__", &print<GammaInc>);
+
+    py::class_<ExpGammaInc>(m, "ExpGammaInc")
+        .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
+        .def_readwrite("k", &ExpGammaInc::k)
+        .def_readwrite("mu", &ExpGammaInc::mu)
+        .def("__repr__", &print<ExpGammaInc>);
+
     py::class_<Params>(m, "Params")
         .def(py::init<Pi, Pr, real_t, real_t>(),
                 "Params class. prob_i and prob_r parameters are defaults.",
-                py::arg("prob_i") = Pi(1.0),
+                py::arg("prob_i") = Pi(1.0, 0.01),
                 py::arg("prob_r") = Pr(1.0, 0.1),
                 py::arg("pseed") = 0.01,
                 py::arg("psus") = 0.5)
