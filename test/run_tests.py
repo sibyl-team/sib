@@ -95,9 +95,10 @@ class SibillaTest(unittest.TestCase):
 
         sib.set_num_threads(NUM_CPUS)
         ## LOAD BELIEFS
-        self.all_beliefs = load_beliefs(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
+        self.loaded_beliefs = load_beliefs(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
+        print("\n--- Execute runs ---")
         print("Executing run 1")
         probs1 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
         # print(probs1[3][0])
@@ -110,7 +111,7 @@ class SibillaTest(unittest.TestCase):
         self.assertEqual(np.all((probs1-probs2) < 1e-7), True)
 
     def test_accuracy(self):
-        print("Test accuracy")
+        print("\n--- Test accuracy ---")
         accu_all = np.stack([self.find_sources_sib(i)[1] for i in range(self.n_inst) ])
         accu_curve = accu_all.mean(0)
 
@@ -118,7 +119,12 @@ class SibillaTest(unittest.TestCase):
         self.assertGreaterEqual(
             accu_meas, 12, msg="The accuracy does not correspond. Maybe the observations have the wrong order?")
 
-    # def test_
+    def test_beliefs(self):
+        print("\n--- Testing beliefs ---")
+        new_all_beliefs = [self.calc_beliefs(i) for i in range(self.n_inst)]
+        for i in range(self.n_inst):
+            for n in range(self.num_nodes):
+                self.assertEqual(np.all(new_all_beliefs[i][n] == self.loaded_beliefs[i][n]),True)
 
 
 if __name__ == '__main__':
