@@ -26,13 +26,15 @@ struct Mes : public std::vector<real_t>
 };
 
 struct Neigh {
-	Neigh(int index, int pos) : index(index), pos(pos) {}
+	Neigh(int index, int pos) : index(index), pos(pos) { omp_init_lock(&lock_); }
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
 	std::vector<int> times; // times of contacts
 	std::vector<real_t> lambdas; // times of contacts
 	Mes msg; // BP msg nij^2 or
-	omp_lock_t lock_;
+	void lock() const { omp_set_lock(&lock_); }
+	void unlock() const { omp_unset_lock(&lock_); }
+	mutable omp_lock_t lock_;
 };
 
 struct Node {

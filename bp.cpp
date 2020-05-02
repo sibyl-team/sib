@@ -301,21 +301,22 @@ real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
-	vector<Mes> UU, HH;
+	vector<Mes> UU, HH, M, R;
 	int const qi = f.bt.size();
 	vector<real_t> ut(qi);
 	vector<real_t> ug(qi);
 
 	for (int j = 0; j < n; ++j) {
-		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
-		omp_set_lock(&v.lock_);
+		Neigh const & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
+		v.lock();
 		HH.push_back(v.msg);
-		omp_unset_lock(&v.lock_);
+		v.unlock();
 		UU.push_back(Mes(v.times.size()));
+		R.push_back(Mes(v.times.size()));
+		M.push_back(Mes(v.times.size()));
 	}
 
 	// allocate buffers
-	vector<Mes> M = UU, R = UU;
 	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
 	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
 	vector<vector<real_t>> CG0(n, vector<real_t>(qi));
@@ -418,7 +419,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				int ming = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					//there is a hidden log cost here, should we cache this?
-					ming = lower_bound(f.times.begin() + ming, f.times.end(), v.times[sij]) - f.times.begin();
+					ming = lower_bound(&f.times[0] + ming, &f.times[0] + qi, v.times[sij]) - &f.times[0];
 					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
 					UU[j](sij, sji) += CG[ming] * pi * l;
 					c += (CG[0] - CG[ming]) * pi * l;
