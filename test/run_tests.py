@@ -139,7 +139,7 @@ class SibillaTest(unittest.TestCase):
             accu_meas, 12, msg="The accuracy does not correspond. Maybe the observations have the wrong order?")
 
     def test_beliefs_fields(self):
-        print("\n--- Testing beliefs ---")
+        print("\n--- Testing beliefs and fields ---")
         beliefs_fields = [self.calc_beliefs_fields(i) for i in range(self.n_inst)]
         
         for i in range(self.n_inst):
