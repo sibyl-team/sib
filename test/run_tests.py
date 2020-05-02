@@ -98,20 +98,20 @@ class SibillaTest(unittest.TestCase):
         self.loaded_beliefs = load_beliefs(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
-        print("\n--- Execute runs ---")
-        print("Executing run 1")
+        print("\n--- Executing trial runs ---")
+        print("Run 1")
         probs1 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
         # print(probs1[3][0])
         self.assertEqual(np.any(probs1 == np.inf), False)
 
-        print("\nExecuting run 2")
+        print("\nRun 2")
         probs2 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
 
         print("")
         self.assertEqual(np.all((probs1-probs2) < 1e-7), True)
 
     def test_accuracy(self):
-        print("\n--- Test accuracy ---")
+        print("\n--- Testing accuracy ---")
         accu_all = np.stack([self.find_sources_sib(i)[1] for i in range(self.n_inst) ])
         accu_curve = accu_all.mean(0)
 
