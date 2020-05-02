@@ -23,14 +23,14 @@ using namespace std;
 
 void cumsum(Mes & m, int a, int b)
 {
+	for (int sij = m.qj - 2; sij >= b; --sij)
+		m(m.qj - 1, sij) += m(m.qj -1, sij + 1);
 	for (int sji = m.qj - 2; sji >= a; --sji) {
-		for (int sij = m.qj - 1; sij >= b; --sij) {
-			m(sji, sij) += m(sji + 1, sij);
-		}
-	}
-	for (int sji = m.qj - 1; sji >= a; --sji) {
+		real_t r = m(sji, m.qj - 1);
+		m(sji, m.qj - 1) += m(sji + 1, m.qj - 1);
 		for (int sij = m.qj - 2; sij >= b; --sij) {
-			m(sji, sij) += m(sji, sij + 1);
+			r += m(sji, sij);
+			m(sji, sij) += r + m(sji + 1, sij);
 		}
 	}
 }
