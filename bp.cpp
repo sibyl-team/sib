@@ -21,7 +21,19 @@
 
 using namespace std;
 
-
+void cumsum(Mes & m, int a, int b)
+{
+	for (int sij = m.qj - 2; sij >= b; --sij)
+		m(m.qj - 1, sij) += m(m.qj -1, sij + 1);
+	for (int sji = m.qj - 2; sji >= a; --sji) {
+		real_t r = m(sji, m.qj - 1);
+		m(sji, m.qj - 1) += m(sji + 1, m.qj - 1);
+		for (int sij = m.qj - 2; sij >= b; --sij) {
+			r += m(sji, sij);
+			m(sji, sij) += r + m(sji + 1, sij);
+		}
+	}
+}
 
 
 FactorGraph::FactorGraph(Params const & params,
@@ -88,7 +100,7 @@ FactorGraph::FactorGraph(Params const & params,
 			nodes[i].neighs[k].times.push_back(Tinf);
 			nodes[i].neighs[k].lambdas.push_back(0.0);
 			int nij = nodes[i].neighs[k].times.size();
-			nodes[i].neighs[k].msg.resize(nij*nij);
+			nodes[i].neighs[k].msg = Mes(nij);
 		}
 	}
 	init();
@@ -210,15 +222,14 @@ void FactorGraph::show_msg(ostream & msgfile)
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
 			for (int n = 0; n < int(nodes[i].neighs[j].msg.size()); ++n) {
-				vector<real_t> & msg = nodes[i].neighs[j].msg;
-				msgfile << msg[n] << " ";
+				msgfile << nodes[i].neighs[j].msg[n] << " ";
 			}
 			msgfile << " " << endl;
 		}
 	}
 }
 
-void norm_msg(vector<real_t> & msg)
+void norm_msg(Mes & msg)
 {
 	real_t S = 0;
 	for(int n = 0; n < int(msg.size()); ++n)
@@ -238,27 +249,16 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to, real_t damp)
 	}
 	real_t err = 0;
 	for (int i = 0; i < n; ++i) {
-        if (!(s > 0)){
-            from[i] = 1./n;
-            err = numeric_limits<real_t>::infinity();
-        } else {
-            from[i] /= s;
-            err = max(err, abs(from[i] - to[i]));
-        }
+		if (!(s > 0)){
+			from[i] = 1./n;
+			err = numeric_limits<real_t>::infinity();
+		} else {
+			from[i] /= s;
+			err = max(err, abs(from[i] - to[i]));
+		}
 		to[i] = damp*to[i] + (1-damp)*from[i];
 	}
 	return err;
-}
-
-int Sij(Node const & f, Neigh const & v, int sij, int gi)
-{
-	// here gi stands for the ti + gi index
-	return v.times[sij] <= f.times[gi] ? sij : v.times.size() - 1;
-}
-
-inline int idx(int sij, int sji, int qj)
-{
-	return sji + qj * sij;
 }
 
 
@@ -276,9 +276,8 @@ void FactorGraph::init()
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
-			vector<real_t> & msg = nodes[i].neighs[j].msg;
-			for(int ss = 0; ss < int(msg.size()); ++ss)
-				msg[ss] = 1;
+			Mes & msg = nodes[i].neighs[j].msg;
+			fill(msg.begin(), msg.end(), 1./ msg.size());
 		}
 		fill(nodes[i].bt.begin(), nodes[i].bt.end(), 1./nodes[i].bt.size());
 		fill(nodes[i].bg.begin(), nodes[i].bg.end(), 1./nodes[i].bg.size());
@@ -293,7 +292,7 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 		int const *b = &v.times[0];
 		int qj = v.times.size();
 		int const *e = &v.times[0] + qj;
-		min_in[j] = min(qj - 1, int(std::lower_bound(b, e, f.times[ti]) - b));
+		min_in[j] = min(qj - 1, int(std::lower_bound(b + min_in[j], e, f.times[ti]) - b));
 		min_out[j] = min(qj - 1, int(std::upper_bound(b + min_in[j], e, f.times[ti]) - b));
 	}
 }
@@ -302,132 +301,130 @@ real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
-	vector<vector<real_t> > UU(n);
-	vector<vector<real_t> > HH(n);
+	vector<Mes> UU, HH, M, R;
 	int const qi = f.bt.size();
-
 	vector<real_t> ut(qi);
 	vector<real_t> ug(qi);
 
-
 	for (int j = 0; j < n; ++j) {
-		Neigh & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
-		omp_set_lock(&v.lock_);
-		HH[j] = v.msg;
-		omp_unset_lock(&v.lock_);
-		UU[j].resize(v.msg.size());
-
+		Neigh const & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
+		v.lock();
+		HH.push_back(v.msg);
+		v.unlock();
+		UU.push_back(Mes(v.times.size()));
+		R.push_back(Mes(v.times.size()));
+		M.push_back(Mes(v.times.size()));
 	}
-	vector<vector<real_t>> M = UU, R = UU;
-	// proba tji >= ti for each j
-	vector<real_t> C0(n), P0(n);
-	// proba tji > ti for each j
-	vector<real_t> C1(n), P1(n);
 
+	// allocate buffers
+	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
+	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
+	vector<vector<real_t>> CG0(n, vector<real_t>(qi));
+	vector<vector<real_t>> CG01(n, vector<real_t>(qi));
+	vector<int> min_in(n), min_out(n);
 	vector<real_t> ht = f.ht;
+
 	ht[0] *= params.pseed;
 	for (int t = 1; t < qi - 1; ++t)
 		ht[t] *= 1 - params.pseed - params.psus;
 	ht[qi-1] *= params.psus;
 
-	vector<int> min_in(n), min_out(n);
 	real_t za = 0.0;
-
 	for (int ti = 0; ti < qi; ++ti) if (f.ht[ti]) {
 		update_limits(ti, f, min_in, min_out);
 
 		for (int j = 0; j < n; ++j) {
-			vector<real_t> & m = M[j];
-			vector<real_t> & r = R[j];
-			fill(m.begin(), m.end(), 0.0);
-			fill(r.begin(), r.end(), 0.0);
+			Mes & m = M[j];
+			Mes & r = R[j];
+			m.clear();
+			r.clear();
+			fill(CG0[j].begin(), CG0[j].end(), 0.0);
+			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			Neigh const & v = f.neighs[j];
-			vector<real_t> const & h = HH[j];
+			Mes const & h = HH[j];
 			int const qj = v.times.size();
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					real_t const l = v.lambdas[sij] * f.prob_i(v.times[sij]-f.times[ti]);
-					m[idx(sji, sij, qj)] = l * pi * h[idx(sji, sij, qj)];
-					r[idx(sji, sij, qj)] = l * pi * h[idx(sji, qj - 1, qj)];;
+					m(sji, sij) = l * pi * h(sji, sij);
+					r(sji, sij) = l * pi * h(sji, qj - 1);;
 					pi *= 1 - l;
 				}
-				m[idx(sji, qj - 1, qj)] = pi * h[idx(sji, qj - 1, qj)];
-				r[idx(sji, qj - 1, qj)] = pi * h[idx(sji, qj - 1, qj)];
+				m(sji, qj - 1) = pi * h(sji, qj - 1);
+				r(sji, qj - 1) = pi * h(sji, qj - 1);
 			}
-			// accumulate
-			for (int sji = qj - 2; sji >=  min_in[j]; --sji) {
-				for (int sij = qj - 1; sij >= min_out[j]; --sij) {
-					m[idx(sji, sij, qj)] += m[idx(sji + 1, sij, qj)];
-					r[idx(sji, sij, qj)] += r[idx(sji + 1, sij, qj)];
-				}
-			}
-
-			for (int sji = qj - 1; sji >=  min_in[j]; --sji) {
-				for (int sij = qj - 2; sij >= min_out[j]; --sij) {
-					m[idx(sji, sij, qj)] += m[idx(sji, sij + 1, qj)];
-					r[idx(sji, sij, qj)] += r[idx(sji, sij + 1, qj)];
-				}
-			}
+			cumsum(m, min_in[j], min_out[j]);
+			cumsum(r, min_in[j], min_out[j]);
 		}
 
-/*
-             .-----min_out
-             |   .-- min_out_g
-   sij       v   v
-   . . . . . . . . .
-sji. . . . . . . . .
-   . . . . . . . . .
-   . . . . . a a b b <- min_in
-   . . . . . a a b b
-   . . . . . c c d d <- min_out
-   . . . . . c c d d
-   . . . . . c c d d
-   . . . . . c c d d
-
-
-C0 = a + c + b' + d'
-C1 = c + d'
-*/
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			for (int j = 0; j < n; ++j) {
-				vector<real_t> & m = M[j];
-				vector<real_t> & r = R[j];
+				Mes & m = M[j];
+				Mes & r = R[j];
 				Neigh const & v = f.neighs[j];
 				int const qj = v.times.size();
 				int const * b = &v.times[0];
+				//there is a hidden log cost here, should we cache this?
 				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
-				C0[j] = m[idx(min_in[j], min_out[j], qj)] - m[idx(min_in[j], min_out_g, qj)] + r[idx(min_in[j], min_out_g, qj)];
-				C1[j] = m[idx(min_out[j], min_out[j], qj)] - m[idx(min_out[j], min_out_g, qj)] + r[idx(min_out[j], min_out_g, qj)];
+
+				/*
+				                .-----min_out[j]
+				                |   .-- min_out_g
+				      sij       v   v
+				      . . . . . . . . .
+				   sji. . . . . . . . .
+				      . . . . . . . . .
+				      . . . . . a a b b <- min_in[j]
+				      . . . . . a a b b
+				      . . . . . c c d d <- min_out[j]
+				      . . . . . c c d d
+				      . . . . . c c d d
+				      . . . . . c c d d
+
+
+				   C0 = a + c + b' + d' = (a + c + b + d) - (b + d) + (b' + d')
+				   C1 = c + d'          = c + d           - d       + d'
+				*/
+				C0[j] = m(min_in[j], min_out[j]) - m(min_in[j], min_out_g) + r(min_in[j], min_out_g);
+				C1[j] = m(min_out[j], min_out[j]) - m(min_out[j], min_out_g) + r(min_out[j], min_out_g);
 			}
 
 			real_t p0full = cavity(C0.begin(), C0.end(), P0.begin(), 1.0, multiplies<real_t>());
 			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const g_prob = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
-			real_t const a = g_prob  * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
+			real_t const pg = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
+			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
 
-			//messages to sij, sji
 			for (int j = 0; j < n; ++j) {
-				Neigh const & v = f.neighs[j];
-				int const qj = v.times.size();
-				real_t const p0 = P0[j];
-				real_t const p01 = p0 - P1[j];
-				for (int sji = min_in[j]; sji < qj; ++sji) {
-					real_t pi = ht[ti] * f.hg[gi] * g_prob * (ti == 0 || v.times[sji] == f.times[ti] ? p0 : p01);
-					for (int s = min_out[j]; s < qj - 1; ++s) {
-						real_t & Uij = UU[j][idx(Sij(f, v, s, gi), sji, qj)];
-						real_t const l = f.prob_i(v.times[s]-f.times[ti]) *  v.lambdas[s];
-						Uij += pi * l;
-						pi *= 1 - l;
-					}
-					UU[j][idx(Sij(f, v, qj - 1, gi), sji, qj)] += pi;
+				CG0[j][gi] += P0[j] * ht[ti] * f.hg[gi] * pg;
+				CG01[j][gi] += (P0[j]-P1[j]) * ht[ti] * f.hg[gi] * pg;
+			}
+		} //gi
+		//messages to sij, sji
+		for (int j = 0; j < n; ++j) {
+			partial_sum(CG0[j].rbegin(), CG0[j].rend(), CG0[j].rbegin());
+			partial_sum(CG01[j].rbegin(), CG01[j].rend(), CG01[j].rbegin());
+			Neigh const & v = f.neighs[j];
+			int const qj = v.times.size();
+			for (int sji = min_in[j]; sji < qj; ++sji) {
+				vector<real_t> const & CG = ti == 0 || v.times[sji] == f.times[ti] ? CG0[j] : CG01[j];
+				real_t pi = 1;
+				real_t c = 0;
+				int ming = lower_bound(&f.times[0] + ti, &f.times[0] + qi, v.times[min_out[j]]) - &f.times[0];
+				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
+					ming = lower_bound(&f.times[0] + ming, &f.times[0] + qi, v.times[sij]) - &f.times[0];
+					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
+					UU[j](sij, sji) += CG[ming] * pi * l;
+					c += (CG[0] - CG[ming]) * pi * l;
+					pi *= 1 - l;
 				}
+				UU[j](qj - 1, sji) += c + (ming + 1 < qi? CG[ming + 1] : 0.0) * pi;
 			}
 		}
 	}
@@ -450,7 +447,7 @@ C1 = c + d'
 		int const qj = v.times.size();
 		for (int sij = 0; sij < qj; ++sij) {
 			for (int sji = 0; sji < qj; ++sji) {
-				zj += HH[j][idx(sij, sji, qj)]*v.msg[idx(sji, sij, qj)];
+				zj += HH[j](sij, sji)*v.msg(sji, sij);
 			}
 		}
 		f.f_ += 0.5*log(zj); // half is cancelled by z_{a,(sij,sji)}
