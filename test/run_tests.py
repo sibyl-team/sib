@@ -41,13 +41,15 @@ def callback(t, err, f):
 
 
 
-def load_beliefs(filename,n_inst,num_nodes):
+def load_run_data(filename,n_inst,num_nodes):
     data = np.load(filename)
-    all_marg_load = []
+    all_data = []
     for inst in range(n_inst):
         margist = [data[f"{inst}_{n}"] for n in range(num_nodes)]
-        all_marg_load.append(margist)
-    return all_marg_load
+        all_data.append(margist)
+    return all_data
+
+
 
 
 class SibillaTest(unittest.TestCase):
@@ -109,7 +111,7 @@ class SibillaTest(unittest.TestCase):
 
         sib.set_num_threads(NUM_CPUS)
         ## LOAD BELIEFS
-        self.loaded_beliefs = load_beliefs(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
+        self.loaded_beliefs = load_run_data(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
         print("\n--- Executing trial runs ---")
