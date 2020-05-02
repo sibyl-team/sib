@@ -23,14 +23,14 @@ using namespace std;
 
 void cumsum(Mes & m, int a, int b)
 {
+	for (int sij = m.qj - 2; sij >= b; --sij)
+		m(m.qj - 1, sij) += m(m.qj -1, sij + 1);
 	for (int sji = m.qj - 2; sji >= a; --sji) {
-		for (int sij = m.qj - 1; sij >= b; --sij) {
-			m(sji, sij) += m(sji + 1, sij);
-		}
-	}
-	for (int sji = m.qj - 1; sji >= a; --sji) {
+		real_t r = m(sji, m.qj - 1);
+		m(sji, m.qj - 1) += m(sji + 1, m.qj - 1);
 		for (int sij = m.qj - 2; sij >= b; --sij) {
-			m(sji, sij) += m(sji, sij + 1);
+			r += m(sji, sij);
+			m(sji, sij) = r + m(sji + 1, sij);
 		}
 	}
 }
@@ -292,7 +292,7 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 		int const *b = &v.times[0];
 		int qj = v.times.size();
 		int const *e = &v.times[0] + qj;
-		min_in[j] = min(qj - 1, int(std::lower_bound(b, e, f.times[ti]) - b));
+		min_in[j] = min(qj - 1, int(std::lower_bound(b + min_in[j], e, f.times[ti]) - b));
 		min_out[j] = min(qj - 1, int(std::upper_bound(b + min_in[j], e, f.times[ti]) - b));
 	}
 }
@@ -416,16 +416,15 @@ real_t FactorGraph::update(int i, real_t damping)
 				vector<real_t> const & CG = ti == 0 || v.times[sji] == f.times[ti] ? CG0[j] : CG01[j];
 				real_t pi = 1;
 				real_t c = 0;
-				int ming = 0;
+				int ming = ti;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					//there is a hidden log cost here, should we cache this?
 					ming = lower_bound(&f.times[0] + ming, &f.times[0] + qi, v.times[sij]) - &f.times[0];
 					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
 					UU[j](sij, sji) += CG[ming] * pi * l;
-					c += (CG[0] - CG[ming]) * pi * l;
+					c += (CG[ti] - CG[ming]) * pi * l;
 					pi *= 1 - l;
 				}
-				UU[j](qj - 1, sji) += c + CG[ming + 1] * pi;
+				UU[j](qj - 1, sji) += c + CG[ti] * pi;
 			}
 		}
 	}
