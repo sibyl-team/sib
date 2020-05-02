@@ -18,22 +18,47 @@ script_path = Path(dir_path)
 FOLDER = script_path / "data_tree"
 NUM_CPUS = 10
 
+BELIEFS_FILE = "beliefs_tree.npz"
+
 
 def callback(t, err, f):
     print(f"{t:4d}, {err:3.2e}", end="\r")
 
 
+
+
+def load_beliefs(filename,n_inst,num_nodes):
+    data = np.load(filename)
+    all_marg_load = []
+    for inst in range(n_inst):
+        margist = [data[f"{inst}_{n}"] for n in range(num_nodes)]
+        all_marg_load.append(margist)
+    return all_marg_load
+
+
 class SibillaTest(unittest.TestCase):
 
-    def find_sources_sib(self, obs_sib, full_epi):
+    def run_sib_instance(self,inst,callback_fun=callback):
         mu = self.params["mu"]
-        src = np.where(full_epi[0])[0][0]
         sib_pars = sib.Params(prob_r=sib.Gamma(mu=mu))
-        sib_fg = sib.FactorGraph(sib_pars, self.contacts_sib, obs_sib)
+        sib_fg = sib.FactorGraph(sib_pars, self.contacts_sib, self.obs_all_sib[inst])
 
-        sib.iterate(sib_fg, maxit=1000, tol=6e-6, callback=callback)
-        # print("\n",end="")
-        # iterate_damp(sib_fg,2000,callback,0.5)
+        sib.iterate(sib_fg, maxit=1000, tol=6e-6, callback=callback_fun)
+
+        return sib_fg
+
+    def calc_beliefs(self,inst):
+        fg = self.run_sib_instance(inst)
+
+        beliefs = []
+        for n in fg.nodes:
+            res = (np.array(n.bt),np.array(n.bg))
+            beliefs.append(np.stack(res))
+        return beliefs
+
+    def find_sources_sib(self,inst):
+        src = self.sources[inst]
+        sib_fg = self.run_sib_instance(inst)
 
         p_sources = []
         for n in sib_fg.nodes:
@@ -49,35 +74,44 @@ class SibillaTest(unittest.TestCase):
         # params,contacts,observ,all_epi
         self.data = data_load.load_exported_data(FOLDER)
         self.params = self.data[0]
+        # Format contacts
         df_cont = self.data[1][["i", "j", "t", "lambda"]]
         self.contacts_sib = list(zip(*[df_cont[k] for k in df_cont.keys()]))
+        # Format observations
         self.obs_all_sib = []
         for ob in self.data[2]:
             df_obs = data_load.convert_obs_to_df(ob)
             df_obs = df_obs[["i", "st", "t"]]
             obs_sib = list(df_obs.to_records(index=False))
             self.obs_all_sib.append(obs_sib)
+        # Find sources nodes
+        self.sources = []
+        for epi in self.data[3]:
+            src = np.where(epi[0])[0][0]
+            self.sources.append(src)
+        
+        self.n_inst = len(self.obs_all_sib)
+        self.num_nodes = self.params["n"]
 
         sib.set_num_threads(NUM_CPUS)
+        ## LOAD BELIEFS
+        self.all_beliefs = load_beliefs(script_path/BELIEFS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
         print("Executing run 1")
-        probs1 = np.stack([self.find_sources_sib(obs, epi)[0]
-                           for obs, epi in zip(self.obs_all_sib, self.data[3])])
+        probs1 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
         # print(probs1[3][0])
         self.assertEqual(np.any(probs1 == np.inf), False)
 
         print("\nExecuting run 2")
-        probs2 = np.stack([self.find_sources_sib(obs, epi)[0]
-                           for obs, epi in zip(self.obs_all_sib, self.data[3])])
+        probs2 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
 
         print("")
         self.assertEqual(np.all((probs1-probs2) < 1e-7), True)
 
     def test_accuracy(self):
         print("Test accuracy")
-        accu_all = np.stack([self.find_sources_sib(obs, epi)[1]
-                             for obs, epi in zip(self.obs_all_sib, self.data[3])])
+        accu_all = np.stack([self.find_sources_sib(i)[1] for i in range(self.n_inst) ])
         accu_curve = accu_all.mean(0)
 
         accu_meas = accu_curve.cumsum().sum()/self.params["n"]
