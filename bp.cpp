@@ -77,30 +77,35 @@ FactorGraph::FactorGraph(Params const & params,
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
+		Node & f = nodes[i];
+		int const n = f.neighs.size();
 		vector<int> F = tobs[i];
-		for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
-			vector<int> const & tij = nodes[i].neighs[k].times;
+		for (int k = 0; k < n; ++k) {
+			vector<int> const & tij = f.neighs[k].times;
 			F.insert(F.end(), tij.begin(), tij.end());
 		}
 		sort(F.begin(), F.end());
 		F.push_back(Tinf);
-		nodes[i].times.push_back(-1);
+		f.times.push_back(-1);
 		for (int k = 0; k < int(F.size()); ++k) {
-			if (nodes[i].times.back() != F[k])
-				nodes[i].times.push_back(F[k]);
+			if (f.times.back() != F[k])
+				f.times.push_back(F[k]);
 		}
-		int ntimes = nodes[i].times.size();
-		nodes[i].bt.resize(ntimes, 1./ntimes);
-		nodes[i].bg.resize(ntimes, 1./ntimes);
-		nodes[i].ht.resize(ntimes);
-		nodes[i].hg.resize(ntimes);
+		int qi = f.times.size();
+		f.bt.resize(qi, 1./qi);
+		f.bg.resize(qi, 1./qi);
+		f.ht.resize(qi);
+		f.hg.resize(qi);
 		set_field(i, tobs[i], sobs[i]);
-		for (int k = 0; k  < int(nodes[i].neighs.size()); ++k) {
-			omp_init_lock(&nodes[i].neighs[k].lock_);
-			nodes[i].neighs[k].times.push_back(Tinf);
-			nodes[i].neighs[k].lambdas.push_back(0.0);
-			int nij = nodes[i].neighs[k].times.size();
+		for (int k = 0; k  < n; ++k) {
+			Neigh & v = f.neighs[k];
+			omp_init_lock(&v.lock_);
+			v.times.push_back(Tinf);
+			v.lambdas.push_back(0.0);
+			int nij = v.times.size();
 			nodes[i].neighs[k].msg = Mes(nij);
+			for (int s = 0; s < nij; ++s)
+				v.times[s] = lower_bound(&f.times[0], &f.times[0] + qi, v.times[s]) - &f.times[0];
 		}
 	}
 	init();
@@ -289,11 +294,11 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 	int n = min_in.size();
 	for (int j = 0; j < n; ++j) {
 		Neigh const & v = f.neighs[j];
-		int const *b = &v.times[0];
 		int qj = v.times.size();
-		int const *e = &v.times[0] + qj;
-		min_in[j] = min(qj - 1, int(std::lower_bound(b + min_in[j], e, f.times[ti]) - b));
-		min_out[j] = min(qj - 1, int(std::upper_bound(b + min_in[j], e, f.times[ti]) - b));
+		int const *b = &v.times[0];
+		int const *e = &v.times[0] + qj - 1;
+		min_in[j] = std::lower_bound(b + min_in[j], e, ti) - b;
+		min_out[j] = min_in[j] + (v.times[min_in[j]] == ti && min_in[j] < qj - 1);
 	}
 }
 
@@ -346,7 +351,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					real_t const l = v.lambdas[sij] * f.prob_i(v.times[sij]-f.times[ti]);
+					real_t const l = v.lambdas[sij] * f.prob_i(f.times[v.times[sij]]-f.times[ti]);
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);;
 					pi *= 1 - l;
@@ -365,8 +370,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				Neigh const & v = f.neighs[j];
 				int const qj = v.times.size();
 				int const * b = &v.times[0];
-				//there is a hidden log cost here, should we cache this?
-				int const min_out_g = min(qj - 1, int(std::upper_bound(b + min_out[j], b + qj, f.times[gi]) - b));
+				int const min_out_g = std::upper_bound(b + min_out[j], b + qj - 1, gi) - b;
 
 				/*
 				                .-----min_out[j]
@@ -413,15 +417,14 @@ real_t FactorGraph::update(int i, real_t damping)
 			Neigh const & v = f.neighs[j];
 			int const qj = v.times.size();
 			for (int sji = min_in[j]; sji < qj; ++sji) {
-				vector<real_t> const & CG = ti == 0 || v.times[sji] == f.times[ti] ? CG0[j] : CG01[j];
+				vector<real_t> const & CG = ti == 0 || ti == v.times[sji] ? CG0[j] : CG01[j];
 				real_t pi = 1;
 				real_t c = 0;
-				int ming = ti;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					ming = lower_bound(&f.times[0] + ming, &f.times[0] + qi, v.times[sij]) - &f.times[0];
-					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
-					UU[j](sij, sji) += CG[ming] * pi * l;
-					c += (CG[ti] - CG[ming]) * pi * l;
+					int const tij = v.times[sij];
+					real_t const l = f.prob_i(f.times[tij]-f.times[ti]) *  v.lambdas[sij];
+					UU[j](sij, sji) += CG[tij] * pi * l;
+					c += (CG[ti] - CG[tij]) * pi * l;
 					pi *= 1 - l;
 				}
 				UU[j](qj - 1, sji) += c + CG[ti] * pi;
