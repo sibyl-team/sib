@@ -416,9 +416,8 @@ real_t FactorGraph::update(int i, real_t damping)
 				vector<real_t> const & CG = ti == 0 || v.times[sji] == f.times[ti] ? CG0[j] : CG01[j];
 				real_t pi = 1;
 				real_t c = 0;
-				int ming = ti;
+				int ming = lower_bound(&f.times[0] + ti, &f.times[0] + qi, v.times[min_out[j]]) - &f.times[0];
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					//there is a hidden log cost here, should we cache this?
 					ming = lower_bound(&f.times[0] + ming, &f.times[0] + qi, v.times[sij]) - &f.times[0];
 					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
 					UU[j](sij, sji) += CG[ming] * pi * l;
