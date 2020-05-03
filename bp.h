@@ -18,7 +18,7 @@ struct Mes : public std::vector<real_t>
 {
 	Mes() : qj(0) {}
 	Mes(size_t qj) : vector<real_t>(qj*qj), qj(qj) {}
-	void clear() { for (auto it=begin(); it != end(); ++it) *it = 0.0; }
+	void clear() { std::fill(begin(), end(), 0.0); }
 	size_t dim() const { return qj;}
 	real_t & operator()(int sji, int sij) { return operator[](qj * sij + sji); }
 	real_t operator()(int sji, int sij) const { return operator[](qj * sij + sji); }
