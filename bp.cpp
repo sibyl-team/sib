@@ -79,17 +79,27 @@ FactorGraph::FactorGraph(Params const & params,
 	for (int i = 0; i < int(nodes.size()); ++i) {
 		Node & f = nodes[i];
 		int const n = f.neighs.size();
-		vector<int> F = tobs[i];
-		for (int k = 0; k < n; ++k) {
-			vector<int> const & tij = f.neighs[k].t;
-			F.insert(F.end(), tij.begin(), tij.end());
+		vector<tuple<int,int>> F;
+		for (auto it = tobs[i].begin(); it != tobs[i].end(); ++it)
+			F.push_back(make_tuple(*it, -1));
+		for (int j = 0; j < n; ++j) {
+			Neigh & v = f.neighs[j];
+			v.t.push_back(Tinf);
+			v.lambdas.push_back(0);
+			for (int s = 0; s < int(v.t.size()); ++s)
+				F.push_back(make_tuple(v.t[s], j));
 		}
 		sort(F.begin(), F.end());
-		F.push_back(Tinf);
+		F.push_back(make_tuple(Tinf,-1));
 		f.times.push_back(-1);
-		for (int k = 0; k < int(F.size()); ++k) {
-			if (f.times.back() != F[k])
-				f.times.push_back(F[k]);
+		vector<int> pointer(n);
+		for (auto it = F.begin(); it != F.end(); ++it) {
+			int t, j;
+			tie(t,j) = *it;
+			if (f.times.back() != t)
+				f.times.push_back(t);
+			if (j != -1)
+				f.neighs[j].t[pointer[j]++] = f.times.size() - 1;
 		}
 		int qi = f.times.size();
 		f.bt.resize(qi, 1./qi);
@@ -97,15 +107,11 @@ FactorGraph::FactorGraph(Params const & params,
 		f.ht.resize(qi);
 		f.hg.resize(qi);
 		set_field(i, tobs[i], sobs[i]);
-		for (int k = 0; k  < n; ++k) {
-			Neigh & v = f.neighs[k];
+		for (int j = 0; j  < n; ++j) {
+			Neigh & v = f.neighs[j];
 			omp_init_lock(&v.lock_);
-			v.t.push_back(Tinf);
-			v.lambdas.push_back(0.0);
 			int nij = v.t.size();
-			nodes[i].neighs[k].msg = Mes(nij);
-			for (int s = 0; s < nij; ++s)
-				v.t[s] = lower_bound(&f.times[0], &f.times[0] + qi, v.t[s]) - &f.times[0];
+			nodes[i].neighs[j].msg = Mes(nij);
 		}
 	}
 	init();
@@ -339,15 +345,11 @@ real_t FactorGraph::update(int i, real_t damping)
 		update_limits(ti, f, min_in, min_out);
 
 		for (int j = 0; j < n; ++j) {
-			Mes & m = M[j];
+			Mes & m = M[j]; // no need to clear, just use the bottom right corner
 			Mes & r = R[j];
-			m.clear();
-			r.clear();
-			fill(CG0[j].begin(), CG0[j].end(), 0.0);
-			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			Neigh const & v = f.neighs[j];
 			Mes const & h = HH[j];
-			int const qj = v.t.size();
+			int const qj = h.qj;
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
@@ -361,8 +363,10 @@ real_t FactorGraph::update(int i, real_t damping)
 			}
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
+			fill(CG0[j].begin(), CG0[j].end(), real_t(0));
+			fill(CG01[j].begin(), CG01[j].end(), real_t(0));
 		}
-		copy(min_out.begin(), min_out.end(), min_g.begin());
+		min_g = min_out;
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			for (int j = 0; j < n; ++j) {
 				Mes & m = M[j];
@@ -373,15 +377,15 @@ real_t FactorGraph::update(int i, real_t damping)
 				min_g[j] = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
 
 				/*
-				                .-----min_out[j]
+				                .-----min_out
 				                |   .-- min_g
 				      sij       v   v
 				      . . . . . . . . .
 				   sji. . . . . . . . .
 				      . . . . . . . . .
-				      . . . . . a a b b <- min_in[j]
+				      . . . . . a a b b <- min_in
 				      . . . . . a a b b
-				      . . . . . c c d d <- min_out[j]
+				      . . . . . c c d d <- min_out
 				      . . . . . c c d d
 				      . . . . . c c d d
 				      . . . . . c c d d
@@ -417,6 +421,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			Neigh const & v = f.neighs[j];
 			int const qj = v.t.size();
 			for (int sji = min_in[j]; sji < qj; ++sji) {
+				// note: ti == qi - 1 implies ti == v.t[sji]
 				vector<real_t> const & CG = ti == 0 || ti == v.t[sji] ? CG0[j] : CG01[j];
 				real_t pi = 1;
 				real_t c = 0;
@@ -437,7 +442,7 @@ real_t FactorGraph::update(int i, real_t damping)
 		ut[t] *= ht[t];
 		ug[t] *= f.hg[t];
 	}
-	//compute marginals on t,g
+	//compute beliefs on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = f.neighs[j];
