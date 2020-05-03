@@ -10,7 +10,8 @@ std::ostream & operator<<(std::ostream & ost, PriorDiscrete const & d) {
 std::ostream & operator<<(std::ostream & ost, Exponential const & e) { return ost << "Exp("<< e.mu << ")"; }
 std::ostream & operator<<(std::ostream & ost, Uniform const & u) { return ost << "Uniform(" << u.p << ")"; }
 
-std::ostream & operator<<(std::ostream & ost, Params const & p)
+template<class Pi, class Pr>
+std::ostream & operator<<(std::ostream & ost, Params<Pi,Pr> const & p)
 {
     return ost << "Params("
 	<< "prob_i=" << p.prob_i

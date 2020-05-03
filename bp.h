@@ -37,6 +37,7 @@ struct Neigh {
 	mutable omp_lock_t lock_;
 };
 
+template<class Pi, class Pr>
 struct Node {
 	Node(int index, Pi const & prob_i, Pr const & prob_g) : index(index), prob_g(prob_g), prob_i(prob_i), f_(0) {}
 	int index;
@@ -51,12 +52,13 @@ struct Node {
 	real_t f_;
 };
 
+template<class Pi, class Pr>
 class FactorGraph {
 public:
 	int Tinf;
-	std::vector<Node> nodes;
+	std::vector<Node<Pi,Pr>> nodes;
 	std::map<int, int> index;
-	FactorGraph(Params const & params,
+	FactorGraph(Params<Pi,Pr> const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
 		std::vector<std::tuple<int, Pi, Pr> > const & individuals = std::vector<std::tuple<int, Pi, Pr> >());
@@ -72,9 +74,12 @@ public:
 	real_t iteration(real_t damping);
 	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
-	Params params;
+	Params<Pi,Pr> params;
 };
 
-std::ostream & operator<<(std::ostream &, FactorGraph const &);
+template<class Pi, class Pr>
+std::ostream & operator<<(std::ostream &, FactorGraph<Pi,Pr> const &);
+
+#include "bp_impl.h"
 
 #endif

@@ -36,7 +36,8 @@ void cumsum(Mes & m, int a, int b)
 }
 
 
-FactorGraph::FactorGraph(Params const & params,
+template<class Pi, class Pr>
+FactorGraph<Pi, Pr>::FactorGraph(Params<Pi, Pr> const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
 		vector<tuple<int, Pi, Pr> > const & individuals) : params(params)
@@ -107,7 +108,8 @@ FactorGraph::FactorGraph(Params const & params,
 	//showgraph();
 }
 
-int FactorGraph::find_neighbor(int i, int j) const
+template<class Pi, class Pr>
+int FactorGraph<Pi, Pr>::find_neighbor(int i, int j) const
 {
 	int k = 0;
 	for (; k < int(nodes[i].neighs.size()); ++k)
@@ -116,17 +118,19 @@ int FactorGraph::find_neighbor(int i, int j) const
 	return k;
 }
 
-int FactorGraph::add_node(int i)
+template<class Pi, class Pr>
+int FactorGraph<Pi, Pr>::add_node(int i)
 {
 	map<int,int>::iterator mit = index.find(i);
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, params.prob_i, params.prob_r));
+	nodes.push_back(Node<Pi,Pr>(i, params.prob_i, params.prob_r));
 	return index[i];
 }
 
-void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
+template<class Pi, class Pr>
+void FactorGraph<Pi, Pr>::add_contact(int i, int j, int t, real_t lambda)
 {
 	i = add_node(i);
 	j = add_node(j);
@@ -151,7 +155,8 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 	}
 }
 
-void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const & sobs)
+template<class Pi, class Pr>
+void FactorGraph<Pi, Pr>::set_field(int i, vector<int> const & tobs, vector<int> const & sobs)
 {
 	// this assumes ordered observation times
 	int tl = 0, gl = 0;
@@ -187,7 +192,8 @@ void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const &
 	}
 }
 
-void FactorGraph::show_graph()
+template<class Pi, class Pr>
+void FactorGraph<Pi, Pr>::show_graph()
 {
 	cerr << "Number of nodes " <<  int(nodes.size()) << endl;
 	for(int i = 0; i < int(nodes.size()); i++) {
@@ -205,10 +211,11 @@ void FactorGraph::show_graph()
 	}
 }
 
-void FactorGraph::show_beliefs(ostream & ofs)
+template<class Pi, class Pr>
+void FactorGraph<Pi, Pr>::show_beliefs(ostream & ofs)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
-		Node & f = nodes[i];
+		Node<Pi,Pr> & f = nodes[i];
 		ofs << "node " << f.index << ":" << endl;
 		for (int t = 0; t < int(f.bt.size()); ++t) {
 			ofs << "    " << f.times[t] << " " << f.bt[t] << " (" << f.ht[t] << ") " << f.bg[t] << " (" << f.hg[t] << ")" << endl;
@@ -217,7 +224,8 @@ void FactorGraph::show_beliefs(ostream & ofs)
 
 }
 
-void FactorGraph::show_msg(ostream & msgfile)
+template<class Pi, class Pr>
+void FactorGraph<Pi, Pr>::show_msg(ostream & msgfile)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
@@ -272,7 +280,8 @@ ostream & operator<<(ostream & o, vector<real_t> const & m)
 	return o;
 }
 
-void FactorGraph::init()
+template<class Pi, class Pr>
+void FactorGraph<Pi, Pr>::init()
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
@@ -284,7 +293,8 @@ void FactorGraph::init()
 	}
 }
 
-void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & min_out)
+template<class Pi, class Pr>
+void update_limits(int ti, Node<Pi,Pr> const &f, vector<int> & min_in, vector<int> & min_out)
 {
 	int n = min_in.size();
 	for (int j = 0; j < n; ++j) {
@@ -297,9 +307,10 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 	}
 }
 
-real_t FactorGraph::update(int i, real_t damping)
+template<class Pi, class Pr>
+real_t FactorGraph<Pi, Pr>::update(int i, real_t damping)
 {
-	Node & f = nodes[i];
+	Node<Pi,Pr> & f = nodes[i];
 	int const n = f.neighs.size();
 	vector<Mes> UU, HH, M, R;
 	int const qi = f.bt.size();
@@ -457,7 +468,8 @@ real_t FactorGraph::update(int i, real_t damping)
 
 }
 
-real_t FactorGraph::iteration(real_t damping)
+template<class Pi, class Pr>
+real_t FactorGraph<Pi, Pr>::iteration(real_t damping)
 {
 	int const N = nodes.size();
 	real_t err = 0.0;
@@ -471,7 +483,8 @@ real_t FactorGraph::iteration(real_t damping)
 	return err;
 }
 
-real_t FactorGraph::loglikelihood() const
+template<class Pi, class Pr>
+real_t FactorGraph<Pi, Pr>::loglikelihood() const
 {
 	real_t L = 0;
 	for(auto nit = nodes.begin(), nend = nodes.end(); nit != nend; ++nit)
@@ -479,7 +492,8 @@ real_t FactorGraph::loglikelihood() const
 	return L;
 }
 
-real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping)
+template<class Pi, class Pr>
+real_t FactorGraph<Pi, Pr>::iterate(int maxit, real_t tol, real_t damping)
 {
 	real_t err = std::numeric_limits<real_t>::infinity();
 	for (int it = 1; it <= maxit; ++it) {
@@ -493,7 +507,8 @@ real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping)
 
 
 
-ostream & operator<<(ostream & ost, FactorGraph const & f)
+template<class Pi, class Pr>
+ostream & operator<<(ostream & ost, FactorGraph<Pi,Pr> const & f)
 {
 	int nasym = 0;
 	int nedge = 0;

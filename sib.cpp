@@ -18,6 +18,9 @@
 
 using namespace std;
 
+typedef Uniform Pi;
+typedef Exponential Pr;
+
 pair<vector<tuple<int,int,int,real_t> >, vector<tuple<int,int,int> > >
 read_files(char const * cont_file, char const * obs_file)
 {
@@ -67,10 +70,10 @@ read_files(char const * cont_file, char const * obs_file)
 	return make_pair(contacts,observations);
 }
 
-tuple<Params,char const *, char const *, int, real_t>
+tuple<Params<Pi,Pr>,char const *, char const *, int, real_t>
 parse_opt(int & argc, char ** argv)
 {
-	Params p(Pi(1.0), Pr(1.0,0.01), 0.01, 0.5);
+	Params<Pi,Pr> p(Pi(1.0), Pr(0.5), 0.1, 0.5);
 	char const * obs_file = "/dev/null";
 	char const * cont_file = "/dev/null";
 	int c;
@@ -117,7 +120,7 @@ parse_opt(int & argc, char ** argv)
 int main(int argc, char ** argv) {
 	auto r = parse_opt(argc, argv);
 	auto co = read_files(get<1>(r), get<2>(r));
-	FactorGraph factor(get<0>(r), get<0>(co), get<1>(co));
+	FactorGraph<Pi,Pr> factor(get<0>(r), get<0>(co), get<1>(co));
 	factor.init();
 	factor.iterate(get<3>(r), get<4>(r), 0.0);
 	factor.show_beliefs(cout);

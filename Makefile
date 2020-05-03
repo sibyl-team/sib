@@ -6,14 +6,10 @@ CXX=g++
 
 all: sib ${SO}
 
-params.o: params.cpp params.h
-	${CXX} ${CFLAGS} -c params.cpp -o $@
-bp.o: bp.cpp bp.h cavity.h
-	${CXX} ${CFLAGS} -c bp.cpp -o $@
-sib: bp.o params.o sib.cpp 
-	${CXX} ${CFLAGS} params.o bp.o sib.cpp ${LINK} -o $@
-${SO}: bp.o params.o pysib.cpp
-	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o pysib.cpp -o $@
+sib: sib.cpp bp.h bp_impl.h params.h params_impl.h
+	${CXX} ${CFLAGS} sib.cpp ${LINK} -o $@
+${SO}: pysib.cpp bp.h bp_impl.h params.h params_impl.h
+	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} pysib.cpp -o $@
 
 test: all
 	python3 test/run_tests.py

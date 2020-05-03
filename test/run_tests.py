@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 import os
 import data_load
+import math
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(1, dir_path+"/..")
@@ -57,7 +58,11 @@ class SibillaTest(unittest.TestCase):
 
     def run_sib_instance(self,inst,callback_fun=callback):
         mu = self.params["mu"]
-        sib_pars = sib.Params(prob_r=sib.Gamma(mu=mu))
+        tmax = max(x[2] for x in self.contacts_sib)
+        tmax = max(tmax, max(x[2] for x in self.obs_all_sib[inst]))
+        prob_r=sib.PriorDiscrete(sib.VectorReal(math.exp(-mu*x) for x in range(tmax + 3)))
+        prob_i=sib.PriorDiscrete(sib.VectorReal(1.0 for x in range(tmax + 3)))
+        sib_pars = sib.Params(prob_r=prob_r, prob_i=prob_i)
         sib_fg = sib.FactorGraph(sib_pars, self.contacts_sib, self.obs_all_sib[inst])
 
         sib.iterate(sib_fg, maxit=1000, tol=6e-6, callback=callback_fun)

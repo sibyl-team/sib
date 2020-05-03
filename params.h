@@ -11,14 +11,13 @@ class Uniform;
 class Exponential;
 class Gamma;
 class PriorDiscrete;
-typedef Gamma Pr;
-typedef Uniform Pi;
 
 
 struct PriorDiscrete
 {
 	PriorDiscrete(std::vector<real_t> const & p) : p(p) {}
-	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? p[d] : 0.0; }
+	PriorDiscrete() : p({1.0, 1.0}) {}
+	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	std::vector<real_t> p;
 };
 
@@ -58,6 +57,7 @@ struct Gamma
 std::ostream & operator<<(std::ostream & ost, Gamma const & g);
 
 
+template<class Pi, class Pr>
 struct Params {
 	Pi prob_i;
 	Pr prob_r;
@@ -69,6 +69,9 @@ struct Params {
 	}
 };
 
-std::ostream & operator<<(std::ostream &, Params const &);
+template<class Pi, class Pr>
+std::ostream & operator<<(std::ostream &, Params<Pi,Pr> const &);
+
+#include "params_impl.h"
 
 #endif
