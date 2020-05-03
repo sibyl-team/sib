@@ -121,6 +121,11 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("mu", &Gamma::mu)
         .def("__repr__", &print<Gamma>);
 
+    py::class_<PriorDiscrete>(m, "PriorDiscrete")
+        .def(py::init<vector<real_t>>())
+        .def_readwrite("p", &PriorDiscrete::p)
+        .def("__repr__", &print<PriorDiscrete>);
+
     py::class_<Params>(m, "Params")
         .def(py::init<Pi, Pr, real_t, real_t>(),
                 "Params class. prob_i and prob_r parameters are defaults.",
