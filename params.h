@@ -57,11 +57,17 @@ struct ExpGammaInc
 	real_t mu;
 	real_t probs[200];
 	ExpGammaInc(real_t k, real_t mu) : k(k), mu(mu) {
+		real_t sum = 0;
 		for (int d = 0; d < 200; d++) {
 			double l = boost::math::gamma_p(k, d * mu);
 			if (d > 0)
 				l -= boost::math::gamma_p(k, (d - 1) * mu);
-			probs[d] = 1. - exp(-l);
+			real_t p = 1. - exp(-l);
+			probs[d] = p;
+			sum += p;
+		}
+		for (int d = 0; d < 200; d++) {
+			probs[d] /= sum;
 		}
 	}
 	real_t operator()(real_t d) const { return probs[int(d)]; }
