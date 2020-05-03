@@ -11,12 +11,10 @@ typedef double real_t;
 class Uniform;
 class Exponential;
 class Gamma;
-class GammaInc;
 class ExpGammaInc;
 
 typedef Gamma Pr;
 typedef ExpGammaInc Pi;
-
 
 struct Uniform
 {
@@ -53,34 +51,20 @@ struct Gamma
 std::ostream & operator<<(std::ostream & ost, Gamma const & g);
 
 
-struct GammaInc
-{
-	real_t k;
-	real_t mu;
-	GammaInc(real_t k, real_t mu) : k(k), mu(mu) {}
-	real_t operator()(real_t d) const {
-		double l = boost::math::gamma_p(k,d * mu);
-		if (d > 0)
-			l -= boost::math::gamma_p(k,(d - 1) * mu);
-		return l;
-	}
-	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
-};
-
-std::ostream & operator<<(std::ostream & ost, GammaInc const & g);
-
-
 struct ExpGammaInc
 {
 	real_t k;
 	real_t mu;
-	ExpGammaInc(real_t k, real_t mu) : k(k), mu(mu) {}
-	real_t operator()(real_t d) const {
-		double l = boost::math::gamma_p(k,d * mu);
-		if (l > 0)
-			l -= boost::math::gamma_p(k,(d - 1) * mu);
-		return exp(1 - l);
+	real_t probs[200];
+	ExpGammaInc(real_t k, real_t mu) : k(k), mu(mu) {
+		for (int d = 0; d < 200; d++) {
+			double l = boost::math::gamma_p(k, d * mu);
+			if (d > 0)
+				l -= boost::math::gamma_p(k, (d - 1) * mu);
+			probs[d] = 1. - exp(-l);
+		}
 	}
+	real_t operator()(real_t d) const { return probs[int(d)]; }
 	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
 };
 
