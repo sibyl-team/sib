@@ -81,16 +81,16 @@ parse_opt(int & argc, char ** argv)
 	while ((c = getopt(argc, argv, "s:i:m:o:c:t:h")) != -1 ) {
 		switch(c) {
 			case 't':
-				tol = stod(string(optarg));
+				tol = stod(optarg);
 				break;
 			case 'i':
-				maxit = stod(string(optarg));
+				maxit = stoi(optarg);
 				break;
 			case 'm':
-				p.prob_r.mu = stod(string(optarg));
+				p.prob_r.mu = stod(optarg);
 				break;
 			case 's':
-				p.pseed = stod(string(optarg));
+				p.pseed = stoi(optarg);
 				break;
 			case 'o':
 				obs_file = optarg;
