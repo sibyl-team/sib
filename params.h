@@ -10,9 +10,19 @@ typedef double real_t;
 class Uniform;
 class Exponential;
 class Gamma;
+class PriorDiscrete;
 typedef Gamma Pr;
 typedef Uniform Pi;
 
+
+struct PriorDiscrete
+{
+	PriorDiscrete(std::vector<real_t> const & p) : p(p) {}
+	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? p[d] : 0.0; }
+	std::vector<real_t> p;
+};
+
+std::ostream & operator<<(std::ostream & ost, PriorDiscrete const & p);
 
 struct Uniform
 {
