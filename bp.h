@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <memory>
 #include <omp.h>
 
 #include "params.h"
@@ -38,11 +39,16 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, Pi const & prob_i, Pr const & prob_g) : index(index), prob_g(prob_g), prob_i(prob_i), f_(0) {}
+	Node(int index, std::shared_ptr<Proba const> prob_i, std::shared_ptr<Proba const> prob_g) :
+		index(index),
+		prob_i(prob_i),
+		prob_g(prob_g),
+		f_(0)
+	{}
 	int index;
-	Pr prob_g;
-	Pi prob_i;
-	std::vector<int> times;  // event times
+	std::shared_ptr<Proba const> prob_i;
+	std::shared_ptr<Proba const> prob_g;
+	std::vector<int> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
 	std::vector<real_t> ht;  // message infection times T[ni+2]
@@ -59,7 +65,7 @@ public:
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
-		std::vector<std::tuple<int, Pi, Pr> > const & individuals = std::vector<std::tuple<int, Pi, Pr> >());
+		std::vector<std::tuple<int, Proba&, Proba&> > const & individuals = std::vector<std::tuple<int, Proba&, Proba&> >());
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);

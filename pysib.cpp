@@ -82,11 +82,11 @@ PYBIND11_MODULE(_sib, m) {
         .def(py::init<Params const &,
                 vector<tuple<int,int,int,real_t>>,
                 vector<tuple<int,int,int>>,
-                vector<tuple<int,Pi,Pr>> >(),
+                vector<tuple<int,Proba&,Proba&>> >(),
                 py::arg("params"),
                 py::arg("contacts"),
                 py::arg("observations"),
-                py::arg("individuals") = vector<tuple<int,Pi,Pr>>())
+                py::arg("individuals") = vector<tuple<int,Proba&,Proba&>>())
         .def("update", &FactorGraph::iteration)
         .def("loglikelihood", &FactorGraph::loglikelihood)
         .def("reset", &FactorGraph::init)
@@ -105,32 +105,35 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("times", &Node::times)
         .def_readonly("index", &Node::index);
 
-    py::class_<Uniform>(m, "Uniform")
+    py::class_<Proba, shared_ptr<Proba>>(m, "Proba");
+
+    py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
         .def(py::init<real_t>(), py::arg("p") = 1.0)
         .def_readwrite("p", &Uniform::p)
         .def("__repr__", &print<Uniform>);
 
-    py::class_<Exponential>(m, "Exponential")
+    py::class_<Exponential, Proba, shared_ptr<Exponential>>(m, "Exponential")
         .def(py::init<real_t>(), py::arg("mu") = 0.1)
         .def_readwrite("mu", &Exponential::mu)
         .def("__repr__", &print<Exponential>);
 
-    py::class_<Gamma>(m, "Gamma")
+    py::class_<Gamma, Proba, shared_ptr<Gamma>>(m, "Gamma")
         .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
         .def_readwrite("k", &Gamma::k)
         .def_readwrite("mu", &Gamma::mu)
         .def("__repr__", &print<Gamma>);
 
-    py::class_<PriorDiscrete>(m, "PriorDiscrete")
+    py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
         .def(py::init<vector<real_t>>())
         .def_readwrite("p", &PriorDiscrete::p)
         .def("__repr__", &print<PriorDiscrete>);
 
+
     py::class_<Params>(m, "Params")
-        .def(py::init<Pi, Pr, real_t, real_t>(),
+        .def(py::init<Proba &, Proba &, real_t, real_t>(),
                 "Params class. prob_i and prob_r parameters are defaults.",
-                py::arg("prob_i") = Pi(1.0),
-                py::arg("prob_r") = Pr(1.0, 0.1),
+                py::arg("prob_i") = *new Pi(1.0),
+                py::arg("prob_r") = *new Pr(1.0, 0.1),
                 py::arg("pseed") = 0.01,
                 py::arg("psus") = 0.5)
         .def_readwrite("prob_r", &Params::prob_r)
