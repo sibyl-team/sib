@@ -311,6 +311,8 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
+	Proba const & prob_i = *f.prob_i;
+	Proba const & prob_r = *f.prob_r;
 	int const n = f.neighs.size();
 	int const qi = f.bt.size();
 
@@ -353,7 +355,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					real_t const l =  (*f.prob_i)(f.times[v.t[sij]]-f.times[ti], v.lambdas[sij]);
+					real_t const l =  prob_i(f.times[v.t[sij]]-f.times[ti], v.lambdas[sij]);
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);;
 					pi *= 1 - l;
@@ -402,7 +404,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const pg = (*f.prob_r)(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : (*f.prob_r)(f.times[gi + 1] - f.times[ti]));
+			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
 			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;
@@ -427,7 +429,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				real_t c = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					int const tij = v.t[sij];
-					real_t const l = (*f.prob_i)(f.times[tij] - f.times[ti],  v.lambdas[sij]);
+					real_t const l = prob_i(f.times[tij] - f.times[ti],  v.lambdas[sij]);
 					UU[j](sij, sji) += CG[tij] * pi * l;
 					c += (CG[ti] - CG[tij]) * pi * l;
 					pi *= 1 - l;
