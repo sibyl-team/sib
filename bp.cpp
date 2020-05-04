@@ -39,7 +39,7 @@ void cumsum(Mes & m, int a, int b)
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		vector<tuple<int, Pi, Pr> > const & individuals) : params(params)
+		vector<tuple<int, Proba&, Proba&> > const & individuals) : params(params)
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
@@ -72,8 +72,8 @@ FactorGraph::FactorGraph(Params const & params,
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
 		int a = add_node(get<0>(*it));
-		nodes[a].prob_i = get<1>(*it);
-		nodes[a].prob_g = get<2>(*it);
+		nodes[a].prob_i = shared_ptr<Proba const>(&get<1>(*it));
+		nodes[a].prob_g = shared_ptr<Proba const>(&get<2>(*it));
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -122,7 +122,7 @@ int FactorGraph::add_node(int i)
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, params.prob_i, params.prob_r));
+	nodes.push_back(Node(i, shared_ptr<Proba const>(params.prob_i), shared_ptr<Proba const>(params.prob_r)));
 	return index[i];
 }
 
@@ -346,7 +346,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					real_t const l = v.lambdas[sij] * f.prob_i(v.times[sij]-f.times[ti]);
+					real_t const l = v.lambdas[sij] * (*f.prob_i)(v.times[sij]-f.times[ti]);
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);;
 					pi *= 1 - l;
@@ -394,7 +394,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const pg = f.prob_g(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : f.prob_g(f.times[gi + 1] - f.times[ti]));
+			real_t const pg = (*f.prob_g)(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : (*f.prob_g)(f.times[gi + 1] - f.times[ti]));
 			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;
@@ -419,7 +419,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				int ming = ti;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					ming = lower_bound(&f.times[0] + ming, &f.times[0] + qi, v.times[sij]) - &f.times[0];
-					real_t const l = f.prob_i(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
+					real_t const l = (*f.prob_i)(v.times[sij]-f.times[ti]) *  v.lambdas[sij];
 					UU[j](sij, sji) += CG[ming] * pi * l;
 					c += (CG[ti] - CG[ming]) * pi * l;
 					pi *= 1 - l;
