@@ -19,6 +19,7 @@ typedef Uniform Pi;
 struct Proba
 {
 	virtual real_t operator()(real_t) const = 0;
+	virtual real_t operator()(real_t d, real_t lambda) const { return operator()(d)*lambda; }
 	virtual Proba * clone() const = 0;
 	virtual void print(std::ostream &) const = 0;
 };
@@ -33,6 +34,22 @@ struct PriorDiscrete : public Proba
 	Proba * clone() const { return new PriorDiscrete(*this); }
 	void print(std::ostream & ost) const {
 	    ost << "PriorDiscrete(";
+	    for (auto it = p.begin(); it < p.end() - 1; ++it)
+		ost << *it << ",";
+	    ost << p.back() << ")";
+	}
+};
+
+
+struct ExpDiscrete : public Proba
+{
+	ExpDiscrete(std::vector<real_t> const & p) : p(p) {}
+	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? p[d] : 0.0; }
+	real_t operator()(real_t d, real_t lambda) const { return std::exp(-operator()(d)*lambda); }
+	std::vector<real_t> p;
+	Proba * clone() const { return new ExpDiscrete(*this); }
+	void print(std::ostream & ost) const {
+	    ost << "ExpDiscrete(";
 	    for (auto it = p.begin(); it < p.end() - 1; ++it)
 		ost << *it << ",";
 	    ost << p.back() << ")";

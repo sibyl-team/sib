@@ -25,18 +25,26 @@ namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
-PriorDiscrete make_discrete(py::list & l)
+vector<real_t> make_vector(py::list & l)
 {
     vector<real_t> v(l.size());
     int i = 0;
     for (py::handle o : l) {
         v[i++] = py::cast<real_t>(o);
     }
-    return PriorDiscrete(v);
+    return v;
+}
 
+PriorDiscrete make_discrete(py::list & l)
+{
+    return PriorDiscrete(make_vector(l));
 }
 
 
+ExpDiscrete make_exp_discrete(py::list & l)
+{
+    return ExpDiscrete(make_vector(l));
+}
 
 
 
@@ -144,6 +152,10 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("p", &PriorDiscrete::p)
         .def("__repr__", &print<PriorDiscrete>);
 
+    py::class_<ExpDiscrete, Proba, shared_ptr<ExpDiscrete>>(m, "ExpDiscrete")
+        .def(py::init(&make_exp_discrete))
+        .def_readwrite("p", &ExpDiscrete::p)
+        .def("__repr__", &print<ExpDiscrete>);
 
     py::class_<Params>(m, "Params")
         .def(py::init<Proba &, Proba &, real_t, real_t>(),
