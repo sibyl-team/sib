@@ -65,7 +65,8 @@ public:
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
-		std::vector<std::tuple<int, Proba&, Proba&> > const & individuals = std::vector<std::tuple<int, Proba&, Proba&> >());
+		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
+			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
