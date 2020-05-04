@@ -45,7 +45,7 @@ struct ExpDiscrete : public Proba
 {
 	ExpDiscrete(std::vector<real_t> const & p) : p(p) {}
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
-	real_t operator()(real_t d, real_t lambda) const { return std::exp(-operator()(d)*lambda); }
+	real_t operator()(real_t d, real_t lambda) const { return 1.0-std::exp(-operator()(d)*lambda); }
 	std::vector<real_t> p;
 	Proba * clone() const { return new ExpDiscrete(*this); }
 	void print(std::ostream & ost) const {
