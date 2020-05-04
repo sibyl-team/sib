@@ -1,5 +1,9 @@
 from _sib import *
 
+import _sib
+
+__module_file__ = _sib.__file__
+
 def marginal(n):
     return n.marginal()
 

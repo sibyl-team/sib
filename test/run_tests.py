@@ -25,8 +25,12 @@ import os
 import data_load
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(1, dir_path+"/..")
-import sib
+#sys.path.insert(4, dir_path+"/..")
+try:
+    import sib
+except ModuleNotFoundError:
+    sys.path.insert(4, dir_path+"/..")
+    import sib
 script_path = Path(dir_path)
 
 FOLDER = script_path / "data" / "tree_check"
@@ -54,6 +58,7 @@ def load_run_data(filename,n_inst,num_nodes):
 
 
 class SibillaTest(unittest.TestCase):
+    showed = False
 
     def run_sib_instance(self,inst,callback_fun=callback):
         mu = self.params["mu"]
@@ -89,6 +94,10 @@ class SibillaTest(unittest.TestCase):
         return p_sources, accu
 
     def setUp(self):
+        if not self.showed:
+            print("\nImported sib from "+sib.__module_file__)
+            self.showed = True
+
         # params,contacts,observ,all_epi
         self.data = data_load.load_exported_data(FOLDER)
         self.params = self.data[0]
