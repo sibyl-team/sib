@@ -73,7 +73,7 @@ FactorGraph::FactorGraph(Params const & params,
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
 		int a = add_node(get<0>(*it));
 		nodes[a].prob_i = get<1>(*it);
-		nodes[a].prob_g = get<2>(*it);
+		nodes[a].prob_r = get<2>(*it);
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -402,7 +402,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const pg = (*f.prob_g)(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : (*f.prob_g)(f.times[gi + 1] - f.times[ti]));
+			real_t const pg = (*f.prob_r)(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : (*f.prob_r)(f.times[gi + 1] - f.times[ti]));
 			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;

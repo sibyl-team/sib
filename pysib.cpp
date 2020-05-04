@@ -6,6 +6,7 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pytypes.h>
 #include <string>
 #include <sstream>
 #include <numeric>
@@ -20,11 +21,23 @@ PYBIND11_MAKE_OPAQUE(std::vector<int>);
 PYBIND11_MAKE_OPAQUE(std::vector<Node>);
 //PYBIND11_MAKE_OPAQUE(std::vector<tuple<real_t, real_t, real_t>>);
 
-
 namespace py = pybind11;
-
 using namespace std;
 using boost::lexical_cast;
+
+PriorDiscrete make_discrete(py::list & l)
+{
+    vector<real_t> v(l.size());
+    int i = 0;
+    for (py::handle o : l) {
+        v[i++] = py::cast<real_t>(o);
+    }
+    return PriorDiscrete(v);
+
+}
+
+
+
 
 
 template<class T> string print(const T & t) { return lexical_cast<string>(t); }
@@ -104,6 +117,8 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("bt", &Node::bt)
         .def_readonly("bg", &Node::bg)
         .def_readonly("times", &Node::times)
+        .def_readonly("prob_i", &Node::prob_i)
+        .def_readonly("prob_r", &Node::prob_r)
         .def_readonly("index", &Node::index);
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba");
@@ -125,7 +140,7 @@ PYBIND11_MODULE(_sib, m) {
         .def("__repr__", &print<Gamma>);
 
     py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
-        .def(py::init<vector<real_t>>())
+        .def(py::init(&make_discrete))
         .def_readwrite("p", &PriorDiscrete::p)
         .def("__repr__", &print<PriorDiscrete>);
 
