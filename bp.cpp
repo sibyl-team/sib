@@ -39,7 +39,7 @@ void cumsum(Mes & m, int a, int b)
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		vector<tuple<int, Proba&, Proba&> > const & individuals) : params(params)
+		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals) : params(params)
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
@@ -72,8 +72,8 @@ FactorGraph::FactorGraph(Params const & params,
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
 		int a = add_node(get<0>(*it));
-		nodes[a].prob_i = shared_ptr<Proba const>(&get<1>(*it));
-		nodes[a].prob_g = shared_ptr<Proba const>(&get<2>(*it));
+		nodes[a].prob_i = get<1>(*it);
+		nodes[a].prob_g = get<2>(*it);
 	}
 
 	for (int i = 0; i < int(nodes.size()); ++i) {
