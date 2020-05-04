@@ -29,7 +29,7 @@ std::ostream & operator<<(std::ostream & ost, Proba const & p);
 struct PriorDiscrete : public Proba
 {
 	PriorDiscrete(std::vector<real_t> const & p) : p(p) {}
-	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? p[d] : 0.0; }
+	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	std::vector<real_t> p;
 	Proba * clone() const { return new PriorDiscrete(*this); }
 	void print(std::ostream & ost) const {
@@ -44,7 +44,7 @@ struct PriorDiscrete : public Proba
 struct ExpDiscrete : public Proba
 {
 	ExpDiscrete(std::vector<real_t> const & p) : p(p) {}
-	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? p[d] : 0.0; }
+	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	real_t operator()(real_t d, real_t lambda) const { return std::exp(-operator()(d)*lambda); }
 	std::vector<real_t> p;
 	Proba * clone() const { return new ExpDiscrete(*this); }
