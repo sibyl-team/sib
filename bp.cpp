@@ -76,6 +76,10 @@ FactorGraph::FactorGraph(Params const & params,
 		nodes[a].prob_r = get<2>(*it);
 	}
 
+	if (nodes.size() > tobs.size()) {
+		tobs.resize(nodes.size());
+		sobs.resize(nodes.size());
+	}
 	for (int i = 0; i < int(nodes.size()); ++i) {
 		vector<int> F = tobs[i];
 		for (int k = 0; k < int(nodes[i].neighs.size()); ++k) {
@@ -122,7 +126,7 @@ int FactorGraph::add_node(int i)
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, shared_ptr<Proba>(params.prob_i), shared_ptr<Proba>(params.prob_r)));
+	nodes.push_back(Node(i, params.prob_i, params.prob_r));
 
 	return index[i];
 }
