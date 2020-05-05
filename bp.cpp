@@ -187,8 +187,8 @@ void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const &
 	}
 
 	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
-		nodes[i].ht[t] = (tl <= t && t <= tu);
-		nodes[i].hg[t] = (gl <= t && t <= gu);
+		nodes[i].ht[t] = params.softconstraint + (1-params.softconstraint)*(tl <= t && t <= tu);
+		nodes[i].hg[t] = params.softconstraint + (1-params.softconstraint)*(gl <= t && t <= gu);
 	}
 }
 
