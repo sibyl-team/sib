@@ -94,13 +94,13 @@ struct Gamma : public Proba
 
 
 struct Params {
-	std::shared_ptr<Proba const> prob_i;
-	std::shared_ptr<Proba const> prob_r;
+	std::shared_ptr<Proba> prob_i;
+	std::shared_ptr<Proba> prob_r;
 	real_t pseed;
 	real_t psus;
 	Params(Proba const & pi, Proba const & pr, real_t pseed, real_t psus) :
-		prob_i(std::shared_ptr<Proba const>(pi.clone())),
-		prob_r(std::shared_ptr<Proba const>(pr.clone())),
+		prob_i(std::shared_ptr<Proba>(pi.clone())),
+		prob_r(std::shared_ptr<Proba>(pr.clone())),
 		pseed(pseed),
 		psus(psus)
 	{

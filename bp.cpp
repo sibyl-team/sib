@@ -122,7 +122,8 @@ int FactorGraph::add_node(int i)
 	if (mit != index.end())
 		return mit->second;
 	index[i] = nodes.size();
-	nodes.push_back(Node(i, shared_ptr<Proba const>(params.prob_i), shared_ptr<Proba const>(params.prob_r)));
+	nodes.push_back(Node(i, shared_ptr<Proba>(params.prob_i), shared_ptr<Proba>(params.prob_r)));
+
 	return index[i];
 }
 

@@ -39,15 +39,15 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, std::shared_ptr<Proba const> prob_i, std::shared_ptr<Proba const> prob_r) :
+	Node(int index, std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r) :
 		index(index),
 		prob_i(prob_i),
 		prob_r(prob_r),
 		f_(0)
 	{}
 	int index;
-	std::shared_ptr<Proba const> prob_i;
-	std::shared_ptr<Proba const> prob_r;
+	std::shared_ptr<Proba> prob_i;
+	std::shared_ptr<Proba> prob_r;
 	std::vector<int> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
