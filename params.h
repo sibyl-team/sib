@@ -98,9 +98,9 @@ struct Params {
 	std::shared_ptr<Proba> prob_r;
 	real_t pseed;
 	real_t psus;
-	Params(Proba const & pi, Proba const & pr, real_t pseed, real_t psus) :
-		prob_i(std::shared_ptr<Proba>(pi.clone())),
-		prob_r(std::shared_ptr<Proba>(pr.clone())),
+	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus) :
+		prob_i(pi),
+		prob_r(pr),
 		pseed(pseed),
 		psus(psus)
 	{

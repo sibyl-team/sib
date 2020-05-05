@@ -98,37 +98,6 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
     //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
 
-
-    py::class_<FactorGraph>(m, "FactorGraph")
-        .def(py::init<Params const &,
-                vector<tuple<int,int,int,real_t>>,
-                vector<tuple<int,int,int>>,
-                vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>
-                >(),
-                py::arg("params"),
-                py::arg("contacts"),
-                py::arg("observations"),
-                py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>())
-        .def("update", &FactorGraph::iteration)
-        .def("loglikelihood", &FactorGraph::loglikelihood)
-        .def("reset", &FactorGraph::init)
-        .def("get_index", &get_index)
-        .def("__repr__", &print<FactorGraph>)
-        .def_readonly("nodes", &FactorGraph::nodes)
-        .def_readonly("params", &FactorGraph::params);
-
-    py::class_<Node>(m, "Node")
-        .def("marginal", &get_marginal)
-        .def("marginal_t", &get_marginal_t)
-        .def_readwrite("ht", &Node::ht)
-        .def_readwrite("hg", &Node::hg)
-        .def_readonly("bt", &Node::bt)
-        .def_readonly("bg", &Node::bg)
-        .def_readonly("times", &Node::times)
-        .def_readonly("prob_i", &Node::prob_i)
-        .def_readonly("prob_r", &Node::prob_r)
-        .def_readonly("index", &Node::index);
-
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba");
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
@@ -158,10 +127,10 @@ PYBIND11_MODULE(_sib, m) {
         .def("__repr__", &print<ExpDiscrete>);
 
     py::class_<Params>(m, "Params")
-        .def(py::init<Proba &, Proba &, real_t, real_t>(),
+        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t>(),
                 "Params class. prob_i and prob_r parameters are defaults.",
-                py::arg("prob_i") = *new Pi(1.0),
-                py::arg("prob_r") = *new Pr(1.0, 0.1),
+                py::arg("prob_i") = *new Uniform(1.0),
+                py::arg("prob_r") = *new Exponential(0.1),
                 py::arg("pseed") = 0.01,
                 py::arg("psus") = 0.5)
         .def_readwrite("prob_r", &Params::prob_r)
@@ -169,5 +138,36 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("pseed", &Params::pseed)
         .def_readwrite("psus", &Params::psus)
         .def("__repr__", &print<Params>);
+
+    py::class_<FactorGraph>(m, "FactorGraph")
+        .def(py::init<Params const &,
+                vector<tuple<int,int,int,real_t>>,
+                vector<tuple<int,int,int>>,
+                vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>
+                >(),
+                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45),
+                py::arg("contacts") = vector<tuple<int,int,int,real_t>>(),
+                py::arg("observations") = vector<tuple<int,int,int>>(),
+                py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>())
+        .def("update", &FactorGraph::iteration)
+        .def("loglikelihood", &FactorGraph::loglikelihood)
+        .def("reset", &FactorGraph::init)
+        .def("get_index", &get_index)
+        .def("__repr__", &print<FactorGraph>)
+        .def_readonly("nodes", &FactorGraph::nodes)
+        .def_readonly("params", &FactorGraph::params);
+
+    py::class_<Node>(m, "Node")
+        .def("marginal", &get_marginal)
+        .def("marginal_t", &get_marginal_t)
+        .def_readwrite("ht", &Node::ht)
+        .def_readwrite("hg", &Node::hg)
+        .def_readonly("bt", &Node::bt)
+        .def_readonly("bg", &Node::bg)
+        .def_readonly("times", &Node::times)
+        .def_readonly("prob_i", &Node::prob_i)
+        .def_readonly("prob_r", &Node::prob_r)
+        .def_readonly("index", &Node::index);
+
     m.def("set_num_threads", &omp_set_num_threads);
 }
