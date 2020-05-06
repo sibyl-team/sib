@@ -39,7 +39,8 @@ void cumsum(Mes & m, int a, int b)
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals) : params(params)
+		vector<tuple<int, std::shared_ptr<Proba>,std::shared_ptr<Proba>> > const & individuals)
+	: params(params)
 {
 	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
@@ -50,8 +51,8 @@ FactorGraph::FactorGraph(Params const & params,
 		add_contact(i, j, t, lambda);
 	}
 
-	vector<vector<int> > tobs(nodes.size());
-	vector<vector<int> > sobs(nodes.size());
+	vector<vector<int>> tobs(nodes.size());
+	vector<vector<int>> sobs(nodes.size());
 	for (auto it = obs.begin(); it != obs.end(); ++it) {
 		int i,s,t;
 		tie(i,s,t) = *it;
@@ -136,9 +137,10 @@ int FactorGraph::add_node(int i)
 	map<int,int>::iterator mit = index.find(i);
 	if (mit != index.end())
 		return mit->second;
-	index[i] = nodes.size();
+	int idx = nodes.size();
+	index[i] = idx;
 	nodes.push_back(Node(i, params.prob_i, params.prob_r));
-	return index[i];
+	return idx;
 }
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
@@ -370,8 +372,8 @@ real_t FactorGraph::update(int i, real_t damping)
 			}
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
-			fill(CG0[j].begin(), CG0[j].end(), real_t(0));
-			fill(CG01[j].begin(), CG01[j].end(), real_t(0));
+			fill(CG0[j].begin(), CG0[j].end(), 0.0);
+			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 		}
 		min_g = min_out;
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
@@ -380,7 +382,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				Mes & r = R[j];
 				Neigh const & v = f.neighs[j];
 				int const qj = v.t.size();
-				int const * b = &v.t[0];
+				int const *b = &v.t[0];
 				min_g[j] = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
 
 				/*
