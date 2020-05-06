@@ -30,8 +30,8 @@ struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) { omp_init_lock(&lock_); }
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
-	std::vector<int> times; // times of contacts
-	std::vector<real_t> lambdas; // times of contacts
+	std::vector<int> t; // time index of contacts
+	std::vector<real_t> lambdas; // transmission probability
 	Mes msg; // BP msg nij^2 or
 	void lock() const { omp_set_lock(&lock_); }
 	void unlock() const { omp_unset_lock(&lock_); }
