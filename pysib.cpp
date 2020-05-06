@@ -6,6 +6,7 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pytypes.h>
 #include <string>
 #include <sstream>
 #include <numeric>
@@ -20,11 +21,31 @@ PYBIND11_MAKE_OPAQUE(std::vector<int>);
 PYBIND11_MAKE_OPAQUE(std::vector<Node>);
 //PYBIND11_MAKE_OPAQUE(std::vector<tuple<real_t, real_t, real_t>>);
 
-
 namespace py = pybind11;
-
 using namespace std;
 using boost::lexical_cast;
+
+vector<real_t> make_vector(py::list & l)
+{
+    vector<real_t> v(l.size());
+    int i = 0;
+    for (py::handle o : l) {
+        v[i++] = py::cast<real_t>(o);
+    }
+    return v;
+}
+
+PriorDiscrete make_discrete(py::list & l)
+{
+    return PriorDiscrete(make_vector(l));
+}
+
+
+ExpDiscrete make_exp_discrete(py::list & l)
+{
+    return ExpDiscrete(make_vector(l));
+}
+
 
 
 template<class T> string print(const T & t) { return lexical_cast<string>(t); }
@@ -77,16 +98,59 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
     //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
 
+    py::class_<Proba, shared_ptr<Proba>>(m, "Proba");
+
+    py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
+        .def(py::init<real_t>(), py::arg("p") = 1.0)
+        .def_readwrite("p", &Uniform::p)
+        .def("__repr__", &print<Uniform>);
+
+    py::class_<Exponential, Proba, shared_ptr<Exponential>>(m, "Exponential")
+        .def(py::init<real_t>(), py::arg("mu") = 0.1)
+        .def_readwrite("mu", &Exponential::mu)
+        .def("__repr__", &print<Exponential>);
+
+    py::class_<Gamma, Proba, shared_ptr<Gamma>>(m, "Gamma")
+        .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
+        .def_readwrite("k", &Gamma::k)
+        .def_readwrite("mu", &Gamma::mu)
+        .def("__repr__", &print<Gamma>);
+
+    py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
+        .def(py::init(&make_discrete))
+        .def_readwrite("p", &PriorDiscrete::p)
+        .def("__repr__", &print<PriorDiscrete>);
+
+    py::class_<ExpDiscrete, Proba, shared_ptr<ExpDiscrete>>(m, "ExpDiscrete")
+        .def(py::init(&make_exp_discrete))
+        .def_readwrite("p", &ExpDiscrete::p)
+        .def("__repr__", &print<ExpDiscrete>);
+
+    py::class_<Params>(m, "Params")
+        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t>(),
+                "Params class. prob_i and prob_r parameters are defaults.",
+                py::arg("prob_i") = *new Uniform(1.0),
+                py::arg("prob_r") = *new Exponential(0.1),
+                py::arg("pseed") = 0.01,
+                py::arg("psus") = 0.5,
+                py::arg("softconstraint") = 0.0)
+        .def_readwrite("prob_r", &Params::prob_r)
+        .def_readwrite("prob_i", &Params::prob_i)
+        .def_readwrite("pseed", &Params::pseed)
+        .def_readwrite("psus", &Params::psus)
+        .def_readwrite("softconstraint", &Params::softconstraint)
+        .def("__repr__", &print<Params>);
 
     py::class_<FactorGraph>(m, "FactorGraph")
         .def(py::init<Params const &,
                 vector<tuple<int,int,int,real_t>>,
                 vector<tuple<int,int,int>>,
-                vector<tuple<int,Pi,Pr>> >(),
-                py::arg("params"),
-                py::arg("contacts"),
-                py::arg("observations"),
-                py::arg("individuals") = vector<tuple<int,Pi,Pr>>())
+                vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>
+                >(),
+                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0),
+                py::arg("contacts") = vector<tuple<int,int,int,real_t>>(),
+                py::arg("observations") = vector<tuple<int,int,int>>(),
+                py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration)
         .def("loglikelihood", &FactorGraph::loglikelihood)
         .def("reset", &FactorGraph::init)
@@ -103,40 +167,9 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("bt", &Node::bt)
         .def_readonly("bg", &Node::bg)
         .def_readonly("times", &Node::times)
+        .def_readonly("prob_i", &Node::prob_i)
+        .def_readonly("prob_r", &Node::prob_r)
         .def_readonly("index", &Node::index);
 
-    py::class_<Uniform>(m, "Uniform")
-        .def(py::init<real_t>(), py::arg("p") = 1.0)
-        .def_readwrite("p", &Uniform::p)
-        .def("__repr__", &print<Uniform>);
-
-    py::class_<Exponential>(m, "Exponential")
-        .def(py::init<real_t>(), py::arg("mu") = 0.1)
-        .def_readwrite("mu", &Exponential::mu)
-        .def("__repr__", &print<Exponential>);
-
-    py::class_<Gamma>(m, "Gamma")
-        .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
-        .def_readwrite("k", &Gamma::k)
-        .def_readwrite("mu", &Gamma::mu)
-        .def("__repr__", &print<Gamma>);
-
-    py::class_<PriorDiscrete>(m, "PriorDiscrete")
-        .def(py::init<vector<real_t>>())
-        .def_readwrite("p", &PriorDiscrete::p)
-        .def("__repr__", &print<PriorDiscrete>);
-
-    py::class_<Params>(m, "Params")
-        .def(py::init<Pi, Pr, real_t, real_t>(),
-                "Params class. prob_i and prob_r parameters are defaults.",
-                py::arg("prob_i") = Pi(1.0),
-                py::arg("prob_r") = Pr(1.0, 0.1),
-                py::arg("pseed") = 0.01,
-                py::arg("psus") = 0.5)
-        .def_readwrite("prob_r", &Params::prob_r)
-        .def_readwrite("prob_i", &Params::prob_i)
-        .def_readwrite("pseed", &Params::pseed)
-        .def_readwrite("psus", &Params::psus)
-        .def("__repr__", &print<Params>);
     m.def("set_num_threads", &omp_set_num_threads);
 }

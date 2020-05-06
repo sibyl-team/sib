@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <memory>
 #include <omp.h>
 
 #include "params.h"
@@ -29,8 +30,8 @@ struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos) { omp_init_lock(&lock_); }
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
-	std::vector<int> times; // times of contacts
-	std::vector<real_t> lambdas; // times of contacts
+	std::vector<int> t; // time index of contacts
+	std::vector<real_t> lambdas; // transmission probability
 	Mes msg; // BP msg nij^2 or
 	void lock() const { omp_set_lock(&lock_); }
 	void unlock() const { omp_unset_lock(&lock_); }
@@ -38,10 +39,15 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, Pi const & prob_i, Pr const & prob_g) : index(index), prob_g(prob_g), prob_i(prob_i), f_(0) {}
+	Node(int index, std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r) :
+		index(index),
+		prob_i(prob_i),
+		prob_r(prob_r),
+		f_(0)
+	{}
 	int index;
-	Pr prob_g;
-	Pi prob_i;
+	std::shared_ptr<Proba> prob_i;
+	std::shared_ptr<Proba> prob_r;
 	std::vector<int> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
@@ -59,7 +65,8 @@ public:
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
-		std::vector<std::tuple<int, Pi, Pr> > const & individuals = std::vector<std::tuple<int, Pi, Pr> >());
+		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
+			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
 	int add_node(int i);
