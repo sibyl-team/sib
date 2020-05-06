@@ -386,18 +386,17 @@ real_t FactorGraph::update(int i, real_t damping)
 				min_g[j] = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
 
 				/*
-				                .-----min_out
-				                |   .-- min_g
-				      sij       v   v
-				      . . . . . . . . .
-				   sji. . . . . . . . .
-				      . . . . . . . . .
-				      . . . . . a a b b <- min_in
-				      . . . . . a a b b
-				      . . . . . c c d d <- min_out
-				      . . . . . c c d d
-				      . . . . . c c d d
-				      . . . . . c c d d
+				              .-----min_out
+				              |   .-- min_g
+				      sij     v   v
+				      . . . . . . . .
+				   sji. . . . . . . .
+				      . . . . . . . .
+				      . . . . a a b b <- min_in
+				      . . . . c c d d <- min_out
+				      . . . . c c d d
+				      . . . . c c d d
+				      . . . . c c d d
 
 
 				   C0 = a + c + b' + d' = (a + c + b + d) - (b + d) + (b' + d')
