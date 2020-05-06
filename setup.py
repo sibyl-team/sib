@@ -4,6 +4,13 @@ from setuptools import setup, Extension
 import sys
 import setuptools
 import unittest
+import os
+
+#decomment the 2 line below
+#if you have problems in compiling sib
+#os.environ["CC"] = "c++-9" 
+#os.environ["CXX"] = "c++-9"
+
 def sib_test():
     test_loader = unittest.TestLoader()
     test_suite = test_loader.discover('test', pattern='*_tests.py')
@@ -42,7 +49,7 @@ ext_modules = [
         ],
         extra_compile_args=[*COMPILE_FLAGS.split(" ")],
         extra_link_args=["-lgomp", "-lm"],
-        #language='c++'
+        language='c++'
     ),
 ]
 
