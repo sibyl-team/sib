@@ -1,4 +1,4 @@
-<h1> SIB   
+<h1> Sibilla  
 <div><small> <small> 
   [S]tatistical [I]nference in Epidemics via [B]elief Propagation 
 </small></small></div>
@@ -130,7 +130,7 @@ Iterate the BP messages.
 ```
 
 ## Contributions
-If you want to participate write us [here]([sybil-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla) or make a pull request.
+If you want to participate write us [sybil-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla) or make a pull request.
 
 ## Mainteiners:
 [sybil-team](https://github.com/sibyl-team)
