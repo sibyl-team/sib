@@ -124,7 +124,7 @@ void append_observation(FactorGraph & G, int i, int s, int t)
         Node & n = G.nodes[i];
         n.times.back() = t;
         n.times.push_back(G.Tinf);
-        t = n.bt.size();
+        int tobs = n.bt.size();
         n.ht.push_back(1.0);
         n.hg.push_back(1.0);
         n.bt.push_back(1.0);
@@ -135,16 +135,16 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 	int gu = qi;
         switch(s) {
                 case 0:
-                        tl = max(tl, t);
-                        gl = max(gl, t);
+                        tl = max(tl, tobs);
+                        gl = max(gl, tobs);
                         break;
                 case 1:
-                        tu = min(tu, t - 1);
-                        gl = max(gl, t);
+                        tu = min(tu, tobs - 1);
+                        gl = max(gl, tobs);
                         break;
                 case 2:
-                        tu = min(tu, t - 1);
-                        gu = min(gu, t - 1);
+                        tu = min(tu, tobs - 1);
+                        gu = min(gu, tobs - 1);
                         break;
                 case -1:
                         break;
@@ -155,6 +155,9 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 		n.ht[t] *= (tl <= t && t <= tu);
 		n.hg[t] *= (gl <= t && t <= gu);
 	}
+        for (int j = 0; j < int(n.neighs.size()); ++j) {
+                n.neighs[j].t.back() = qi - 1;
+        }
 }
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
