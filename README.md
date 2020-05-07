@@ -1,25 +1,140 @@
-## Sibilla
+<h1> SIB   
+<div><small> <small> 
+  [S]tatistical [I]nference in Epidemics via [B]elief Propagation 
+</small></small></div>
+</h1>
 
 
 Belief Propagation for inference in epidemics. This code implements and expands the method described in
 
 https://www.nature.com/articles/srep27538
 
-* Requirements:
+## Requirements:
 
   - A C++11 compiler
   - python3
-  - pybind11
+  - [pybind11]()
   - header only boost libraries
 
-* Compilation:
+## Install:
+you can choose one of the following procedures:
 
-    Adjust makefile and type make. You'll obtain a standalone CLI ./sib executable, plus a dynamic library containing a python module `sib`
+* make
 
-* Usage: 
+    1. Adjust `Makefile`, if needed.
+    2. type: `make`
+    
+* pip install
 
-    Have a look at https://github.com/sibyl-team/sib/blob/master/Sibilla.ipynb
+    1. Adjust the setup.py, if needed.
+    2. `pip install .`
 
+You'll obtain a standalone CLI ./sib, plus a dynamic library containing a python module `sib`
+
+## Quick start: 
+
+ Have a look at this [notebook](https://github.com/sibyl-team/sib/blob/master/Sibilla.ipynb).
+
+## Documentation:
+
+### python module:
+
+```
+sib.Params(
+  prob_i = Uniform(1.0), 
+  prob_r = Exponential(0.1), 
+  pseed = 0.01, 
+  psus = 0.5, 
+  softconstraint = 0):
+    
+    Settings the parameters of the model used for inference.
+
+    Parameters
+    ----------
+    prob_i : Function - optional
+        function to compute the probability of infection, 
+        depending on the difference (t-ti), ti time of infection.
+        [default: Uniform]
+    prob_r : Function - optional
+        function to compute the probability of recovery, 
+        depending on the difference (t-ti), ti time of infection.
+        [default: exponential decay with mu = 0.1]
+    pseed : Float - optional
+        Prior to be source of infections (infected at starting times).
+        [default 1e-2]
+    psus: Float - optional
+        Prior to be susceptible.
+        [default: 0.5]
+    softconstraint: Float
+        Soft the observations constraints.
+
+  
+    Returns
+    -------
+    None
+```
+
+```
+sib.FactorGraph(
+  Params,
+  contacts,
+  observations,
+  individuals = 0
+)
+    Construct the factor graph from the list of contacts,
+    the lists of observations, the Parameters of the model.
+    Eventually is possible to set infectiousness and 
+    recoverability priors on each individual.
+
+    Parameters
+    ----------
+    Params: Class sib.Params -- optional
+        see sib.Params
+    contacts: list<tuple(int, int, int, float)>
+        list of single direct contacts (for bidirectional contacts add also
+        the inverse contact). Order of tuple contact: (node_i, node_j, time, lambda)
+        The lambdas are the instantaneous probability of infection.
+    observations: list<tuple(int, int, int)>
+        list of single observation on single node a time t. Order of observation tuple:
+        (node_i, state, time)
+        Where state could be 0, 1 or 2 representing susceptible, infected, recovery.
+    individuals: list(tuple(int, prior_t, prior_r)) [optional]
+        List of tuple where each tuple are the prior on the infectiousness and recoverability of node "i".
+
+    return
+    ------
+      Class FactorGraph
+
+```
+```
+sib.iterate(
+  f,
+  maxit=100,
+  tol=1e-3, 
+  damping=0.0,
+  callback=(lambda t, err, f: print(t, err, flush=True))
+)
+Iterate the BP messages.
+    Parameters
+    ----------
+    f: FactorGraph class
+      The factor graph. See sib.FactorGraph
+    maxit: int -- optional
+      max number of iteration of update of BP equation
+    tol: float -- optional
+      If the error of the update of BP equation is less than `tol`the iteration stop.
+    damping: float -- optional
+      Damping parameter to help the convergence of BP equation.
+    callback: function(iter_n, err, f)
+      Function callback, called after each iteration. Take as argument, number of current iteration (iter_n), error (err), and the FactorGraph (f). 
+```
+
+## Contributions
+If you want to participate write us [here]([sybil-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla) or make a pull request.
+
+## Mainteiners:
+[sybil-team](https://github.com/sibyl-team)
 
 Enjoy!
+
 The Sibyl Team
