@@ -39,15 +39,14 @@ void cumsum(Mes & m, int a, int b)
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int,int,int,real_t> > const & contacts,
 		vector<tuple<int, int, int> > const & obs,
-		vector<tuple<int, std::shared_ptr<Proba>,std::shared_ptr<Proba>> > const & individuals)
-	: params(params)
+		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
+	Tinf(100000),
+	params(params)
 {
-	Tinf = -1;
 	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
 		int i,j,t;
 		real_t lambda;
 		tie(i,j,t,lambda) = *it;
-		Tinf = max(Tinf, t + 1);
 		add_contact(i, j, t, lambda);
 	}
 
@@ -145,6 +144,7 @@ int FactorGraph::add_node(int i)
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
+	Tinf = max(Tinf, t + 1);
 	i = add_node(i);
 	j = add_node(j);
 	int ki = find_neighbor(i, j);
@@ -167,6 +167,8 @@ void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 		throw invalid_argument("time of contacts should be ordered");
 	}
 }
+
+
 
 void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const & sobs)
 {
@@ -410,7 +412,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			real_t p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 
 			//messages to ti, gi
-			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi + 1 == qi ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
+			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi >= qi - 1 ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
 			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full);
 
 			ug[gi] += ht[ti] * a;

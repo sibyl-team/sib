@@ -92,6 +92,147 @@ int get_index(FactorGraph & f, int i)
 }
 
 
+
+Mes & operator++(Mes & msg)
+{
+	int qj = msg.qj;
+	msg.qj++;
+	msg.resize(msg.qj * msg.qj);
+
+
+	for (int sij = qj - 1; sij >= 0; --sij) {
+		for (int sji = qj - 1; sji >= 0; --sji) {
+			msg(sji, sij) = msg[(qj + 1) * sij + sji];
+		}
+	}
+	for (int s = 0; s < int(msg.qj); ++s) {
+		msg(s, qj) = msg(s, qj -1);
+		msg(s, qj - 1) = 0.0;
+		msg(qj, s) = msg(qj - 1, s);
+		msg(s, qj - 1) = 0.0;
+	}
+	return msg;
+}
+
+void append_observation(FactorGraph & G, int i, int s, int t)
+{
+        auto mi = G.index.find(i);
+        if (mi == G.index.end())
+                throw invalid_argument("unexistant node");
+
+        i = mi->second;
+        Node & n = G.nodes[i];
+        n.times.back() = t;
+        n.times.push_back(G.Tinf);
+        t = n.bt.size();
+        n.ht.push_back(1.0);
+        n.hg.push_back(1.0);
+        n.bt.push_back(1.0);
+        n.bg.push_back(1.0);
+        int qi = n.times.size();
+	int tl = 0, gl = 0;
+	int tu = qi;
+	int gu = qi;
+        switch(s) {
+                case 0:
+                        tl = max(tl, t);
+                        gl = max(gl, t);
+                        break;
+                case 1:
+                        tu = min(tu, t - 1);
+                        gl = max(gl, t);
+                        break;
+                case 2:
+                        tu = min(tu, t - 1);
+                        gu = min(gu, t - 1);
+                        break;
+                case -1:
+                        break;
+
+        }
+        fill(&n.ht[0], &n.ht[0] + tl, 0.0);
+        fill(&n.ht[0] + tu, &n.ht[0] + qi, 0.0);
+        fill(&n.bt[0], &n.bt[0] + gl, 0.0);
+        fill(&n.bt[0] + gu, &n.bt[0] + qi, 0.0);
+}
+
+void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
+{
+        G.Tinf = max(G.Tinf, t + 1);
+	auto mi = G.index.find(i);
+	auto mj = G.index.find(j);
+	if (mi == G.index.end() || mj == G.index.end())
+		throw invalid_argument("cannot append contact to unexistant node");
+	i = mi->second;
+	j = mj->second;
+	Node & fi = G.nodes[i];
+	Node & fj = G.nodes[j];
+	int qi = fi.times.size();
+	int qj = fj.times.size();
+	if (fi.times[qi - 2] > t || fj.times[qj - 2] > t)
+		throw invalid_argument("time of contacts should be ordered");
+
+	int ki = G.find_neighbor(i, j);
+	int kj = G.find_neighbor(j, i);
+
+	if (ki == int(fi.neighs.size())) {
+		assert(kj == int(fj.neighs.size()));
+		fi.neighs.push_back(Neigh(j, kj));
+		fj.neighs.push_back(Neigh(i, ki));
+                fi.neighs.back().msg = Mes(1);
+                fj.neighs.back().msg = Mes(1);
+                fi.neighs.back().msg[0] = 1.0;
+                fj.neighs.back().msg[0] = 1.0;
+		fi.neighs.back().t.push_back(G.Tinf);
+		fj.neighs.back().t.push_back(G.Tinf);
+                fi.neighs.back().lambdas.push_back(0);
+                fj.neighs.back().lambdas.push_back(0);
+	}
+
+	Neigh & ni = fi.neighs[ki];
+	Neigh & nj = fj.neighs[kj];
+	if (fi.times[qi - 2] < t) {
+		fi.times.back() = t;
+		fi.times.push_back(G.Tinf);
+                fi.ht.push_back(0);
+                fi.hg.push_back(0);
+                fi.bt.push_back(0);
+                fi.bg.push_back(0);
+                ++qi;
+	}
+	if (fj.times[qj - 2] < t) {
+		fj.times.back() = t;
+		fj.times.push_back(G.Tinf);
+                fj.ht.push_back(0);
+                fj.hg.push_back(0);
+                fj.bt.push_back(0);
+                fj.bg.push_back(0);
+                ++qj;
+	}
+	if (ni.t[ni.t.size() - 2] < qi - 2) {
+		ni.t.back() = qi - 2;
+		nj.t.back() = qj - 2;
+		ni.t.push_back(qi - 1);
+		nj.t.push_back(qj - 1);
+		ni.lambdas.back() = lambda;
+		nj.lambdas.back() = 0.0;
+                ni.lambdas.push_back(0.0);
+                nj.lambdas.push_back(0.0);
+		++ni.msg;
+		++nj.msg;
+	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
+		ni.lambdas[ni.t.size() - 2] = lambda;
+	} else {
+		throw invalid_argument("time of contacts should be ordered");
+	}
+}
+
+
+
+
+
+
+
 PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
@@ -156,9 +297,10 @@ PYBIND11_MODULE(_sib, m) {
         .def("reset", &FactorGraph::init)
         .def("get_index", &get_index)
         .def("__repr__", &print<FactorGraph>)
+        .def("append_contact", &append_contact)
+        .def("append_observation", &append_observation)
         .def_readonly("nodes", &FactorGraph::nodes)
         .def_readonly("params", &FactorGraph::params);
-
     py::class_<Node>(m, "Node")
         .def("marginal", &get_marginal)
         .def("marginal_t", &get_marginal_t)
