@@ -150,10 +150,11 @@ void append_observation(FactorGraph & G, int i, int s, int t)
                         break;
 
         }
-        fill(&n.ht[0], &n.ht[0] + tl, 0.0);
-        fill(&n.ht[0] + tu, &n.ht[0] + qi, 0.0);
-        fill(&n.bt[0], &n.bt[0] + gl, 0.0);
-        fill(&n.bt[0] + gu, &n.bt[0] + qi, 0.0);
+
+	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
+		nodes[i].ht[t] *= (tl <= t && t <= tu);
+		nodes[i].hg[t] *= (gl <= t && t <= gu);
+	}
 }
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
