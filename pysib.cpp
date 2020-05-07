@@ -109,9 +109,10 @@ Mes & operator++(Mes & msg)
 		}
 	}
 	for (int s = 0; s < int(msg.qj); ++s) {
-		msg(s, qj) = msg(s, qj - 1);
+		msg(s, qj) = msg(s, qj -1);
+		msg(s, qj - 1) = 0.0;
 		msg(qj, s) = msg(qj - 1, s);
-                msg(qj, qj) = msg(qj - 1, qj - 1);
+		msg(s, qj - 1) = 0.0;
 	}
 	return msg;
 }
@@ -124,51 +125,43 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
         i = mi->second;
         Node & n = G.nodes[i];
-        if (t < n.times[n.times.size() - 2])
-                throw invalid_argument("observation time too small");
-        else if (t > n.times[n.times.size() - 2]) {
-                n.times.back() = t;
-                n.times.push_back(G.Tinf);
-                n.ht.push_back(n.ht.back());
-                n.hg.push_back(n.hg.back());
-                n.bt.push_back(n.bt.back());
-                n.bg.push_back(n.bg.back());
-                // adjust infinite times
-                for (int j = 0; j < int(n.neighs.size()); ++j) {
-                        n.neighs[j].t.back() = n.times.size() - 1;
-                }
-        }
+        n.times.back() = t;
+        n.times.push_back(G.Tinf);
+        t = n.bt.size();
+        n.ht.push_back(1.0);
+        n.hg.push_back(1.0);
+        n.bt.push_back(1.0);
+        n.bg.push_back(1.0);
         int qi = n.times.size();
-        int tobs = qi - 2;
 	int tl = 0, gl = 0;
 	int tu = qi;
 	int gu = qi;
-        switch (s) {
+        switch(s) {
                 case 0:
-                        tl = max(tl, tobs);
-                        gl = max(gl, tobs);
+                        tl = max(tl, t);
+                        gl = max(gl, t);
                         break;
                 case 1:
-                        tu = min(tu, tobs - 1);
-                        gl = max(gl, tobs);
+                        tu = min(tu, t - 1);
+                        gl = max(gl, t);
                         break;
                 case 2:
-                        tu = min(tu, tobs - 1);
-                        gu = min(gu, tobs - 1);
+                        tu = min(tu, t - 1);
+                        gu = min(gu, t - 1);
                         break;
                 case -1:
                         break;
 
         }
-
-	for(int t = 0; t < qi; ++t) {
-		n.ht[t] *= (tl <= t && t <= tu);
-		n.hg[t] *= (gl <= t && t <= gu);
-	}
+        fill(&n.ht[0], &n.ht[0] + tl, 0.0);
+        fill(&n.ht[0] + tu, &n.ht[0] + qi, 0.0);
+        fill(&n.bt[0], &n.bt[0] + gl, 0.0);
+        fill(&n.bt[0] + gu, &n.bt[0] + qi, 0.0);
 }
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 {
+        G.Tinf = max(G.Tinf, t + 1);
 	auto mi = G.index.find(i);
 	auto mj = G.index.find(j);
 	if (mi == G.index.end() || mj == G.index.end())
@@ -205,22 +198,22 @@ void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 	if (fi.times[qi - 2] < t) {
 		fi.times.back() = t;
 		fi.times.push_back(G.Tinf);
-                fi.ht.push_back(fi.ht.back());
-                fi.hg.push_back(fi.hg.back());
-                fi.bt.push_back(fi.bt.back());
-                fi.bg.push_back(fi.bg.back());
+                fi.ht.push_back(0);
+                fi.hg.push_back(0);
+                fi.bt.push_back(0);
+                fi.bg.push_back(0);
                 ++qi;
 	}
 	if (fj.times[qj - 2] < t) {
 		fj.times.back() = t;
 		fj.times.push_back(G.Tinf);
-                fj.ht.push_back(fj.ht.back());
-                fj.hg.push_back(fj.hg.back());
-                fj.bt.push_back(fj.bt.back());
-                fj.bg.push_back(fj.bg.back());
+                fj.ht.push_back(0);
+                fj.hg.push_back(0);
+                fj.bt.push_back(0);
+                fj.bg.push_back(0);
                 ++qj;
 	}
-	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
+	if (ni.t[ni.t.size() - 2] < qi - 2) {
 		ni.t.back() = qi - 2;
 		nj.t.back() = qj - 2;
 		ni.t.push_back(qi - 1);
@@ -236,11 +229,6 @@ void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}
-        // adjust infinite times
-        for (int k = 0; k < int(fi.neighs.size()); ++k)
-                fi.neighs[k].t.back() = qi - 1;
-        for (int k = 0; k < int(fj.neighs.size()); ++k)
-                fj.neighs[k].t.back() = qj - 1;
 }
 
 

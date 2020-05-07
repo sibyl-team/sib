@@ -43,6 +43,12 @@ FactorGraph::FactorGraph(Params const & params,
 	Tinf(100000),
 	params(params)
 {
+	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
+		int i,j,t;
+		real_t lambda;
+		tie(i,j,t,lambda) = *it;
+		add_contact(i, j, t, lambda);
+	}
 
 	vector<vector<int>> tobs(nodes.size());
 	vector<vector<int>> sobs(nodes.size());
