@@ -151,7 +151,7 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
         }
 
-	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
+	for(int t = 0; t < qi; ++t) {
 		nodes[i].ht[t] *= (tl <= t && t <= tu);
 		nodes[i].hg[t] *= (gl <= t && t <= gu);
 	}
