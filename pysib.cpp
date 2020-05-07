@@ -209,7 +209,7 @@ void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
                 fj.bg.push_back(0);
                 ++qj;
 	}
-	if (ni.t[ni.t.size() - 2] < qi - 2) {
+	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
 		ni.t.back() = qi - 2;
 		nj.t.back() = qj - 2;
 		ni.t.push_back(qi - 1);
