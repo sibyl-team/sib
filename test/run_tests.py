@@ -155,10 +155,8 @@ class SibillaTest(unittest.TestCase):
             for n in range(self.num_nodes):
                 #with self.subTest(inst=i,node=n):
                 msg_fail = "Test on inst {} for node {} failed".format(i,n)
-                
-                self.assertEqual(np.all(beliefs_fields[i][n][0] - self.loaded_beliefs[i][n] < 1e-12),True,msg_fail)
-                
-                self.assertEqual(np.all(beliefs_fields[i][n][1] == self.loaded_fields[i][n]),True,msg_fail)
+                self.assertEqual(np.all(beliefs_fields[i][n][0][:,:-2] - self.loaded_beliefs[i][n][:,:-2] < 1e-12),True,msg_fail)
+                self.assertEqual(np.all(beliefs_fields[i][n][1][:,:-2]== self.loaded_fields[i][n][:,:-2]),True,msg_fail)
 
 
 if __name__ == '__main__':
