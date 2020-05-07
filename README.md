@@ -1,13 +1,9 @@
-<h1> Sibilla  
-<div><small> <small> 
-  [S]tatistical [I]nference in Epidemics via [B]elief Propagation 
-</small></small></div>
-</h1>
+# Sibilla  
+
+##  [S]tatistical [I]nference in Epidemics via [B]elief Propagation 
 
 
-Belief Propagation for inference in epidemics. This code implements and expands the method described in
-
-https://www.nature.com/articles/srep27538
+Belief Propagation for inference in epidemics. 
 
 ## Requirements:
 
@@ -33,7 +29,11 @@ You'll obtain a standalone CLI ./sib, plus a dynamic library containing a python
 
 ## Quick start: 
 
- Have a look at this [notebook](https://github.com/sibyl-team/sib/blob/master/Sibilla.ipynb).
+ Have a look at this [notebook](/test/test.ipynb).
+
+ ## Reference:
+ This code implements and expands the method described [here](https://www.nature.com/articles/srep27538).
+
 
 ## Documentation:
 
@@ -130,11 +130,12 @@ Iterate the BP messages.
 ```
 
 ## Contributions
-If you want to participate write us [sybil-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla) or make a pull request.
+If you want to participate write us ([sybil-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla)) or make a pull request.
+
+## License
+[Apache License 2.0](LICENSE)
 
 ## Mainteiners:
-[sybil-team](https://github.com/sibyl-team)
+[The sybil-team](https://github.com/sibyl-team)
 
 Enjoy!
-
-The Sibyl Team
