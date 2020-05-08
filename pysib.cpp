@@ -124,18 +124,22 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
         i = mi->second;
         Node & n = G.nodes[i];
-        int tobs = n.times.size() - 1;
         if (t < n.times[n.times.size() - 2])
                 throw invalid_argument("observation time too small");
-        else if (t > n.times[n.times.size() -2]) {
+        else if (t > n.times[n.times.size() - 2]) {
                 n.times.back() = t;
                 n.times.push_back(G.Tinf);
                 n.ht.push_back(n.ht.back());
                 n.hg.push_back(n.hg.back());
                 n.bt.push_back(n.bt.back());
                 n.bg.push_back(n.bg.back());
+                // adjust infinite times
+                for (int j = 0; j < int(n.neighs.size()); ++j) {
+                        n.neighs[j].t.back() = n.times.size() - 1;
+                }
         }
         int qi = n.times.size();
+        int tobs = qi - 2;
 	int tl = 0, gl = 0;
 	int tu = qi;
 	int gu = qi;
@@ -161,10 +165,6 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 		n.ht[t] *= (tl <= t && t <= tu);
 		n.hg[t] *= (gl <= t && t <= gu);
 	}
-        // adjust infinite times
-        for (int j = 0; j < int(n.neighs.size()); ++j) {
-                n.neighs[j].t.back() = qi - 1;
-        }
 }
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
