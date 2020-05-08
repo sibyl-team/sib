@@ -106,7 +106,7 @@ Mes & operator++(Mes & msg)
 		}
 	}
 	for (int s = 0; s < int(msg.qj); ++s) {
-		msg(s, qj) = msg(s, qj -1);
+		msg(s, qj) = msg(s, qj - 1);
 		msg(s, qj - 1) = 0.0;
 		msg(qj, s) = msg(qj - 1, s);
 		msg(s, qj - 1) = 0.0;
@@ -122,9 +122,13 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
         i = mi->second;
         Node & n = G.nodes[i];
+        int tobs = n.times.size() - 1;
+        if (t < n.times[n.times.size() - 2])
+                throw invalid_argument("observation time too small");
+
+
         n.times.back() = t;
         n.times.push_back(G.Tinf);
-        int tobs = n.bt.size();
         n.ht.push_back(1.0);
         n.hg.push_back(1.0);
         n.bt.push_back(1.0);
@@ -133,7 +137,7 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 	int tl = 0, gl = 0;
 	int tu = qi;
 	int gu = qi;
-        switch(s) {
+        switch (s) {
                 case 0:
                         tl = max(tl, tobs);
                         gl = max(gl, tobs);
@@ -162,7 +166,6 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 {
-        G.Tinf = max(G.Tinf, t + 1);
 	auto mi = G.index.find(i);
 	auto mj = G.index.find(j);
 	if (mi == G.index.end() || mj == G.index.end())
@@ -175,6 +178,7 @@ void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 	int qj = fj.times.size();
 	if (fi.times[qi - 2] > t || fj.times[qj - 2] > t)
 		throw invalid_argument("time of contacts should be ordered");
+        G.Tinf = max(G.Tinf, t + 1);
 
 	int ki = G.find_neighbor(i, j);
 	int kj = G.find_neighbor(j, i);
