@@ -127,14 +127,14 @@ void append_observation(FactorGraph & G, int i, int s, int t)
         int tobs = n.times.size() - 1;
         if (t < n.times[n.times.size() - 2])
                 throw invalid_argument("observation time too small");
-
-
-        n.times.back() = t;
-        n.times.push_back(G.Tinf);
-        n.ht.push_back(n.ht.back());
-        n.hg.push_back(n.hg.back());
-        n.bt.push_back(n.bt.back());
-        n.bg.push_back(n.bg.back());
+        else if (t > n.times[n.times.size() -2]) {
+                n.times.back() = t;
+                n.times.push_back(G.Tinf);
+                n.ht.push_back(n.ht.back());
+                n.hg.push_back(n.hg.back());
+                n.bt.push_back(n.bt.back());
+                n.bg.push_back(n.bg.back());
+        }
         int qi = n.times.size();
 	int tl = 0, gl = 0;
 	int tu = qi;
