@@ -79,7 +79,10 @@ get_marginal(Node const & n)
 
 tuple<real_t, real_t, real_t> get_marginal_t(Node const & n, int t)
 {
-        return get_marginal(n)[t];
+        if (t < 0 || t >= n.bt.size() - 2)
+            throw py::key_error("Time out of range");
+        else
+            return get_marginal(n)[t];
 }
 
 
