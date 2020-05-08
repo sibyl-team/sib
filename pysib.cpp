@@ -129,10 +129,10 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
         n.times.back() = t;
         n.times.push_back(G.Tinf);
-        n.ht.push_back(1.0);
-        n.hg.push_back(1.0);
-        n.bt.push_back(1.0);
-        n.bg.push_back(1.0);
+        n.ht.push_back(ht.back());
+        n.hg.push_back(hg.back());
+        n.bt.push_back(bt.back());
+        n.bg.push_back(bg.back());
         int qi = n.times.size();
 	int tl = 0, gl = 0;
 	int tu = qi;
