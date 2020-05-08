@@ -107,9 +107,8 @@ Mes & operator++(Mes & msg)
 	}
 	for (int s = 0; s < int(msg.qj); ++s) {
 		msg(s, qj) = msg(s, qj - 1);
-		msg(s, qj - 1) = 0.0;
 		msg(qj, s) = msg(qj - 1, s);
-		msg(s, qj - 1) = 0.0;
+                msg(qj, qj) = msg(qj - 1, qj - 1);
 	}
 	return msg;
 }
@@ -159,6 +158,7 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 		n.ht[t] *= (tl <= t && t <= tu);
 		n.hg[t] *= (gl <= t && t <= gu);
 	}
+        // adjust infinite times
         for (int j = 0; j < int(n.neighs.size()); ++j) {
                 n.neighs[j].t.back() = qi - 1;
         }
@@ -202,19 +202,19 @@ void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 	if (fi.times[qi - 2] < t) {
 		fi.times.back() = t;
 		fi.times.push_back(G.Tinf);
-                fi.ht.push_back(0);
-                fi.hg.push_back(0);
-                fi.bt.push_back(0);
-                fi.bg.push_back(0);
+                fi.ht.push_back(fi.ht.back());
+                fi.hg.push_back(fi.hg.back());
+                fi.bt.push_back(fi.bt.back());
+                fi.bg.push_back(fi.bg.back());
                 ++qi;
 	}
 	if (fj.times[qj - 2] < t) {
 		fj.times.back() = t;
 		fj.times.push_back(G.Tinf);
-                fj.ht.push_back(0);
-                fj.hg.push_back(0);
-                fj.bt.push_back(0);
-                fj.bg.push_back(0);
+                fj.ht.push_back(fj.ht.back());
+                fj.hg.push_back(fj.hg.back());
+                fj.bt.push_back(fj.bt.back());
+                fj.bg.push_back(fj.bg.back());
                 ++qj;
 	}
 	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
@@ -233,6 +233,11 @@ void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}
+        // adjust infinite times
+        for (int k = 0; k < int(fi.neighs.size()); ++k)
+                fi.neighs[k].t.back() = qi - 1;
+        for (int k = 0; k < int(fj.neighs.size()); ++k)
+                fj.neighs[k].t.back() = qj - 1;
 }
 
 
