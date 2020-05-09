@@ -129,13 +129,13 @@ Iterate the BP messages.
 ```
 
 ## Contributions
-If you want to participate write us ([sybil-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla)) or make a pull request.
+If you want to participate write us ([sbyl-team](mailto:sibylteam@gmail.com?subject=[GitHub]%20Source%20sibilla)) or make a pull request.
 
 ## License
 [Apache License 2.0](LICENSE)
 
 ## Maintainers:
-[The sybil-team](https://github.com/sibyl-team)
+[The sbyl-team](https://github.com/sibyl-team)
 
 ## Acknowledgements
 This project has been partially funded by "La ricerca dei talenti", Fondazione CRT, Project Sibyl
