@@ -18,25 +18,23 @@ def marginals_t(f, t):
     '''
     M = {}
     for i in range(len(f.nodes)):
-        n = f.nodes[f.get_index(i)]
-        ttrue = list(n.times).index(t)-1
-        M[i] = n.marginal_t(ttrue)
+        M[i] = marginal_t(n, t)
         #sib.marginal
 
     return M
 
-def marginal_t(i, t):
+def marginal_t(n, t):
     '''
     returns the marginals of nodes at fixed time 
     
-    - i: name node
+    - n: sib.Node class
     - t: time
     
     return: list - probability to be [prob_S, prob_I, prob_R]
     '''
-    n = f.nodes[f.get_index(i)]
+    
     ttrue = list(n.times).index(t)-1
-    M = n.marginal_t(ttrue)
+    M = n.marginal_index(ttrue)
     #sib.marginal
 
     return M
