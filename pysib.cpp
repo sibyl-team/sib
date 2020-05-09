@@ -77,7 +77,7 @@ get_marginal(Node const & n)
         return marg;
 }
 
-tuple<real_t, real_t, real_t> get_marginal_t(Node const & n, int t)
+tuple<real_t, real_t, real_t> get_marginal_index(Node const & n, int t)
 {
         if (t < 0 || t >= int(n.bt.size()) - 2)
             throw py::key_error("Time out of range");
@@ -319,7 +319,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("params", &FactorGraph::params);
     py::class_<Node>(m, "Node")
         .def("marginal", &get_marginal)
-        .def("marginal_t", &get_marginal_t)
+        .def("marginal_index", &get_marginal_index)
         .def_readwrite("ht", &Node::ht)
         .def_readwrite("hg", &Node::hg)
         .def_readonly("bt", &Node::bt)
