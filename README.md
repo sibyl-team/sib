@@ -134,7 +134,10 @@ If you want to participate write us ([sybil-team](mailto:sibylteam@gmail.com?sub
 ## License
 [Apache License 2.0](LICENSE)
 
-## Mainteiners:
+## Maintainers:
 [The sybil-team](https://github.com/sibyl-team)
+
+## Acknowledgements
+This project has been partially funded by "La ricerca dei talenti", Fondazione CRT, Project Sibyl
 
 Enjoy!
