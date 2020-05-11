@@ -24,7 +24,9 @@ you can choose one of the following procedures:
     1. Adjust the setup.py, if needed.
     2. `pip install .`
 
-You'll obtain a standalone CLI ./sib, plus a dynamic library containing a python module `sib`
+You'll obtain a standalone CLI ./sib, plus a dynamic library containing a python module `sib`.
+
+When not installing with `pip`, make sure to include the `sib` folder into the python path.
 
 ## Quick start: 
 
