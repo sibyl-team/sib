@@ -17,8 +17,8 @@ def marginals_t(f, t):
     return: dict - probability to be {i : [prob_S, prob_I, prob_R]
     '''
     M = {}
-    for i in range(len(f.nodes)):
-        M[i] = marginal_t(n, t)
+    for n in f.nodes:
+        M[n.index] = marginal_t(n, t)
         #sib.marginal
 
     return M
@@ -33,7 +33,7 @@ def marginal_t(n, t):
     return: list - probability to be [prob_S, prob_I, prob_R]
     '''
     
-    ttrue = list(n.times).index(t)-1
+    ttrue = list(n.times).index(t)
     M = n.marginal_index(ttrue)
     #sib.marginal
 
