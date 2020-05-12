@@ -141,13 +141,9 @@ int FactorGraph::find_neighbor(int i, int j) const
 
 int FactorGraph::add_node(int i)
 {
-	map<int,int>::iterator mit = index.find(i);
-	if (mit != index.end())
-		return mit->second;
-	int idx = nodes.size();
-	index[i] = idx;
-	nodes.push_back(Node(i, params.prob_i, params.prob_r));
-	return idx;
+	for (int j = 0; j < i + 1 - int(nodes.size()); ++j)
+		nodes.push_back(Node(params.prob_i, params.prob_r));
+	return i;
 }
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
@@ -218,11 +214,11 @@ void FactorGraph::show_graph()
 {
 	cerr << "Number of nodes " <<  int(nodes.size()) << endl;
 	for(int i = 0; i < int(nodes.size()); i++) {
-		cerr << "### index " << nodes[i].index << "###" << endl;
+		cerr << "### index " << i << "###" << endl;
 		cerr << "### in contact with " <<  int(nodes[i].neighs.size()) << "nodes" << endl;
 		vector<Neigh> const & aux = nodes[i].neighs;
 		for (int j = 0; j < int(aux.size()); j++) {
-			cerr << "# neighbor " << nodes[aux[j].index].index << endl;
+			cerr << "# neighbor " << aux[j].index << endl;
 			cerr << "# in position " << aux[j].pos << endl;
 			cerr << "# in contact " << int(aux[j].t.size()) << " times, in t: ";
 			for (int s = 0; s < int(aux[j].t.size()); s++)
@@ -236,7 +232,7 @@ void FactorGraph::show_beliefs(ostream & ofs)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		Node & f = nodes[i];
-		ofs << "node " << f.index << ":" << endl;
+		ofs << "node " << i << ":" << endl;
 		for (int t = 0; t < int(f.bt.size()); ++t) {
 			ofs << "    " << f.times[t] << " " << f.bt[t] << " (" << f.ht[t] << ") " << f.bg[t] << " (" << f.hg[t] << ")" << endl;
 		}
@@ -524,9 +520,9 @@ ostream & operator<<(ostream & ost, FactorGraph const & f)
 	int nasym = 0;
 	int nedge = 0;
 	int ncont = 0;
-	for(auto nit = f.nodes.begin(); nit != f.nodes.end(); ++nit) {
-		for (auto vit = nit->neighs.begin(); vit != nit->neighs.end(); ++vit) {
-                        if (vit->index < nit->index)
+	for(int i = 0; i < int(f.nodes.size()); ++i) {
+		for (auto vit = f.nodes[i].neighs.begin(), vend = f.nodes[i].neighs.end(); vit != vend; ++vit) {
+                        if (vit->index < i)
                                 continue;
 			++nedge;
 			ncont += vit->lambdas.size() - 1;

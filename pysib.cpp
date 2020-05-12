@@ -52,11 +52,12 @@ template<class T> string print(const T & t) { return lexical_cast<string>(t); }
 
 map<int, vector<int> >
 get_times(FactorGraph const & f) {
-    map<int, vector<int> > times;
-    for (int i = 0; i < int(f.nodes.size()); ++i) {
-        (times[f.nodes[i].index] = f.nodes[i].times).pop_back();
-    }
-    return times;
+        map<int, vector<int> > times;
+        for (int i = 0; i < int(f.nodes.size()); ++i) {
+            times[i] = f.nodes[i].times;
+            times[i].pop_back();
+        }
+        return times;
 }
 
 vector<tuple<real_t, real_t, real_t>>
@@ -88,10 +89,7 @@ tuple<real_t, real_t, real_t> get_marginal_index(Node const & n, int t)
 
 int get_index(FactorGraph & f, int i)
 {
-    auto it = f.index.find(i);
-    if (it == f.index.end())
-       throw py::key_error("key not found");
-    return it->second;
+    return i;
 }
 
 
@@ -117,13 +115,17 @@ Mes & operator++(Mes & msg)
 	return msg;
 }
 
+
+void check_index(FactorGraph const & G, int i)
+{
+        if (i < 0 || i > int(G.nodes.size()))
+                throw invalid_argument("unexistent index");
+
+}
+
 void append_observation(FactorGraph & G, int i, int s, int t)
 {
-        auto mi = G.index.find(i);
-        if (mi == G.index.end())
-                throw invalid_argument("unexistant node");
-
-        i = mi->second;
+        check_index(G, i);
         Node & n = G.nodes[i];
         n.times.back() = t;
         n.times.push_back(G.Tinf);
@@ -161,13 +163,8 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 {
-        G.Tinf = max(G.Tinf, t + 1);
-	auto mi = G.index.find(i);
-	auto mj = G.index.find(j);
-	if (mi == G.index.end() || mj == G.index.end())
-		throw invalid_argument("cannot append contact to unexistant node");
-	i = mi->second;
-	j = mj->second;
+        check_index(G, i);
+        check_index(G, j);
 	Node & fi = G.nodes[i];
 	Node & fj = G.nodes[j];
 	int qi = fi.times.size();
@@ -314,8 +311,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("bg", &Node::bg)
         .def_readonly("times", &Node::times)
         .def_readonly("prob_i", &Node::prob_i)
-        .def_readonly("prob_r", &Node::prob_r)
-        .def_readonly("index", &Node::index);
+        .def_readonly("prob_r", &Node::prob_r);
 
     m.def("set_num_threads", &omp_set_num_threads);
 }

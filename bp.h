@@ -4,7 +4,6 @@
 // Author: Anna Paola Muntoni
 
 #include <vector>
-#include <map>
 #include <iostream>
 #include <memory>
 #include <omp.h>
@@ -39,13 +38,11 @@ struct Neigh {
 };
 
 struct Node {
-	Node(int index, std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r) :
-		index(index),
+	Node(std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r) :
 		prob_i(prob_i),
 		prob_r(prob_r),
 		f_(0)
 	{}
-	int index;
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
 	std::vector<int> times;
@@ -61,7 +58,6 @@ class FactorGraph {
 public:
 	int Tinf;
 	std::vector<Node> nodes;
-	std::map<int, int> index;
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
 		std::vector<std::tuple<int, int, int> > const & obs,
