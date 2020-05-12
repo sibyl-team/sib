@@ -140,6 +140,6 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 [The sibyl-team](https://github.com/sibyl-team)
 
 ## Acknowledgements
-This project has been partially funded by "La ricerca dei talenti", Fondazione CRT, Project Sibyl
+This project has been partially funded by Fondazione CRT through project SIBYL. 
 
 Enjoy!
