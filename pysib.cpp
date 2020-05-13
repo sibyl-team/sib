@@ -118,7 +118,7 @@ void check_index(FactorGraph const & G, int i)
 
 void append_observation(FactorGraph & G, int i, int s, int t)
 {
-        check_index(G, i);
+        G.get_node(i);
         Node & n = G.nodes[i];
         n.times.back() = t;
         n.times.push_back(G.Tinf);
@@ -156,8 +156,8 @@ void append_observation(FactorGraph & G, int i, int s, int t)
 
 void append_contact(FactorGraph & G, int i, int j, int t, real_t lambda)
 {
-        check_index(G, i);
-        check_index(G, j);
+        G.get_node(i);
+        G.get_node(j);
 	Node & fi = G.nodes[i];
 	Node & fj = G.nodes[j];
 	int qi = fi.times.size();
