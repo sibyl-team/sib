@@ -148,6 +148,8 @@ int FactorGraph::get_node(int i)
 
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
+	if (lambda < 0 || lambda > 1)
+		throw invalid_argument("lambda is out of [0,1]");
 	Tinf = max(Tinf, t + 1);
 	i = get_node(i);
 	j = get_node(j);
