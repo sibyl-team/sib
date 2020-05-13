@@ -112,7 +112,7 @@ Mes & operator++(Mes & msg)
 
 void check_index(FactorGraph const & G, int i)
 {
-        if (i < 0 || i > int(G.nodes.size()))
+        if (i < 0 || i >= int(G.nodes.size()))
                 throw invalid_argument("unexistent index");
 
 }
