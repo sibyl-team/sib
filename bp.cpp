@@ -43,12 +43,6 @@ FactorGraph::FactorGraph(Params const & params,
 	Tinf(100000),
 	params(params)
 {
-	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
-		int i,j,t;
-		real_t lambda;
-		tie(i,j,t,lambda) = *it;
-		add_contact(i, j, t, lambda);
-	}
 
 	vector<vector<int>> tobs(nodes.size());
 	vector<vector<int>> sobs(nodes.size());
@@ -69,6 +63,14 @@ FactorGraph::FactorGraph(Params const & params,
 			throw invalid_argument("time of observations should be ordered");
 		}
 	}
+
+	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
+		int i,j,t;
+		real_t lambda;
+		tie(i,j,t,lambda) = *it;
+		add_contact(i, j, t, lambda);
+	}
+
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
 		int a = add_node(get<0>(*it));
