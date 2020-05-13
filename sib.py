@@ -18,7 +18,7 @@ def marginals_t(f, t):
     '''
     M = {}
     for i in range(len(f.nodes)):
-        M[i] = marginal_t(f.nodes[n], t)
+        M[i] = marginal_t(f.nodes[i], t)
 
     return M
 
