@@ -65,7 +65,7 @@ public:
 			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
 	void add_contact(int i, int j, int t, real_t lambda);
-	int add_node(int i);
+	int get_node(int i);
 	void init();
 	void set_field(int i, std::vector<int> const & tobs, std::vector<int> const & sobs);
 	real_t update(int i, real_t damping);

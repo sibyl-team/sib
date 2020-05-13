@@ -56,7 +56,7 @@ FactorGraph::FactorGraph(Params const & params,
 		int i,s,t;
 		tie(i,s,t) = *it;
 		Tinf = max(Tinf, t + 1);
-		i = add_node(i);
+		i = get_node(i);
 		if (nodes.size() > tobs.size()) {
 			tobs.resize(nodes.size());
 			sobs.resize(nodes.size());
@@ -79,7 +79,7 @@ FactorGraph::FactorGraph(Params const & params,
 
 
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
-		int a = add_node(get<0>(*it));
+		int a = get_node(get<0>(*it));
 		nodes[a].prob_i = get<1>(*it);
 		nodes[a].prob_r = get<2>(*it);
 	}
@@ -139,9 +139,9 @@ int FactorGraph::find_neighbor(int i, int j) const
 	return k;
 }
 
-int FactorGraph::add_node(int i)
+int FactorGraph::get_node(int i)
 {
-	for (int j = 0; j < i + 1 - int(nodes.size()); ++j)
+	for (int j = nodes.size(); j < i + 1; ++j)
 		nodes.push_back(Node(params.prob_i, params.prob_r));
 	return i;
 }
@@ -149,8 +149,8 @@ int FactorGraph::add_node(int i)
 void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
 {
 	Tinf = max(Tinf, t + 1);
-	i = add_node(i);
-	j = add_node(j);
+	i = get_node(i);
+	j = get_node(j);
 	int ki = find_neighbor(i, j);
 	int kj = find_neighbor(j, i);
 	if (ki == int(nodes[i].neighs.size())) {

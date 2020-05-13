@@ -87,12 +87,6 @@ tuple<real_t, real_t, real_t> get_marginal_index(Node const & n, int t)
 }
 
 
-int get_index(FactorGraph & f, int i)
-{
-    return i;
-}
-
-
 
 Mes & operator++(Mes & msg)
 {
@@ -296,7 +290,6 @@ PYBIND11_MODULE(_sib, m) {
         .def("update", &FactorGraph::iteration)
         .def("loglikelihood", &FactorGraph::loglikelihood)
         .def("reset", &FactorGraph::init)
-        .def("get_index", &get_index)
         .def("__repr__", &print<FactorGraph>)
         .def("append_contact", &append_contact)
         .def("append_observation", &append_observation)
