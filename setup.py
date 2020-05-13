@@ -17,7 +17,7 @@ def sib_test():
     return test_suite
 
 
-__version__ = '0.1'
+__version__ = '0.1.2'
 COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -fopenmp"
 
 
