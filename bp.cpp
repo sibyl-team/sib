@@ -56,8 +56,7 @@ void FactorGraph::append_observation(int i, int s, int t)
         int qi = n.times.size();
         int tobs = qi - 2;
 	int tl = 0, gl = 0;
-	int tu = qi;
-	int gu = qi;
+	int tu = qi, gu = qi;
         switch (s) {
                 case 0:
                         tl = max(tl, tobs);
@@ -71,7 +70,8 @@ void FactorGraph::append_observation(int i, int s, int t)
                         tu = min(tu, tobs - 1);
                         gu = min(gu, tobs - 1);
                         break;
-                case -1:
+                default:
+			// anything else just adds timepoint but no constraint
                         break;
 
         }
@@ -157,8 +157,8 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 
 
 FactorGraph::FactorGraph(Params const & params,
-		vector<tuple<int,int,int,real_t> > const & contacts2,
-		vector<tuple<int, int, int> > const & obs2,
+		vector<tuple<int,int,int,real_t> > const & contacts,
+		vector<tuple<int, int, int> > const & obs,
 		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
 	params(params)
 {
@@ -168,12 +168,6 @@ FactorGraph::FactorGraph(Params const & params,
 		n.prob_i = get<1>(*it);
 		n.prob_r = get<2>(*it);
 	}
-	vector<tuple<int,int,int,real_t> > contacts = contacts2;
-	sort(contacts.begin(), contacts.end(), [](tuple<int,int,int,real_t> const & x,tuple<int,int,int,real_t> const & y) {return get<2>(x) < get<2>(y);});
-
-	vector<tuple<int, int, int> > obs = obs2;
-	sort(obs.begin(), obs.end(), [](tuple<int,int,int> const & x,tuple<int,int,int> const & y) {return get<2>(x) < get<2>(y);});
-
 	auto ic = contacts.begin(), ec = contacts.end();
 	auto io = obs.begin(), eo = obs.end();
 	while (ic != ec || io != eo) {

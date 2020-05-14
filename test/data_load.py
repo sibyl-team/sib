@@ -49,6 +49,7 @@ def load_exported_data(folder_path,epidemies_with_name=False,pandas_df=True):
         else:
             contacts = np.loadtxt(f,delimiter=",")
 
+    contacts.sort_values(by="t", inplace=True)
     file_all_obs = fold / ALL_OBS_FILE
     if file_all_obs.exists():
         with bz2.open(file_all_obs,"rt") as f:
@@ -77,5 +78,6 @@ def convert_obs_to_df(globs):
         for t, nodes in obse.items():
             data_iter = itertools.product([v],nodes,[int(t)])
             all_dfs.append(pd.DataFrame(data_iter,columns=columns))
-    return pd.concat(all_dfs)
-    
+    all_obs = pd.concat(all_dfs)
+    all_obs.sort_values(by="t", inplace=True)
+    return all_obs
