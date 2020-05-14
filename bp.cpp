@@ -107,7 +107,7 @@ Mes & operator++(Mes & msg)
 	return msg;
 }
 
-void FactorGraph::append_contact(int i, int j, int t, real_t lambda)
+void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t lambdaji)
 {
         add_node(i);
         add_node(j);
@@ -125,34 +125,16 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambda)
 		assert(kj == int(fj.neighs.size()));
 		fi.neighs.push_back(Neigh(j, kj));
 		fj.neighs.push_back(Neigh(i, ki));
-                fi.neighs.back().msg = Mes(1);
-                fj.neighs.back().msg = Mes(1);
-                fi.neighs.back().msg[0] = 1.0;
-                fj.neighs.back().msg[0] = 1.0;
-		fi.neighs.back().t.push_back(Tinf);
-		fj.neighs.back().t.push_back(Tinf);
-                fi.neighs.back().lambdas.push_back(0);
-                fj.neighs.back().lambdas.push_back(0);
 	}
 
 	Neigh & ni = fi.neighs[ki];
 	Neigh & nj = fj.neighs[kj];
 	if (fi.times[qi - 2] < t) {
-		fi.times.back() = t;
-		fi.times.push_back(Tinf);
-                fi.ht.push_back(fi.ht.back());
-                fi.hg.push_back(fi.hg.back());
-                fi.bt.push_back(fi.bt.back());
-                fi.bg.push_back(fi.bg.back());
+		fi.push_back_time(t);
                 ++qi;
 	}
 	if (fj.times[qj - 2] < t) {
-		fj.times.back() = t;
-		fj.times.push_back(Tinf);
-                fj.ht.push_back(fj.ht.back());
-                fj.hg.push_back(fj.hg.back());
-                fj.bt.push_back(fj.bt.back());
-                fj.bg.push_back(fj.bg.back());
+		fj.push_back_time(t);
                 ++qj;
 	}
 	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
@@ -160,14 +142,14 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambda)
 		nj.t.back() = qj - 2;
 		ni.t.push_back(qi - 1);
 		nj.t.push_back(qj - 1);
-		ni.lambdas.back() = lambda;
-		nj.lambdas.back() = 0.0;
+		ni.lambdas.back() = lambdaij;
+		nj.lambdas.back() = lambdaji;
                 ni.lambdas.push_back(0.0);
                 nj.lambdas.push_back(0.0);
 		++ni.msg;
 		++nj.msg;
 	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
-		ni.lambdas[ni.t.size() - 2] = lambda;
+		ni.lambdas[ni.t.size() - 2] = lambdaij;
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}
@@ -191,7 +173,6 @@ FactorGraph::FactorGraph(Params const & params,
 		n.prob_i = get<1>(*it);
 		n.prob_r = get<2>(*it);
 	}
-	
 	vector<tuple<int,int,int,real_t> > contacts = contacts2;
 	sort(contacts.begin(), contacts.end(), [](tuple<int,int,int,real_t> const & x,tuple<int,int,int,real_t> const & y) {return get<2>(x) < get<2>(y);});
 

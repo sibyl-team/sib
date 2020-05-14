@@ -19,7 +19,7 @@ extern int const Tinf;
 
 struct Mes : public std::vector<real_t>
 {
-	Mes() : qj(0) {}
+	// Mes() : qj(0) {}
 	Mes(size_t qj) : vector<real_t>(qj*qj), qj(qj) {}
 	void clear() { std::fill(begin(), end(), 0.0); }
 	size_t dim() const { return qj;}
@@ -29,7 +29,10 @@ struct Mes : public std::vector<real_t>
 };
 
 struct Neigh {
-	Neigh(int index, int pos) : index(index), pos(pos) { omp_init_lock(&lock_); }
+	Neigh(int index, int pos) : index(index), pos(pos), t({Tinf}), lambdas({0.0}), msg(1) {
+		omp_init_lock(&lock_);
+
+	}
 	int index;  // index of the node
 	int pos;    // position of the node in neighbors list
 	std::vector<int> t; // time index of contacts
@@ -56,6 +59,14 @@ struct Node {
 		}
 
 	}
+	void push_back_time(int t) {
+		times.back() = t;
+		times.push_back(Tinf);
+                ht.push_back(ht.back());
+                hg.push_back(hg.back());
+                bt.push_back(bt.back());
+                bg.push_back(bg.back());
+	}
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
 	std::vector<int> times;
@@ -76,7 +87,7 @@ public:
 		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
 			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
-	void append_contact(int i, int j, int t, real_t lambda);
+	void append_contact(int i, int j, int t, real_t lambda, real_t lambdaji = 0.0);
 	void append_observation(int i, int s, int t);
 	void add_node(int i);
 	void init();
