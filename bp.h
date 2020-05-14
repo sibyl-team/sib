@@ -14,6 +14,9 @@
 #ifndef FACTORGRAPH_H
 #define FACTORGRAPH_H
 
+extern int const Tinf;
+
+
 struct Mes : public std::vector<real_t>
 {
 	Mes() : qj(0) {}
@@ -42,7 +45,17 @@ struct Node {
 		prob_i(prob_i),
 		prob_r(prob_r),
 		f_(0)
-	{}
+	{
+		times.push_back(-1);
+		times.push_back(Tinf);
+		for (int t = 0; t < 2; ++t) {
+			bt.push_back(1);
+			ht.push_back(1);
+			bg.push_back(1);
+			hg.push_back(1);
+		}
+
+	}
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
 	std::vector<int> times;
@@ -56,7 +69,6 @@ struct Node {
 
 class FactorGraph {
 public:
-	int Tinf;
 	std::vector<Node> nodes;
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
@@ -64,8 +76,9 @@ public:
 		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
 			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
-	void add_contact(int i, int j, int t, real_t lambda);
-	int get_node(int i);
+	void append_contact(int i, int j, int t, real_t lambda);
+	void append_observation(int i, int s, int t);
+	void add_node(int i);
 	void init();
 	void set_field(int i, std::vector<int> const & tobs, std::vector<int> const & sobs);
 	real_t update(int i, real_t damping);

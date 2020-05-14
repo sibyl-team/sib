@@ -120,7 +120,6 @@ int main(int argc, char ** argv) {
 	auto r = parse_opt(argc, argv);
 	auto co = read_files(get<1>(r), get<2>(r));
 	FactorGraph factor(get<0>(r), get<0>(co), get<1>(co));
-	factor.init();
 	factor.iterate(get<3>(r), get<4>(r), 0.0);
 	factor.show_beliefs(cout);
 	return 0;

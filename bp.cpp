@@ -21,6 +21,8 @@
 
 using namespace std;
 
+
+int const Tinf = 1000000;
 void cumsum(Mes & m, int a, int b)
 {
 	for (int sij = m.qj - 2; sij >= b; --sij)
@@ -36,98 +38,181 @@ void cumsum(Mes & m, int a, int b)
 }
 
 
+
+void FactorGraph::append_observation(int i, int s, int t)
+{
+	add_node(i);
+	Node & n = nodes[i];
+        if (t < n.times[n.times.size() - 2]) {
+		cerr << t << " " << n.times[n.times.size() - 2] << endl;
+                throw invalid_argument("observation time too small");
+	} else if (t > n.times[n.times.size() - 2]) {
+                n.times.back() = t;
+                n.times.push_back(Tinf);
+                n.ht.push_back(n.ht.back());
+                n.hg.push_back(n.hg.back());
+                n.bt.push_back(n.bt.back());
+                n.bg.push_back(n.bg.back());
+                // adjust infinite times
+                for (int j = 0; j < int(n.neighs.size()); ++j) {
+                        n.neighs[j].t.back() = n.times.size() - 1;
+                }
+        }
+        int qi = n.times.size();
+        int tobs = qi - 2;
+	int tl = 0, gl = 0;
+	int tu = qi;
+	int gu = qi;
+        switch (s) {
+                case 0:
+                        tl = max(tl, tobs);
+                        gl = max(gl, tobs);
+                        break;
+                case 1:
+                        tu = min(tu, tobs - 1);
+                        gl = max(gl, tobs);
+                        break;
+                case 2:
+                        tu = min(tu, tobs - 1);
+                        gu = min(gu, tobs - 1);
+                        break;
+                case -1:
+                        break;
+
+        }
+
+	for(int t = 0; t < qi; ++t) {
+		n.ht[t] *= (tl <= t && t <= tu);
+		n.hg[t] *= (gl <= t && t <= gu);
+	}
+}
+
+Mes & operator++(Mes & msg)
+{
+	int qj = msg.qj;
+	msg.qj++;
+	msg.resize(msg.qj * msg.qj);
+
+
+	for (int sij = qj - 1; sij >= 0; --sij) {
+		for (int sji = qj - 1; sji >= 0; --sji) {
+			msg(sji, sij) = msg[(qj + 1) * sij + sji];
+		}
+	}
+	for (int s = 0; s < int(msg.qj); ++s) {
+		msg(s, qj) = msg(s, qj - 1);
+		msg(qj, s) = msg(qj - 1, s);
+                msg(qj, qj) = msg(qj - 1, qj - 1);
+	}
+	return msg;
+}
+
+void FactorGraph::append_contact(int i, int j, int t, real_t lambda)
+{
+        add_node(i);
+        add_node(j);
+	Node & fi = nodes[i];
+	Node & fj = nodes[j];
+	int qi = fi.times.size();
+	int qj = fj.times.size();
+	if (fi.times[qi - 2] > t || fj.times[qj - 2] > t)
+		throw invalid_argument("time of contacts should be ordered");
+
+	int ki = find_neighbor(i, j);
+	int kj = find_neighbor(j, i);
+
+	if (ki == int(fi.neighs.size())) {
+		assert(kj == int(fj.neighs.size()));
+		fi.neighs.push_back(Neigh(j, kj));
+		fj.neighs.push_back(Neigh(i, ki));
+                fi.neighs.back().msg = Mes(1);
+                fj.neighs.back().msg = Mes(1);
+                fi.neighs.back().msg[0] = 1.0;
+                fj.neighs.back().msg[0] = 1.0;
+		fi.neighs.back().t.push_back(Tinf);
+		fj.neighs.back().t.push_back(Tinf);
+                fi.neighs.back().lambdas.push_back(0);
+                fj.neighs.back().lambdas.push_back(0);
+	}
+
+	Neigh & ni = fi.neighs[ki];
+	Neigh & nj = fj.neighs[kj];
+	if (fi.times[qi - 2] < t) {
+		fi.times.back() = t;
+		fi.times.push_back(Tinf);
+                fi.ht.push_back(fi.ht.back());
+                fi.hg.push_back(fi.hg.back());
+                fi.bt.push_back(fi.bt.back());
+                fi.bg.push_back(fi.bg.back());
+                ++qi;
+	}
+	if (fj.times[qj - 2] < t) {
+		fj.times.back() = t;
+		fj.times.push_back(Tinf);
+                fj.ht.push_back(fj.ht.back());
+                fj.hg.push_back(fj.hg.back());
+                fj.bt.push_back(fj.bt.back());
+                fj.bg.push_back(fj.bg.back());
+                ++qj;
+	}
+	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
+		ni.t.back() = qi - 2;
+		nj.t.back() = qj - 2;
+		ni.t.push_back(qi - 1);
+		nj.t.push_back(qj - 1);
+		ni.lambdas.back() = lambda;
+		nj.lambdas.back() = 0.0;
+                ni.lambdas.push_back(0.0);
+                nj.lambdas.push_back(0.0);
+		++ni.msg;
+		++nj.msg;
+	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
+		ni.lambdas[ni.t.size() - 2] = lambda;
+	} else {
+		throw invalid_argument("time of contacts should be ordered");
+	}
+        // adjust infinite times
+        for (int k = 0; k < int(fi.neighs.size()); ++k)
+                fi.neighs[k].t.back() = qi - 1;
+        for (int k = 0; k < int(fj.neighs.size()); ++k)
+                fj.neighs[k].t.back() = qj - 1;
+}
+
+
 FactorGraph::FactorGraph(Params const & params,
-		vector<tuple<int,int,int,real_t> > const & contacts,
-		vector<tuple<int, int, int> > const & obs,
+		vector<tuple<int,int,int,real_t> > const & contacts2,
+		vector<tuple<int, int, int> > const & obs2,
 		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
-	Tinf(100000),
 	params(params)
 {
-	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
-		int i,j,t;
-		real_t lambda;
-		tie(i,j,t,lambda) = *it;
-		add_contact(i, j, t, lambda);
-	}
-
-	vector<vector<int>> tobs(nodes.size());
-	vector<vector<int>> sobs(nodes.size());
-	for (auto it = obs.begin(); it != obs.end(); ++it) {
-		int i,s,t;
-		tie(i,s,t) = *it;
-		Tinf = max(Tinf, t + 1);
-		i = get_node(i);
-		if (nodes.size() > tobs.size()) {
-			tobs.resize(nodes.size());
-			sobs.resize(nodes.size());
-		}
-
-		if (tobs[i].empty() || t >= tobs[i].back()) {
-			tobs[i].push_back(t);
-			sobs[i].push_back(s);
-		} else {
-			throw invalid_argument("time of observations should be ordered");
-		}
-	}
-
-	for (auto it = contacts.begin(); it != contacts.end(); ++it) {
-		int i,j,t;
-		real_t lambda;
-		tie(i,j,t,lambda) = *it;
-		add_contact(i, j, t, lambda);
-	}
-
-
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
-		int a = get_node(get<0>(*it));
-		nodes[a].prob_i = get<1>(*it);
-		nodes[a].prob_r = get<2>(*it);
+		add_node(get<0>(*it));
+		Node & n = nodes[get<0>(*it)];
+		n.prob_i = get<1>(*it);
+		n.prob_r = get<2>(*it);
 	}
+	
+	vector<tuple<int,int,int,real_t> > contacts = contacts2;
+	sort(contacts.begin(), contacts.end(), [](tuple<int,int,int,real_t> const & x,tuple<int,int,int,real_t> const & y) {return get<2>(x) < get<2>(y);});
 
-	if (nodes.size() > tobs.size()) {
-		tobs.resize(nodes.size());
-		sobs.resize(nodes.size());
-	}
-	for (int i = 0; i < int(nodes.size()); ++i) {
-		Node & f = nodes[i];
-		int const n = f.neighs.size();
-		vector<tuple<int,int>> F;
-		for (auto it = tobs[i].begin(); it != tobs[i].end(); ++it)
-			F.push_back(make_tuple(*it, -1));
-		for (int j = 0; j < n; ++j) {
-			Neigh & v = f.neighs[j];
-			v.t.push_back(Tinf);
-			v.lambdas.push_back(0);
-			for (int s = 0; s < int(v.t.size()); ++s)
-				F.push_back(make_tuple(v.t[s], j));
-		}
-		sort(F.begin(), F.end());
-		F.push_back(make_tuple(Tinf,-1));
-		f.times.push_back(-1);
-		vector<int> pointer(n);
-		for (auto it = F.begin(); it != F.end(); ++it) {
-			int t, j;
-			tie(t,j) = *it;
-			if (f.times.back() != t)
-				f.times.push_back(t);
-			if (j != -1)
-				f.neighs[j].t[pointer[j]++] = f.times.size() - 1;
-		}
-		int qi = f.times.size();
-		f.bt.resize(qi, 1./qi);
-		f.bg.resize(qi, 1./qi);
-		f.ht.resize(qi);
-		f.hg.resize(qi);
-		set_field(i, tobs[i], sobs[i]);
-		for (int j = 0; j  < n; ++j) {
-			Neigh & v = f.neighs[j];
-			omp_init_lock(&v.lock_);
-			int nij = v.t.size();
-			nodes[i].neighs[j].msg = Mes(nij);
+	vector<tuple<int, int, int> > obs = obs2;
+	sort(obs.begin(), obs.end(), [](tuple<int,int,int> const & x,tuple<int,int,int> const & y) {return get<2>(x) < get<2>(y);});
+
+	auto ic = contacts.begin(), ec = contacts.end();
+	auto io = obs.begin(), eo = obs.end();
+	while (ic != ec || io != eo) {
+		int tc = ic == ec ? Tinf : get<2>(*ic);
+		int to = io == eo ? Tinf : get<2>(*io);
+		if (tc < to) {
+			// cerr << "appending contact" << get<0>(*ic) << " " <<  get<1>(*ic)<< " " <<  get<2>(*ic) << " " <<  get<3>(*ic) << endl;
+			append_contact(get<0>(*ic), get<1>(*ic), get<2>(*ic), get<3>(*ic));
+			ic++;
+		} else {
+			// cerr << "appending obs" << get<0>(*io) << " " <<  get<1>(*io)<< " " <<  get<2>(*io)  << endl;
+			append_observation(get<0>(*io), get<1>(*io), get<2>(*io));
+			io++;
 		}
 	}
-	init();
-	//showgraph();
 }
 
 int FactorGraph::find_neighbor(int i, int j) const
@@ -139,41 +224,11 @@ int FactorGraph::find_neighbor(int i, int j) const
 	return k;
 }
 
-int FactorGraph::get_node(int i)
+void FactorGraph::add_node(int i)
 {
 	for (int j = nodes.size(); j < i + 1; ++j)
 		nodes.push_back(Node(params.prob_i, params.prob_r));
-	return i;
 }
-
-void FactorGraph::add_contact(int i, int j, int t, real_t lambda)
-{
-	if (lambda < 0 || lambda > 1)
-		throw invalid_argument("lambda is out of [0,1]");
-	Tinf = max(Tinf, t + 1);
-	i = get_node(i);
-	j = get_node(j);
-	int ki = find_neighbor(i, j);
-	int kj = find_neighbor(j, i);
-	if (ki == int(nodes[i].neighs.size())) {
-		assert(kj == int(nodes[j].neighs.size()));
-		nodes[i].neighs.push_back(Neigh(j, kj));
-		nodes[j].neighs.push_back(Neigh(i, ki));
-	}
-	Neigh & ni = nodes[i].neighs[ki];
-	Neigh & nj = nodes[j].neighs[kj];
-	if (ni.t.empty() || t > ni.t.back()) {
-		ni.t.push_back(t);
-		ni.lambdas.push_back(lambda);
-		nj.t.push_back(t);
-		nj.lambdas.push_back(0.0);
-	} else if (t == ni.t.back()) {
-		ni.lambdas.back() = lambda;
-	} else {
-		throw invalid_argument("time of contacts should be ordered");
-	}
-}
-
 
 
 void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const & sobs)
@@ -295,18 +350,6 @@ ostream & operator<<(ostream & o, vector<real_t> const & m)
 	}
 	o << "}";
 	return o;
-}
-
-void FactorGraph::init()
-{
-	for(int i = 0; i < int(nodes.size()); ++i) {
-		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
-			Mes & msg = nodes[i].neighs[j].msg;
-			fill(msg.begin(), msg.end(), 1. / msg.size());
-		}
-		fill(nodes[i].bt.begin(), nodes[i].bt.end(), 1. / nodes[i].bt.size());
-		fill(nodes[i].bg.begin(), nodes[i].bg.end(), 1. / nodes[i].bg.size());
-	}
 }
 
 void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & min_out)
