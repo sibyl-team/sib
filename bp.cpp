@@ -47,12 +47,7 @@ void FactorGraph::append_observation(int i, int s, int t)
 		cerr << t << " " << n.times[n.times.size() - 2] << endl;
                 throw invalid_argument("observation time too small");
 	} else if (t > n.times[n.times.size() - 2]) {
-                n.times.back() = t;
-                n.times.push_back(Tinf);
-                n.ht.push_back(n.ht.back());
-                n.hg.push_back(n.hg.back());
-                n.bt.push_back(n.bt.back());
-                n.bg.push_back(n.bg.back());
+		n.push_back_time(t);
                 // adjust infinite times
                 for (int j = 0; j < int(n.neighs.size()); ++j) {
                         n.neighs[j].t.back() = n.times.size() - 1;
