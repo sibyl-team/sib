@@ -102,6 +102,34 @@ Mes & operator++(Mes & msg)
 	return msg;
 }
 
+
+Mes & operator--(Mes & msg)
+{
+	int qj = msg.qj;
+	msg.qj--;
+	for (int sij = 0; sij < qj - 1; ++sij) {
+		for (int sji = 0; sji < qj - 1; ++sji) {
+			msg(sji, sij) = msg[qj * (sij + 1) + (sji + 1)];
+		}
+	}
+	msg.resize(msg.qj * msg.qj);
+	return msg;
+}
+
+
+void FactorGraph::drop_contacts(int t)
+{
+	for (int i = 0; i < int(nodes.size()); ++i) {
+		Node & fi = nodes[i];
+		for (int k = 0; k < int(fi.neighs.size()); ++k) {
+			if (fi.times[fi.neighs[k].t[0]] != t)
+				throw invalid_argument("can only drop first contact");
+			fi.neighs[k].t.erase(fi.neighs[k].t.begin() + 1, fi.neighs[k].t.begin() + 2);
+			--fi.neighs[k].msg;
+		}
+	}
+}
+
 void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t lambdaji)
 {
         add_node(i);
@@ -137,14 +165,19 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 		nj.t.back() = qj - 2;
 		ni.t.push_back(qi - 1);
 		nj.t.push_back(qj - 1);
-		ni.lambdas.back() = lambdaij;
-		nj.lambdas.back() = lambdaji;
+		if (lambdaij != DO_NOT_OVERWRITE)
+			ni.lambdas.back() = lambdaij;
+		if (lambdaji != DO_NOT_OVERWRITE)
+			nj.lambdas.back() = lambdaji;
                 ni.lambdas.push_back(0.0);
                 nj.lambdas.push_back(0.0);
 		++ni.msg;
 		++nj.msg;
 	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
-		ni.lambdas[ni.t.size() - 2] = lambdaij;
+		if (lambdaij != DO_NOT_OVERWRITE)
+			ni.lambdas[ni.t.size() - 2] = lambdaij;
+		if (lambdaji != DO_NOT_OVERWRITE)
+			nj.lambdas[nj.t.size() - 2] = lambdaji;
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}

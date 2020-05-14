@@ -87,7 +87,8 @@ public:
 		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
 			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
-	void append_contact(int i, int j, int t, real_t lambda, real_t lambdaji = 0.0);
+	void append_contact(int i, int j, int t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
+	void drop_contacts(int t);
 	void append_observation(int i, int s, int t);
 	void add_node(int i);
 	void init();
@@ -100,6 +101,7 @@ public:
 	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
 	Params params;
+	enum ARRAY_ENUM { DO_NOT_OVERWRITE = -1 };
 };
 
 std::ostream & operator<<(std::ostream &, FactorGraph const &);
