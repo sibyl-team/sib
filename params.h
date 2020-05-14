@@ -99,12 +99,14 @@ struct Params {
 	real_t pseed;
 	real_t psus;
 	real_t softconstraint;
+	real_t autoinf;
 	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus, real_t softconstraint) :
 		prob_i(pi),
 		prob_r(pr),
 		pseed(pseed),
 		psus(psus),
-		softconstraint(softconstraint)
+		softconstraint(softconstraint),
+		autoinf(0.0)
 	{
 		if (pseed + psus > 1)
 			throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
