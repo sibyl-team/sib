@@ -44,10 +44,11 @@ struct Neigh {
 };
 
 struct Node {
-	Node(std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r) :
+	Node(std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r, int index) :
 		prob_i(prob_i),
 		prob_r(prob_r),
-		f_(0)
+		f_(0),
+		index(index)
 	{
 		times.push_back(-1);
 		times.push_back(Tinf);
@@ -76,6 +77,7 @@ struct Node {
 	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
+	int index;
 };
 
 class FactorGraph {

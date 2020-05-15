@@ -84,21 +84,24 @@ void FactorGraph::append_observation(int i, int s, int t)
 
 Mes & operator++(Mes & msg)
 {
-	int qj = msg.qj;
+	int oldqj = msg.qj;
 	msg.qj++;
+	int qj = msg.qj;
 	msg.resize(msg.qj * msg.qj);
 
-
-	for (int sij = qj - 1; sij >= 0; --sij) {
-		for (int sji = qj - 1; sji >= 0; --sji) {
-			msg(sji, sij) = msg[(qj + 1) * sij + sji];
+	//msg(sji, sij) = msg[qj * sij + sji]
+	for (int sij = oldqj - 1; sij >= 0; --sij) {
+		for (int sji = oldqj - 1; sji >= 0; --sji) {
+			msg(sji, sij) = msg[oldqj * sij + sji];
 		}
 	}
-	for (int s = 0; s < int(msg.qj); ++s) {
-		msg(s, qj) = msg(s, qj - 1);
-		msg(qj, s) = msg(qj - 1, s);
-                msg(qj, qj) = msg(qj - 1, qj - 1);
+	for (int s = 0; s < qj; ++s) {
+		msg(s, qj - 1) = msg(s, qj - 2);
+		msg(s, qj - 2) = 0.0;
+		msg(qj - 1, s) = msg(qj - 2, s);
+		msg(qj - 2, s) = 0.0;
 	}
+        msg(qj - 1, qj - 1) = msg(qj - 2, qj - 2);
 	return msg;
 }
 
@@ -166,18 +169,18 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 		ni.t.push_back(qi - 1);
 		nj.t.push_back(qj - 1);
 		if (lambdaij != DO_NOT_OVERWRITE)
-			ni.lambdas.back() = lambdaij;
+			ni.lambdas.back() = lambdaij * 0; 
 		if (lambdaji != DO_NOT_OVERWRITE)
-			nj.lambdas.back() = lambdaji;
+			nj.lambdas.back() = lambdaji * 0; 
                 ni.lambdas.push_back(0.0);
                 nj.lambdas.push_back(0.0);
 		++ni.msg;
 		++nj.msg;
 	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
 		if (lambdaij != DO_NOT_OVERWRITE)
-			ni.lambdas[ni.t.size() - 2] = lambdaij;
+			ni.lambdas[ni.t.size() - 2] = 0 *lambdaij; 
 		if (lambdaji != DO_NOT_OVERWRITE)
-			nj.lambdas[nj.t.size() - 2] = lambdaji;
+			nj.lambdas[nj.t.size() - 2] = 0 * lambdaji; 
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}
@@ -230,7 +233,7 @@ int FactorGraph::find_neighbor(int i, int j) const
 void FactorGraph::add_node(int i)
 {
 	for (int j = nodes.size(); j < i + 1; ++j)
-		nodes.push_back(Node(params.prob_i, params.prob_r));
+		nodes.push_back(Node(params.prob_i, params.prob_r, i));
 }
 
 

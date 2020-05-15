@@ -133,7 +133,7 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<Params>(m, "Params")
         .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t>(),
-                "Params class. prob_i and prob_r parameters are defaults.",
+                "SIB Params class. prob_i and prob_r parameters are defaults.",
                 py::arg("prob_i") = *new Uniform(1.0),
                 py::arg("prob_r") = *new Exponential(0.1),
                 py::arg("pseed") = 0.01,
@@ -146,7 +146,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("softconstraint", &Params::softconstraint)
         .def("__repr__", &print<Params>);
 
-    py::class_<FactorGraph>(m, "FactorGraph")
+    py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
                 vector<tuple<int,int,int,real_t>>,
                 vector<tuple<int,int,int>>,
@@ -156,23 +156,25 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("contacts") = vector<tuple<int,int,int,real_t>>(),
                 py::arg("observations") = vector<tuple<int,int,int>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>())
-        .def("update", &FactorGraph::iteration)
-        .def("loglikelihood", &FactorGraph::loglikelihood)
+        .def("update", &FactorGraph::iteration, "perform one iteration")
+        .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &print<FactorGraph>)
-        .def("append_contact", &FactorGraph::append_contact)
-        .def("append_observation", &FactorGraph::append_observation)
-        .def_readonly("nodes", &FactorGraph::nodes)
-        .def_readonly("params", &FactorGraph::params);
-    py::class_<Node>(m, "Node")
-        .def("marginal", &get_marginal)
-        .def("marginal_index", &get_marginal_index)
-        .def_readwrite("ht", &Node::ht)
-        .def_readwrite("hg", &Node::hg)
-        .def_readonly("bt", &Node::bt)
-        .def_readonly("bg", &Node::bg)
-        .def_readonly("times", &Node::times)
-        .def_readonly("prob_i", &Node::prob_i)
-        .def_readonly("prob_r", &Node::prob_r);
+        .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t,real_t)) &FactorGraph::append_contact, "append contact (i,j,t,lambdaij,lambdaji)")
+        .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t)) &FactorGraph::append_contact, "append contact (i,j,t,lambdaij)")
+        .def("append_observation", &FactorGraph::append_observation, "append an observation (i,state,t)")
+        .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
+        .def_readonly("params", &FactorGraph::params, "parameters");
+    py::class_<Node>(m, "Node", "SIB class representing an individual")
+        .def("marginal", &get_marginal, "compute marginal probabilities (pS,pI,pR) corresponding to times n.times[1:]")
+        .def("marginal_index", &get_marginal_index, "marginal at a given time (excluding time -1)")
+        .def_readwrite("ht", &Node::ht, "external prior on ti")
+        .def_readwrite("hg", &Node::hg, "external prior on gi")
+        .def_readonly("bt", &Node::bt, "belief on ti")
+        .def_readonly("bg", &Node::bg, "belief on gi")
+        .def_readonly("times", &Node::times, "event times of this node")
+        .def_readonly("index", &Node::index, "node index (deprecated, do not use)")
+        .def_readonly("prob_i", &Node::prob_i, "probability of infection as function of t-ti")
+        .def_readonly("prob_r", &Node::prob_r, "cumulative probability of recovery P(tr>t)");
 
-    m.def("set_num_threads", &omp_set_num_threads);
+    m.def("set_num_threads", &omp_set_num_threads, "sets the maximum number of simultaneous cpu threads");
 }
