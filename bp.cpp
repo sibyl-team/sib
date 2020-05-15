@@ -169,18 +169,18 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 		ni.t.push_back(qi - 1);
 		nj.t.push_back(qj - 1);
 		if (lambdaij != DO_NOT_OVERWRITE)
-			ni.lambdas.back() = lambdaij * 0; 
+			ni.lambdas.back() = lambdaij;
 		if (lambdaji != DO_NOT_OVERWRITE)
-			nj.lambdas.back() = lambdaji * 0; 
+			nj.lambdas.back() = lambdaji;
                 ni.lambdas.push_back(0.0);
                 nj.lambdas.push_back(0.0);
 		++ni.msg;
 		++nj.msg;
 	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
 		if (lambdaij != DO_NOT_OVERWRITE)
-			ni.lambdas[ni.t.size() - 2] = 0 *lambdaij; 
+			ni.lambdas[ni.t.size() - 2] = lambdaij;
 		if (lambdaji != DO_NOT_OVERWRITE)
-			nj.lambdas[nj.t.size() - 2] = 0 * lambdaji; 
+			nj.lambdas[nj.t.size() - 2] = lambdaji;
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}
