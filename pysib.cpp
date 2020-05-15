@@ -314,6 +314,7 @@ PYBIND11_MODULE(_sib, m) {
         .def("get_index", &get_index)
         .def("__repr__", &print<FactorGraph>)
         .def("append_contact", &append_contact)
+        .def("showmsg", [](FactorGraph & f){f.show_msg(std::cerr);}, "show messages for debugging")
         .def("append_observation", &append_observation)
         .def_readonly("nodes", &FactorGraph::nodes)
         .def_readonly("params", &FactorGraph::params);
