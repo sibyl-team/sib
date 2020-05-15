@@ -7,3 +7,7 @@ __pycache__/
 
 ## Text editors
 .vscode
+
+# python build files
+build/
+sib.egg-info/
