@@ -164,7 +164,7 @@ PYBIND11_MODULE(_sib, m) {
         .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t,real_t)) &FactorGraph::append_contact, "append contact (i,j,t,lambdaij,lambdaji)")
         .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t)) &FactorGraph::append_contact, "append contact (i,j,t,lambdaij)")
         .def("append_observation", &FactorGraph::append_observation, "append an observation (i,state,t)")
-    .def("showmsg", [](FactorGraph & f){f.show_msg(std::cerr);}, "show messages for debugging")
+    .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
         .def_readonly("params", &FactorGraph::params, "parameters");
     py::class_<Node>(m, "Node", "SIB class representing an individual")
