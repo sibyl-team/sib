@@ -19,8 +19,7 @@ extern int const Tinf;
 
 struct Mes : public std::vector<real_t>
 {
-	// Mes() : qj(0) {}
-	Mes(size_t qj) : vector<real_t>(qj*qj, 1. / (qj*qj)), qj(qj) {}
+	Mes(size_t qj, real_t val = 0.0) : vector<real_t>(qj*qj, val), qj(qj) {}
 	void clear() { std::fill(begin(), end(), 0.0); }
 	size_t dim() const { return qj;}
 	real_t & operator()(int sji, int sij) { return operator[](qj * sij + sji); }
@@ -29,7 +28,7 @@ struct Mes : public std::vector<real_t>
 };
 
 struct Neigh {
-	Neigh(int index, int pos) : index(index), pos(pos), t({Tinf}), lambdas({0.0}), msg(1) {
+	Neigh(int index, int pos) : index(index), pos(pos), t({Tinf}), lambdas({0.0}), msg(1, 1.0) {
 		omp_init_lock(&lock_);
 
 	}
