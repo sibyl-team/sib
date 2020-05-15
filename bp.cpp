@@ -95,13 +95,11 @@ Mes & operator++(Mes & msg)
 			msg(sji, sij) = msg[oldqj * sij + sji];
 		}
 	}
+        msg(qj - 1, qj - 1) = msg(qj - 2, qj - 2);
 	for (int s = 0; s < qj; ++s) {
 		msg(s, qj - 1) = msg(s, qj - 2);
-		msg(s, qj - 2) = 0.0;
 		msg(qj - 1, s) = msg(qj - 2, s);
-		msg(qj - 2, s) = 0.0;
 	}
-        msg(qj - 1, qj - 1) = msg(qj - 2, qj - 2);
 	return msg;
 }
 
@@ -303,14 +301,20 @@ void FactorGraph::show_beliefs(ostream & ofs)
 
 }
 
-void FactorGraph::show_msg(ostream & msgfile)
+void FactorGraph::show_msg(ostream & o)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
-		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
-			for (int n = 0; n < int(nodes[i].neighs[j].msg.size()); ++n) {
-				msgfile << nodes[i].neighs[j].msg[n] << " ";
+		auto & n = nodes[i];
+		for(int j = 0; j < int(n.neighs.size()); ++j) {
+			auto & v = n.neighs[j];
+			o << i << " <- " << v.index << " : " << endl;
+			for (int sij = 0; sij < int(v.msg.qj); ++sij) {
+				for (int sji = 0; sji < int(v.msg.qj); ++sji) {
+					o << v.msg(sij, sji) << " ";
+				}
+				o << endl;
 			}
-			msgfile << " " << endl;
+
 		}
 	}
 }

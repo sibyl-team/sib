@@ -20,7 +20,7 @@ extern int const Tinf;
 struct Mes : public std::vector<real_t>
 {
 	// Mes() : qj(0) {}
-	Mes(size_t qj) : vector<real_t>(qj*qj), qj(qj) {}
+	Mes(size_t qj) : vector<real_t>(qj*qj, 1. / (qj*qj)), qj(qj) {}
 	void clear() { std::fill(begin(), end(), 0.0); }
 	size_t dim() const { return qj;}
 	real_t & operator()(int sji, int sij) { return operator[](qj * sij + sji); }
