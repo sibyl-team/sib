@@ -72,7 +72,7 @@ parse_opt(int & argc, char ** argv)
 {
 	auto prob_i = new Uniform(1.0);
 	auto prob_r = new Gamma(1.0,0.01);
-	Params p(shared_ptr<Proba>(prob_i), shared_ptr<Proba>(prob_r), 0.01, 0.5, 0.0);
+	Params p(shared_ptr<Proba>(prob_i), shared_ptr<Proba>(prob_r), 0.01, 0.5, 0.0, 0.0);
 	char const * obs_file = "/dev/null";
 	char const * cont_file = "/dev/null";
 	int c;
