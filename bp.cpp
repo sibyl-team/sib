@@ -126,6 +126,7 @@ void FactorGraph::drop_contacts(int t)
 			if (fi.times[fi.neighs[k].t[0]] != t)
 				throw invalid_argument("can only drop first contact");
 			fi.neighs[k].t.erase(fi.neighs[k].t.begin() + 1, fi.neighs[k].t.begin() + 2);
+			fi.neighs[k].lambdas.erase(fi.neighs[k].lambdas.begin() + 1, fi.neighs[k].lambdas.begin() + 2);
 			--fi.neighs[k].msg;
 		}
 	}
