@@ -161,8 +161,12 @@ PYBIND11_MODULE(_sib, m) {
         .def("update", &FactorGraph::iteration, "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &print<FactorGraph>)
-        .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t,real_t)) &FactorGraph::append_contact, "append contact (i,j,t,lambdaij,lambdaji)")
-        .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t)) &FactorGraph::append_contact, "append contact (i,j,t,lambdaij)")
+        .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t,real_t)) &FactorGraph::append_contact,
+                py::arg("i"),
+                py::arg("j"),
+                py::arg("t"),
+                py::arg("lambdaij"),
+                py::arg("lambdaji") = FactorGraph::DO_NOT_OVERWRITE)
         .def("append_observation", &FactorGraph::append_observation, "append an observation (i,state,t)")
     .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
