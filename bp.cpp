@@ -123,11 +123,13 @@ void FactorGraph::drop_contacts(int t)
 	for (int i = 0; i < int(nodes.size()); ++i) {
 		Node & fi = nodes[i];
 		for (int k = 0; k < int(fi.neighs.size()); ++k) {
-			if (fi.times[fi.neighs[k].t[0]] != t)
+			if (fi.times[fi.neighs[k].t[0]] < t)
 				throw invalid_argument("can only drop first contact");
-			fi.neighs[k].t.erase(fi.neighs[k].t.begin() + 1, fi.neighs[k].t.begin() + 2);
-			fi.neighs[k].lambdas.erase(fi.neighs[k].lambdas.begin() + 1, fi.neighs[k].lambdas.begin() + 2);
-			--fi.neighs[k].msg;
+			else if (fi.times[fi.neighs[k].t[0]] == t) {
+				fi.neighs[k].t.erase(fi.neighs[k].t.begin() + 1, fi.neighs[k].t.begin() + 2);
+				fi.neighs[k].lambdas.erase(fi.neighs[k].lambdas.begin() + 1, fi.neighs[k].lambdas.begin() + 2);
+				--fi.neighs[k].msg;
+			}
 		}
 	}
 }
