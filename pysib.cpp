@@ -138,8 +138,8 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("prob_r") = *new Exponential(0.1),
                 py::arg("pseed") = 0.01,
                 py::arg("psus") = 0.5,
-                py::arg("pautoinf") = 0.0,
-                py::arg("softconstraint") = 0.0)
+                py::arg("softconstraint") = 0.0,
+                py::arg("pautoinf") = 0.0)
 
         .def_readwrite("prob_r", &Params::prob_r)
         .def_readwrite("prob_i", &Params::prob_i)
