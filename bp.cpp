@@ -242,9 +242,9 @@ void FactorGraph::show_msg(ostream & msgfile)
 {
 	for(int i = 0; i < int(nodes.size()); ++i) {
 		for(int j = 0; j < int(nodes[i].neighs.size()); ++j) {
-			msgfile << i << " <- " << nodes[i].neighs[j].index << endl; 
-			for (int sij = 0; sij < nodes[i].neighs[j].msg.qj; ++sij) {
-				for (int sji = 0; sji < nodes[i].neighs[j].msg.qj; ++sji) {
+			msgfile << i << " <- " << nodes[i].neighs[j].index << endl;
+			for (int sij = 0; sij < int(nodes[i].neighs[j].msg.qj); ++sij) {
+				for (int sji = 0; sji < int(nodes[i].neighs[j].msg.qj); ++sji) {
 					msgfile << nodes[i].neighs[j].msg(sji,sij) << " ";
 				}
 				msgfile << endl;
