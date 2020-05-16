@@ -166,7 +166,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("j"),
                 py::arg("t"),
                 py::arg("lambdaij"),
-                py::arg("lambdaji") = FactorGraph::DO_NOT_OVERWRITE)
+                py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE))
         .def("append_observation", &FactorGraph::append_observation, "append an observation (i,state,t)")
     .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
