@@ -168,7 +168,8 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("lambdaij"),
                 py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE))
         .def("append_observation", &FactorGraph::append_observation, "append an observation (i,state,t)")
-    .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
+        .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
+        .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
         .def_readonly("params", &FactorGraph::params, "parameters");
     py::class_<Node>(m, "Node", "SIB class representing an individual")
