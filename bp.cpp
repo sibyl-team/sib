@@ -234,7 +234,7 @@ int FactorGraph::find_neighbor(int i, int j) const
 void FactorGraph::add_node(int i)
 {
 	for (int j = nodes.size(); j < i + 1; ++j)
-		nodes.push_back(Node(params.prob_i, params.prob_r, i));
+		nodes.push_back(Node(params.prob_i, params.prob_r, j));
 }
 
 
