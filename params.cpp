@@ -7,7 +7,8 @@ std::ostream & operator<<(std::ostream & ost, Params const & p)
 	<< "prob_i=" << *p.prob_i
         << ",prob_r=" << *p.prob_r
         << ",pseed=" << p.pseed
-        << ",psus=" << p.psus << ")";
+        << ",psus=" << p.psus
+        << ",pautoinf=" << p.pautoinf << ")";
 }
 
 std::ostream & operator<<(std::ostream & ost, Proba const & p) { p.print(ost); return ost; }

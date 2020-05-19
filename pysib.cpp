@@ -146,6 +146,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("pseed", &Params::pseed)
         .def_readwrite("psus", &Params::psus)
         .def_readwrite("softconstraint", &Params::softconstraint)
+        .def_readwrite("pautoinf", &Params::pautoinf)
         .def("__repr__", &print<Params>);
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
@@ -166,12 +167,18 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("j"),
                 py::arg("t"),
                 py::arg("lambdaij"),
-                py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE))
-        .def("append_observation", &FactorGraph::append_observation, "append an observation (i,state,t)")
+                py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE),
+                "appends a new contact from i to j at time t with transmission probabilities lambdaij, lambdaji")
+        .def("append_observation", &FactorGraph::append_observation,
+                py::arg("i"),
+                py::arg("s"),
+                py::arg("t"),
+                "appends a new observation with state s to node i at time t")
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
         .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
         .def_readonly("params", &FactorGraph::params, "parameters");
+
     py::class_<Node>(m, "Node", "SIB class representing an individual")
         .def("marginal", &get_marginal, "compute marginal probabilities (pS,pI,pR) corresponding to times n.times[1:]")
         .def("marginal_index", &get_marginal_index, "marginal at a given time (excluding time -1)")
