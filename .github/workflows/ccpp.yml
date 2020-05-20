@@ -19,6 +19,6 @@ jobs:
       run: pip3 install pybind11 numpy pandas --user
     - uses: actions/checkout@v2
     - name: make
-      run: make INC=$BOOST_ROOT_1_69_0
+      run: make INC=-I$BOOST_ROOT_1_69_0
     - name: test
       run: make test
