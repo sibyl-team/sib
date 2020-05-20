@@ -8,7 +8,7 @@ Message passing algorithm for inference in epidemic inference problems. The Sibi
 
   - A C++11 compiler
   - python3
-  - [pybind11]()
+  - [pybind11](https://github.com/pybind/pybind11)
   - header only boost libraries
 
 ## Install:
