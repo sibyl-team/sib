@@ -1,0 +1,24 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+    - name: Install pybind11
+      run: pip3 install pybind11 numpy pandas --user
+    - uses: actions/checkout@v2
+    - name: make
+      run: make INC=-I$BOOST_ROOT_1_69_0
+    - name: test
+      run: make test
