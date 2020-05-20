@@ -15,9 +15,10 @@ jobs:
 
     - name: Setup Python
       uses: actions/setup-python@v2
-
+    - name: Install pybind11
+      run: pip3 install pybind11 --user
     - uses: actions/checkout@v2
     - name: make
       run: make INC=$BOOST_ROOT_1_69_0
-    - name: make test
+    - name: test
       run: make test
