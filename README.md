@@ -30,7 +30,7 @@ When not installing with `pip`, make sure to include the `sib` folder into the p
 
 ## Quick start: 
 
- Have a look at this [notebook](/test/test.ipynb).
+ Have a look at this [notebook](./examples/dummy_test.ipynb).
 
  ## Reference:
  This code implements and expands the method described [here](https://www.nature.com/articles/srep27538).
@@ -141,5 +141,6 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 
 ## Acknowledgements
 This project has been partially funded by Fondazione CRT through call "La Ricerca dei Talenti", project SIBYL. 
+This project 
 
 Enjoy!
