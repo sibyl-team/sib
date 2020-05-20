@@ -1,3 +1,6 @@
+![C/C++ CI](https://github.com/sibyl-team/sib/workflows/C/C++%20CI/badge.svg)
+
+
 # Sibilla  
 
 > SIB: [S]tatistical [I]nference in Epidemics via [B]elief Propagation
