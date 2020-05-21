@@ -13,7 +13,6 @@ struct Proba
 {
 	virtual real_t operator()(real_t) const = 0;
 	virtual real_t operator()(real_t d, real_t lambda) const { return operator()(d)*lambda; }
-	virtual Proba * clone() const = 0;
 	virtual void print(std::ostream &) const = 0;
 };
 
@@ -24,7 +23,6 @@ struct PriorDiscrete : public Proba
 	PriorDiscrete(std::vector<real_t> const & p) : p(p) {}
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	std::vector<real_t> p;
-	Proba * clone() const { return new PriorDiscrete(*this); }
 	void print(std::ostream & ost) const {
 	    ost << "PriorDiscrete(";
 	    for (auto it = p.begin(); it < p.end() - 1; ++it)
@@ -40,7 +38,6 @@ struct ExpDiscrete : public Proba
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	real_t operator()(real_t d, real_t lambda) const { return 1.0-std::exp(-operator()(d)*lambda); }
 	std::vector<real_t> p;
-	Proba * clone() const { return new ExpDiscrete(*this); }
 	void print(std::ostream & ost) const {
 	    ost << "ExpDiscrete(";
 	    for (auto it = p.begin(); it < p.end() - 1; ++it)
@@ -56,7 +53,6 @@ struct Uniform : public Proba
 	real_t p;
 	real_t operator()(real_t d) const { return p; }
 	std::istream & operator>>(std::istream & ist) { return ist >> p; }
-	Proba * clone() const { return new Uniform(*this); }
 	void print(std::ostream & ost) const { ost << "Uniform(" << p << ")"; }
 };
 
@@ -69,7 +65,6 @@ struct Exponential : public Proba
 	real_t mu;
 	real_t operator()(real_t d) const { return exp(-mu*d); }
 	std::istream & operator>>(std::istream & ist) { return ist >> mu; }
-	Proba * clone() const { return new Exponential(*this); }
 	void print(std::ostream & ost) const { ost << "Exponential("<< mu << ")"; }
 };
 
@@ -81,7 +76,6 @@ struct Gamma : public Proba
 	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
 	real_t operator()(real_t d) const { return 1-boost::math::gamma_p(k,d*mu); }
 	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
-	Proba *clone() const { return new Gamma(*this); }
 	void print(std::ostream & ost) const { ost << "Gamma(" << k << "," << mu << ")"; }
 };
 
