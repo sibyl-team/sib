@@ -8,13 +8,6 @@
 
 
 typedef double real_t;
-class Uniform;
-class Exponential;
-class Gamma;
-class PriorDiscrete;
-typedef Gamma Pr;
-typedef Uniform Pi;
-
 
 struct Proba
 {
@@ -77,7 +70,7 @@ struct Exponential : public Proba
 	real_t operator()(real_t d) const { return exp(-mu*d); }
 	std::istream & operator>>(std::istream & ist) { return ist >> mu; }
 	Proba * clone() const { return new Exponential(*this); }
-	void print(std::ostream & ost) const { ost << "Exp("<< mu << ")"; }
+	void print(std::ostream & ost) const { ost << "Exponential("<< mu << ")"; }
 };
 
 
