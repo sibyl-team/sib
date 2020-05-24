@@ -16,7 +16,7 @@ sib: bp.o params.o sib.cpp
 drop.o: drop.cpp
 	${CXX} ${CFLAGS} -c drop.cpp ${LINK} -o $@
 ${SO}: bp.o params.o drop.o pysib.cpp
-	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o pysib.cpp -o $@
+	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o drop.o pysib.cpp -o $@
 
 test: all
 	python3 test/run_tests.py
