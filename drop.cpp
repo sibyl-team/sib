@@ -24,7 +24,7 @@ void drop_sc(FactorGraph & fg, int t, int maxit_sc, real_t tol_sc, real_t dampin
 	}
 	fg.drop_contacts(t);
 	for (int it = 0; it < maxit_sc; ++it) {
-		real_t err_bp = max(err_bp, fg.iteration(damping_bp));
+		real_t err_bp = fg.iteration(damping_bp);
 		real_t err_sc = 0.0;
 #pragma omp parallel for reduction(max:err_sc)
 		for (int i = 0; i < n; ++i) {
