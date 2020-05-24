@@ -14,6 +14,7 @@
 #include <iterator>
 #include <exception>
 #include "bp.h"
+#include "drop.h"
 
 
 PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
@@ -175,6 +176,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("t"),
                 "appends a new observation with state s to node i at time t")
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
+        .def("drop_sc", &drop_sc, "drop contacts at time t (first time), adjusting fields")
         .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
         .def_readonly("params", &FactorGraph::params, "parameters");

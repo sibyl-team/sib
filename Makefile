@@ -13,7 +13,9 @@ bp.o: bp.cpp bp.h cavity.h
 	${CXX} ${CFLAGS} -c bp.cpp -o $@
 sib: bp.o params.o sib.cpp 
 	${CXX} ${CFLAGS} params.o bp.o sib.cpp ${LINK} -o $@
-${SO}: bp.o params.o pysib.cpp
+drop.o: drop.cpp
+	${CXX} ${CFLAGS} -c drop.cpp ${LINK} -o $@
+${SO}: bp.o params.o drop.o pysib.cpp
 	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o pysib.cpp -o $@
 
 test: all
