@@ -1,5 +1,6 @@
 #include "bp.h"
 #include <vector>
+#include <exception>
 
 using namespace std;
 
@@ -8,12 +9,12 @@ real_t set_h(real_t bnew, real_t bold)
 	if (bnew == 0) {
 		if (bold == 0)
 			return 1;
-		throw;
+		throw domain_error("singularity error");;
 	}
 	return bold / bnew;
 }
 
-void drop_sc(FactorGraph & fg, int t, int maxit_sc, real_t tol_sc, real_t damping_bp, real_t damping_sc)
+void drop_sc(FactorGraph & fg, int t, int maxit_bp, real_t tol_bp, real_t damping_bp, int maxit_sc, real_t tol_sc, real_t damping_sc)
 {
 	int n = fg.nodes.size();
 	vector<vector<real_t>> bts(n);
@@ -24,7 +25,9 @@ void drop_sc(FactorGraph & fg, int t, int maxit_sc, real_t tol_sc, real_t dampin
 	}
 	fg.drop_contacts(t);
 	for (int it = 0; it < maxit_sc; ++it) {
-		real_t err_bp = fg.iteration(damping_bp);
+		real_t err_bp = 0.0;
+		for (int k = 0; k < maxit_bp; ++k)
+			err_bp = max(err_bp, fg.iteration(damping_bp));
 		real_t err_sc = 0.0;
 #pragma omp parallel for reduction(max:err_sc)
 		for (int i = 0; i < n; ++i) {
@@ -36,6 +39,7 @@ void drop_sc(FactorGraph & fg, int t, int maxit_sc, real_t tol_sc, real_t dampin
 				f.hg[ti] *= pow(set_h(f.bg[ti], bgs[i][ti]), damping_sc);
 			}
 		}
+		cerr << it << " " << err_bp << " " << err_sc << endl;
 		if (max(err_bp, err_sc) < tol_sc)
 			return;
 	}

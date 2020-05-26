@@ -7,6 +7,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pytypes.h>
+#include <pybind11/iostream.h>
 #include <string>
 #include <sstream>
 #include <numeric>
@@ -99,6 +100,7 @@ void check_index(FactorGraph const & G, int i)
 
 
 PYBIND11_MODULE(_sib, m) {
+    py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
@@ -176,7 +178,16 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("t"),
                 "appends a new observation with state s to node i at time t")
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
-        .def("drop_sc", &drop_sc, "drop contacts at time t (first time), adjusting fields")
+        .def("drop_sc", &drop_sc,
+                py::arg("t"),
+                py::arg("maxit_bp") = 10,
+                py::arg("tol_bp") = 1e-3,
+                py::arg("damping_bp") = 0.1,
+                py::arg("maxit_sc") = 10,
+                py::arg("tol_sc") = 1e-3,
+                py::arg("damping_sc") = 0.9,
+                "drop contacts at time t (first time), adjusting fields")
+
         .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
         .def_readonly("params", &FactorGraph::params, "parameters");
