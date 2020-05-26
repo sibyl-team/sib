@@ -437,11 +437,17 @@ real_t FactorGraph::update(int i, real_t damping)
 			}
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
-			fill(CG0[j].begin(), CG0[j].end(), 0.0);
-			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 		}
 		min_g = min_out;
-		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
+		for (int gi = ti; gi < qi; ++gi) {
+			if (f.hg[gi] == 0) {
+				for (int j = 0; j < n; ++j) {
+					CG0[j][gi] = 0;
+					CG01[j][gi] = 0;
+				}
+				continue;
+			}
+
 			for (int j = 0; j < n; ++j) {
 				Mes & m = M[j];
 				Mes & r = R[j];
@@ -483,8 +489,8 @@ real_t FactorGraph::update(int i, real_t damping)
 			za += ht[ti] * f.hg[gi] * a;
 
 			for (int j = 0; j < n; ++j) {
-				CG0[j][gi] += P0[j] * ht[ti] * f.hg[gi] * pg;
-				CG01[j][gi] += (P0[j] - P1[j] * (1 - params.pautoinf)) * ht[ti] * f.hg[gi] * pg;
+				CG0[j][gi] = P0[j] * ht[ti] * f.hg[gi] * pg;
+				CG01[j][gi] = (P0[j] - P1[j] * (1 - params.pautoinf)) * ht[ti] * f.hg[gi] * pg;
 			}
 		}
 		//messages to sij, sji
