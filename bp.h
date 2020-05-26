@@ -76,6 +76,7 @@ struct Node {
 	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
+	real_t err_;
 	int index;
 };
 

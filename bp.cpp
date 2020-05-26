@@ -517,6 +517,7 @@ real_t FactorGraph::update(int i, real_t damping)
 	}
 	//compute beliefs on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
+	f.err_ = diff;
 	for (int j = 0; j < n; ++j) {
 		Neigh & v = f.neighs[j];
 		v.lock();
