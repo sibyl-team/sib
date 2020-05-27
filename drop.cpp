@@ -14,7 +14,8 @@ real_t get_h(real_t b, real_t bs)
 	return bs / b;
 }
 
-void drop_sc(FactorGraph & fg, int t, int maxit_bp, real_t tol_bp, real_t damping_bp, int maxit_sc, real_t tol_sc, real_t damping_sc)
+std::tuple<int, real_t, real_t>
+drop_sc(FactorGraph & fg, int t, int maxit_bp, real_t tol_bp, real_t damping_bp, int maxit_sc, real_t tol_sc, real_t damping_sc)
 {
 	int n = fg.nodes.size();
 	vector<vector<real_t>> bts(n);
@@ -24,14 +25,17 @@ void drop_sc(FactorGraph & fg, int t, int maxit_bp, real_t tol_bp, real_t dampin
 		bgs[i] = fg.nodes[i].bg;
 	}
 	fg.drop_contacts(t);
-	for (int it = 0; it < maxit_sc; ++it) {
-		real_t err_bp = 0.0;
+	real_t err_bp = 0.0;
+	real_t err_sc = 0.0;
+	int it;
+	for (it = 0; it < maxit_sc; ++it) {
+		err_bp = 0.0;
 		for (int k = 0; k < maxit_bp; ++k) {
 			err_bp = max(err_bp, fg.iteration(damping_bp));
 			if (err_bp < tol_bp)
 				break;
 		}
-		real_t err_sc = 0.0;
+		err_sc = 0.0;
 #pragma omp parallel for reduction(max:err_sc)
 		for (int i = 0; i < n; ++i) {
 			Node & f = fg.nodes[i];
@@ -42,8 +46,9 @@ void drop_sc(FactorGraph & fg, int t, int maxit_bp, real_t tol_bp, real_t dampin
 				f.hg[ti] *= pow(get_h(f.bg[ti], bgs[i][ti]), damping_sc);
 			}
 		}
-		cerr << it << " " << err_bp << " " << err_sc << endl;
 		if (max(err_bp, err_sc) < tol_sc)
-			return;
+			break;
 	}
+	return make_tuple(it, err_bp, err_sc);
 }
+

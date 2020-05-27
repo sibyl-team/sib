@@ -100,7 +100,7 @@ void check_index(FactorGraph const & G, int i)
 
 
 PYBIND11_MODULE(_sib, m) {
-    py::add_ostream_redirect(m, "ostream_redirect");
+    // py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
@@ -180,12 +180,12 @@ PYBIND11_MODULE(_sib, m) {
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
         .def("drop_sc", &drop_sc,
                 py::arg("t"),
-                py::arg("maxit_bp") = 10,
+                py::arg("maxit_bp") = 1,
                 py::arg("tol_bp") = 1e-3,
-                py::arg("damping_bp") = 0.1,
-                py::arg("maxit_sc") = 10,
+                py::arg("damping_bp") = 0.0,
+                py::arg("maxit_sc") = 20,
                 py::arg("tol_sc") = 1e-3,
-                py::arg("damping_sc") = 0.9,
+                py::arg("damping_sc") = 0.1,
                 "drop contacts at time t (first time), adjusting fields")
 
         .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
