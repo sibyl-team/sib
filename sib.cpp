@@ -67,21 +67,22 @@ read_files(char const * cont_file, char const * obs_file)
 	return make_pair(contacts,observations);
 }
 
-tuple<Params,char const *, char const *, int, real_t>
-parse_opt(int & argc, char ** argv)
+int main(int argc, char ** argv)
 {
-	auto prob_i = new Uniform(1.0);
-	auto prob_r = new Gamma(1.0,0.01);
-	Params p(shared_ptr<Proba>(prob_i), shared_ptr<Proba>(prob_r), 0.01, 0.5, 0.0, 0.0);
 	char const * obs_file = "/dev/null";
 	char const * cont_file = "/dev/null";
 	int c;
 
 	real_t tol = 1e-3;
+	real_t mu = 0.5;
+	real_t pseed = 0.1;
 	int maxit = 100;
 
-	while ((c = getopt(argc, argv, "s:i:m:o:c:t:h")) != -1 ) {
+	while ((c = getopt(argc, argv, "j:s:i:m:o:c:t:h")) != -1 ) {
 		switch(c) {
+			case 'j':
+				omp_set_num_threads(stod(optarg));
+				break;
 			case 't':
 				tol = stod(optarg);
 				break;
@@ -89,10 +90,10 @@ parse_opt(int & argc, char ** argv)
 				maxit = stoi(optarg);
 				break;
 			case 'm':
-				prob_r->mu = stod(optarg);
+				mu = stod(optarg);
 				break;
 			case 's':
-				p.pseed = stoi(optarg);
+				pseed = stoi(optarg);
 				break;
 			case 'o':
 				obs_file = optarg;
@@ -112,15 +113,13 @@ parse_opt(int & argc, char ** argv)
 				exit(1);
 		}
 	}
-	return make_tuple(p, cont_file, obs_file, maxit, tol);
-}
 
-
-int main(int argc, char ** argv) {
-	auto r = parse_opt(argc, argv);
-	auto co = read_files(get<1>(r), get<2>(r));
-	FactorGraph factor(get<0>(r), get<0>(co), get<1>(co));
-	factor.iterate(get<3>(r), get<4>(r), 0.0);
+	auto prob_i = shared_ptr<Proba>(new Uniform(1.0));
+	auto prob_r = shared_ptr<Proba>(new Gamma(1.0,mu));
+	Params p(prob_i, prob_r, 0.01, 0.5, pseed, 0.0);
+	auto co = read_files(cont_file, obs_file);
+	FactorGraph factor(p, get<0>(co), get<1>(co));
+	factor.iterate(maxit, tol, 0.0);
 	factor.show_beliefs(cout);
 	return 0;
 }

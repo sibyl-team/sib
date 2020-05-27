@@ -28,7 +28,7 @@ struct Mes : public std::vector<real_t>
 };
 
 struct Neigh {
-	Neigh(int index, int pos) : index(index), pos(pos), t({Tinf}), lambdas({0.0}), msg(1, 1.0) {
+	Neigh(int index, int pos) : index(index), pos(pos), t(1, Tinf), lambdas(1, 0.0), msg(1, 1.0) {
 		omp_init_lock(&lock_);
 
 	}
