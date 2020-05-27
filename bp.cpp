@@ -136,6 +136,8 @@ void FactorGraph::drop_contacts(int t)
 
 void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t lambdaji)
 {
+	if (i == j)
+		throw invalid_argument("self loops are not allowed");
         add_node(i);
         add_node(j);
 	Node & fi = nodes[i];
@@ -186,10 +188,12 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 		throw invalid_argument("time of contacts should be ordered");
 	}
         // adjust infinite times
-        for (int k = 0; k < int(fi.neighs.size()); ++k)
+        for (int k = 0; k < int(fi.neighs.size()); ++k) {
                 fi.neighs[k].t.back() = qi - 1;
-        for (int k = 0; k < int(fj.neighs.size()); ++k)
+	}
+        for (int k = 0; k < int(fj.neighs.size()); ++k) {
                 fj.neighs[k].t.back() = qj - 1;
+	}
 }
 
 
@@ -427,7 +431,8 @@ real_t FactorGraph::update(int i, real_t damping)
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				real_t pi = 1;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
-					real_t const l =  prob_i(f.times[v.t[sij]]-f.times[ti], v.lambdas[sij]);
+					int tij = v.t[sij];
+					real_t const l =  prob_i(f.times[tij]-f.times[ti], v.lambdas[sij]);
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);;
 					pi *= 1 - l;
