@@ -41,7 +41,8 @@ ext_modules = [
         #"cavity.h",
         "params.cpp",
         #"params.h",
-        "pysib.cpp"
+        "pysib.cpp",
+        "drop.cpp"
         ],
         include_dirs=[
             # Path to pybind11 headers
