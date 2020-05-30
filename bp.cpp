@@ -494,18 +494,16 @@ real_t FactorGraph::update(int i, real_t damping)
 			}
 			//messages to ti, gi
 			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi >= qi - 1 ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
-			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full * (1-params.pautoinf));
 
+			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full * (1-params.pautoinf));
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
 
+			real_t const b = ht[ti] * f.hg[gi] * pg;
 			for (int j = 0; j < n; ++j) {
-				real_t a = ht[ti] * f.hg[gi] * pg;
-				real_t p0 = P0[j] * a;
-				real_t p01 = (P0[j] - P1[j] * (1 - params.pautoinf)) * a;
-				CG0[j][min_g[j]] += p0;
-				CG01[j][min_g[j]] += p01;
+				CG0[j][min_g[j]] += P0[j] * b;
+				CG01[j][min_g[j]] += (P0[j] - P1[j] * (1 - params.pautoinf)) * b;
 			}
 		}
 		//messages to sij, sji
