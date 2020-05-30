@@ -403,12 +403,12 @@ real_t FactorGraph::update(int i, real_t damping)
 		UU.push_back(Mes(v.t.size()));
 		R.push_back(Mes(v.t.size()));
 		M.push_back(Mes(v.t.size()));
-		CG0.push_back(vector<real_t>(qi));
-		CG01.push_back(vector<real_t>(qi));
+		CG0.push_back(vector<real_t>(v.t.size() + 1));
+		CG01.push_back(vector<real_t>(v.t.size() + 1));
 	}
 	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
 	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
-	vector<int> min_in(n), min_out(n), min_g(n);
+	vector<int> min_in(n), min_out(n);
 	vector<real_t> ht = f.ht;
 
 	// apply external fields
@@ -448,7 +448,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			fill(CG0[j].begin(), CG0[j].end(), 0.0);
 		}
-		min_g = min_out;
+		auto min_g = min_out;
 		real_t p0full = 0.0, p1full = 0.0;
 		bool changed = true;
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
@@ -456,10 +456,11 @@ real_t FactorGraph::update(int i, real_t damping)
 				Neigh const & v = f.neighs[j];
 				int const qj = v.t.size();
 				int const *b = &v.t[0];
-				int oldming = min_g[j];
-				min_g[j] = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
-				if (min_g[j] > oldming)
+				int newming = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
+				if (newming != min_g[j]) {
 					changed = true;
+					min_g[j] = newming;
+				}
 			}
 			if (changed) {
 				changed = false;
@@ -500,8 +501,11 @@ real_t FactorGraph::update(int i, real_t damping)
 			za += ht[ti] * f.hg[gi] * a;
 
 			for (int j = 0; j < n; ++j) {
-				CG0[j][gi] += P0[j] * ht[ti] * f.hg[gi] * pg;
-				CG01[j][gi] += (P0[j] - P1[j] * (1 - params.pautoinf)) * ht[ti] * f.hg[gi] * pg;
+				real_t a = ht[ti] * f.hg[gi] * pg;
+				real_t p0 = P0[j] * a;
+				real_t p01 = (P0[j] - P1[j] * (1 - params.pautoinf)) * a;
+				CG0[j][min_g[j]] += p0;
+				CG01[j][min_g[j]] += p01;
 			}
 		}
 		//messages to sij, sji
@@ -518,11 +522,11 @@ real_t FactorGraph::update(int i, real_t damping)
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					int const tij = v.t[sij];
 					real_t const l = prob_i(f.times[tij] - f.times[ti],  v.lambdas[sij]);
-					UU[j](sij, sji) += CG[tij] * pi * l;
-					c += (CG[ti] - CG[tij]) * pi * l;
+					UU[j](sij, sji) += CG[sij + 1] * pi * l;
+					c += (CG[0] - CG[sij + 1]) * pi * l;
 					pi *= 1 - l;
 				}
-				UU[j](qj - 1, sji) += c + CG[ti] * pi;
+				UU[j](qj - 1, sji) += c + CG[0] * pi;
 			}
 		}
 	}
