@@ -74,7 +74,7 @@ struct Gamma : public Proba
 	real_t k;
 	real_t mu;
 	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
-	real_t operator()(real_t d) const { return 1-boost::math::gamma_p(k,d*mu); }
+	real_t operator()(real_t d) const { return boost::math::gamma_q(k,d*mu); }
 	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
 	void print(std::ostream & ost) const { ost << "Gamma(" << k << "," << mu << ")"; }
 };
