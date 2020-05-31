@@ -451,44 +451,42 @@ real_t FactorGraph::update(int i, real_t damping)
 		auto min_g = min_out;
 		real_t p0full = 0.0, p1full = 0.0;
 		bool changed = true;
+		for (int j = 0; j < n; ++j)
+			min_g[j] -= 1;
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
 				int const qj = v.t.size();
 				int const *b = &v.t[0];
 				int newming = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
-				if (newming != min_g[j]) {
-					changed = true;
-					min_g[j] = newming;
-				}
+				if (newming == min_g[j])
+					continue;
+				min_g[j] = newming;
+				changed = true;
+				Mes & m = M[j];
+				Mes & r = R[j];
+				/*
+				   .-----min_out
+				   |   .-- min_g
+				   sij     v   v
+				   . . . . . . . .
+				   sji. . . . . . . .
+				   . . . . . . . .
+				   . . . . a a b b <- min_in
+				   . . . . c c d d <- min_out
+				   . . . . c c d d
+				   . . . . c c d d
+				   . . . . c c d d
+
+
+				   C0 = a + c + b' + d' = (a + c + b + d) - (b + d) + (b' + d')
+				   C1 = c + d'          = c + d           - d       + d'
+				   */
+				C0[j] = m(min_in[j],  min_out[j]) - m(min_in[j],  min_g[j]) + r(min_in[j],  min_g[j]);
+				C1[j] = m(min_out[j], min_out[j]) - m(min_out[j], min_g[j]) + r(min_out[j], min_g[j]);
 			}
 			if (changed) {
 				changed = false;
-				for (int j = 0; j < n; ++j) {
-					Mes & m = M[j];
-					Mes & r = R[j];
-
-					/*
-						      .-----min_out
-						      |   .-- min_g
-					      sij     v   v
-					      . . . . . . . .
-					   sji. . . . . . . .
-					      . . . . . . . .
-					      . . . . a a b b <- min_in
-					      . . . . c c d d <- min_out
-					      . . . . c c d d
-					      . . . . c c d d
-					      . . . . c c d d
-
-
-					   C0 = a + c + b' + d' = (a + c + b + d) - (b + d) + (b' + d')
-					   C1 = c + d'          = c + d           - d       + d'
-					*/
-					C0[j] = m(min_in[j],  min_out[j]) - m(min_in[j],  min_g[j]) + r(min_in[j],  min_g[j]);
-					C1[j] = m(min_out[j], min_out[j]) - m(min_out[j], min_g[j]) + r(min_out[j], min_g[j]);
-				}
-
 				p0full = cavity(C0.begin(), C0.end(), P0.begin(), 1.0, multiplies<real_t>());
 				p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 			}
@@ -520,6 +518,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					int const tij = v.t[sij];
 					real_t const l = prob_i(f.times[tij] - f.times[ti],  v.lambdas[sij]);
+					//note: CG[sij + 1] counts everything with gi >= sij
 					UU[j](sij, sji) += CG[sij + 1] * pi * l;
 					c += (CG[0] - CG[sij + 1]) * pi * l;
 					pi *= 1 - l;
