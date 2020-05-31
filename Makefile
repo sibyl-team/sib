@@ -1,4 +1,4 @@
-INC=
+INC=-I${CONDA_PREFIX}/include
 CFLAGS=-fPIC -std=c++11 -Wall -O3 -g -fopenmp ${INC}
 SO=_sib$(shell python3-config --extension-suffix)
 LINK=-lgomp -lm

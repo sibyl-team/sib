@@ -7,6 +7,11 @@
 #include <numeric>
 #include <iterator>
 
+
+// this function computes dest_i = op_{j\neq i} src_j for all i
+// given an associative binary operator op with neutral element init in O(n)
+// Note: if op has inverse inv() AND is commutative, this is equivalent to
+// op((op_j a_j), inv(a_i))
 template<typename T, typename iterator_t, typename C>
 T cavity(iterator_t const & beg, iterator_t const &end, iterator_t const & dest, T const & init, C const & op)
 {
