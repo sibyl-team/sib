@@ -39,7 +39,8 @@ drop_sc(FactorGraph & fg, int t, int maxit_bp, real_t tol_bp, real_t damping_bp,
 #pragma omp parallel for reduction(max:err_sc)
 		for (int i = 0; i < n; ++i) {
 			Node & f = fg.nodes[i];
-			for (int ti = 0; ti < int(f.bt.size()); ++ti) {
+			// for (int ti = 0; ti < int(f.bt.size()); ++ti) {
+			int ti = find(f.times.begin(), f.times.end(), t) - f.times.begin(); {
 				err_sc = max(err_sc, bts[i][ti] - f.bt[ti]);
 				err_sc = max(err_sc, bgs[i][ti] - f.bg[ti]);
 				f.ht[ti] *= pow(get_h(f.bt[ti], bts[i][ti]), damping_sc);
