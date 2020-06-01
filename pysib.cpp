@@ -206,5 +206,5 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("prob_r", &Node::prob_r, "cumulative probability of recovery P(tr>t)");
 
     m.def("set_num_threads", &omp_set_num_threads, "sets the maximum number of simultaneous cpu threads");
-    m.def("version", [](){cout << VERSION << endl;}, "compiled version of sib");
+    m.def("version", [](){return VERSION;}, "compiled version of sib");
 }
