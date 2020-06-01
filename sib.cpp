@@ -78,7 +78,7 @@ int main(int argc, char ** argv)
 	real_t pseed = 0.1;
 	int maxit = 100;
 
-	while ((c = getopt(argc, argv, "j:s:i:m:o:c:t:h")) != -1 ) {
+	while ((c = getopt(argc, argv, "j:s:i:m:o:c:t:hv")) != -1 ) {
 		switch(c) {
 			case 'j':
 				omp_set_num_threads(stod(optarg));
@@ -101,6 +101,9 @@ int main(int argc, char ** argv)
 			case 'c':
 				cont_file = optarg;
 				break;
+			case 'v':
+				cout << "SIBYL version " << VERSION << endl;
+				return 0;
 			case 'h':
 				cout << "SIR inference, continuous time" << endl;
 				cout << "-c : Contact file with format 'i,j,t,lambdaij' " << endl;
