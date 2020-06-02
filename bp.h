@@ -47,7 +47,8 @@ struct Node {
 		prob_i(prob_i),
 		prob_r(prob_r),
 		f_(0),
-		index(index)
+		index(index),
+		recovered(false)
 	{
 		times.push_back(-1);
 		times.push_back(Tinf);
@@ -78,6 +79,7 @@ struct Node {
 	real_t f_;
 	real_t err_;
 	int index;
+	bool recovered;
 };
 
 class FactorGraph {

@@ -53,6 +53,10 @@ void FactorGraph::append_observation(int i, int s, int t)
                         n.neighs[j].t.back() = n.times.size() - 1;
                 }
         }
+	if (s == 2) {
+		n.recovered=true;
+		// s = 1;
+	}
         int qi = n.times.size();
         int tobs = qi - 2;
 	int tl = 0, gl = 0;
@@ -146,6 +150,9 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 	int qj = fj.times.size();
 	if (fi.times[qi - 2] > t || fj.times[qj - 2] > t)
 		throw invalid_argument("time of contacts should be ordered");
+
+	if (nodes[i].recovered || nodes[j].recovered)
+		return;
 
 	int ki = find_neighbor(i, j);
 	int kj = find_neighbor(j, i);
@@ -453,7 +460,10 @@ real_t FactorGraph::update(int i, real_t damping)
 		bool changed = true;
 		for (int j = 0; j < n; ++j)
 			min_g[j] -= 1;
-		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
+		for (int gi = ti; gi < qi; ++gi) {
+			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi >= qi - 1 ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
+			if (pg * f.hg[gi] == 0)
+			       continue;
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
 				int const qj = v.t.size();
@@ -491,7 +501,6 @@ real_t FactorGraph::update(int i, real_t damping)
 				p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 			}
 			//messages to ti, gi
-			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi >= qi - 1 ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
 
 			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full * (1-params.pautoinf));
 			ug[gi] += ht[ti] * a;
