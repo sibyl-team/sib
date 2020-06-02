@@ -55,7 +55,7 @@ void FactorGraph::append_observation(int i, int s, int t)
         }
 	if (s == 2) {
 		n.recovered=true;
-		// s = 1;
+		s = 1;
 	}
         int qi = n.times.size();
         int tobs = qi - 2;
