@@ -5,6 +5,7 @@ import sys
 import setuptools
 import unittest
 import os
+import subprocess
 
 #decomment the 2 line below
 #if you have problems in compiling sib
@@ -44,6 +45,9 @@ ext_modules = [
         "pysib.cpp",
         "drop.cpp"
         ],
+        define_macros=[('VERSION', '"' + subprocess.Popen(['git', 'show', '-s',
+            '--pretty=%h %ad %d'],
+            stdout=subprocess.PIPE).communicate()[0].decode()[:-1] + '"')],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
