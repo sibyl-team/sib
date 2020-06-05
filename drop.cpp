@@ -22,14 +22,14 @@ void drop_time(FactorGraph & fg, int t)
                         erase_first_time(f.ht);
                         erase_first_time(f.hg);
                         erase_first_time(f.times);
-                }
-		int n = f.neighs.size();
-		for (int j = 0; j < n; ++j) {
-			Neigh & v = f.neighs[j];
-			for (int k = 0; k < int(v.t.size() - 1); ++k) {
-				--v.t[k];
+			int m = f.neighs.size();
+			for (int j = 0; j < m; ++j) {
+				Neigh & v = f.neighs[j];
+				for (int k = 0; k < int(v.t.size()); ++k) {
+					--v.t[k];
+				}
 			}
-		}
+                }
         }
 }
 
