@@ -4,6 +4,29 @@
 
 using namespace std;
 
+template<class T>
+void erase_first_time(vector<T> & p)
+{
+        p.erase(p.begin() + 1, p.begin() + 2);
+}
+
+void drop_time(FactorGraph & fg, int t)
+{
+        fg.drop_contacts(t);
+        int n = fg.nodes.size();
+        for (int i = 0; i < n; ++i) {
+                Node & f = fg.nodes[i];
+                if (t == f.times[1]) {
+                        erase_first_time(f.bt);
+                        erase_first_time(f.bg);
+                        erase_first_time(f.ht);
+                        erase_first_time(f.hg);
+                        erase_first_time(f.times);
+                }
+        }
+}
+
+
 real_t get_h(real_t b, real_t bs)
 {
 	if (b == 0) {
