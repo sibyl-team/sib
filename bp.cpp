@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <functional>
 #include <algorithm>
-#include <cassert>
+#include <assert.h>
 #include <tuple>
 #include <exception>
 #include "bp.h"
@@ -242,7 +242,21 @@ void FactorGraph::add_node(int i)
 }
 
 
-void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const & sobs)
+void FactorGraph::reset_observations(vector<tuple<int, int, int> > const & obs)
+{
+	vector<vector<int>> tobs(nodes.size());
+	vector<vector<int>> sobs(nodes.size());
+	for (auto it = obs.begin(); it != obs.end(); ++it) {
+		sobs[get<0>(*it)].push_back(get<1>(*it));
+		tobs[get<0>(*it)].push_back(get<2>(*it));
+	}
+	for (int i = 0; i < int(nodes.size()); ++i) {
+		set_field(i, sobs[i], tobs[i]);
+	}
+}
+
+
+void FactorGraph::set_field(int i, vector<int> const & sobs, vector<int> const & tobs)
 {
 	// this assumes ordered observation times
 	int tl = 0, gl = 0;
@@ -254,6 +268,8 @@ void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const &
 		int to = tobs[k];
 		while (nodes[i].times[t] != to)
 			t++;
+		if (nodes[i].times[t] != to)
+			throw invalid_argument("this is a bad time");
 		switch (state) {
 			case 0:
 				tl = max(tl, t);
@@ -273,8 +289,8 @@ void FactorGraph::set_field(int i, vector<int> const & tobs, vector<int> const &
 	}
 
 	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
-		nodes[i].ht[t] = params.softconstraint + (1-params.softconstraint)*(tl <= t && t <= tu);
-		nodes[i].hg[t] = params.softconstraint + (1-params.softconstraint)*(gl <= t && t <= gu);
+		nodes[i].ht[t] = (tl <= t && t <= tu);
+		nodes[i].hg[t] = (gl <= t && t <= gu);
 	}
 }
 

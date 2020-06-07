@@ -172,6 +172,9 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("lambdaij"),
                 py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE),
                 "appends a new contact from i to j at time t with transmission probabilities lambdaij, lambdaji")
+        .def("reset_observations", &FactorGraph::reset_observations,
+                py::arg("obs"),
+                "resets all observations")
         .def("append_observation", &FactorGraph::append_observation,
                 py::arg("i"),
                 py::arg("s"),
