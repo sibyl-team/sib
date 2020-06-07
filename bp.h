@@ -52,10 +52,10 @@ struct Node {
 		times.push_back(-1);
 		times.push_back(Tinf);
 		for (int t = 0; t < 2; ++t) {
-			bt.push_back(0.5);
-			ht.push_back(0.5);
-			bg.push_back(0.5);
-			hg.push_back(0.5);
+			bt.push_back(1);
+			ht.push_back(1);
+			bg.push_back(1);
+			hg.push_back(1);
 		}
 
 	}
