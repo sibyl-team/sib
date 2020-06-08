@@ -269,8 +269,9 @@ void FactorGraph::set_field(int i, vector<int> const & sobs, vector<int> const &
 		int to = tobs[k];
 		while (nodes[i].times[t] != to && t < qi)
 			t++;
-		if (nodes[i].times[t] != to)
-			throw invalid_argument("this is a bad time");
+		if (nodes[i].times[t] != to) {
+			throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
+		}
 		switch (state) {
 			case 0:
 				tl = max(tl, t);
