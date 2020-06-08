@@ -18,7 +18,6 @@
 #include <exception>
 #include "bp.h"
 #include "cavity.h"
-#include <boost/format.hpp>
 
 using namespace std;
 
@@ -271,7 +270,7 @@ void FactorGraph::set_field(int i, vector<int> const & sobs, vector<int> const &
 		while (nodes[i].times[t] != to && t < qi)
 			t++;
 		if (nodes[i].times[t] != to) {
-			throw invalid_argument(boost::str(boost::format("this is a bad time: node %1% time %2%") % i % t).c_str());
+			throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
 		}
 		switch (state) {
 			case 0:
