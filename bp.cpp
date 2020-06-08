@@ -259,14 +259,15 @@ void FactorGraph::reset_observations(vector<tuple<int, int, int> > const & obs)
 void FactorGraph::set_field(int i, vector<int> const & sobs, vector<int> const & tobs)
 {
 	// this assumes ordered observation times
+	int qi = nodes[i].times.size();
 	int tl = 0, gl = 0;
-	int tu = nodes[i].times.size();
-	int gu = nodes[i].times.size();
+	int tu = qi;
+	int gu = qi;
 	int t = 0;
 	for (int k = 0; k < int(tobs.size()); ++k) {
 		int state = sobs[k];
 		int to = tobs[k];
-		while (nodes[i].times[t] != to)
+		while (nodes[i].times[t] != to && t < qi)
 			t++;
 		if (nodes[i].times[t] != to)
 			throw invalid_argument("this is a bad time");
@@ -288,7 +289,7 @@ void FactorGraph::set_field(int i, vector<int> const & sobs, vector<int> const &
 		}
 	}
 
-	for(int t = 0; t < int(nodes[i].ht.size()); ++t) {
+	for(int t = 0; t < qi; ++t) {
 		nodes[i].ht[t] = (tl <= t && t <= tu);
 		nodes[i].hg[t] = (gl <= t && t <= gu);
 	}
