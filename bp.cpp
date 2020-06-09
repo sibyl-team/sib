@@ -470,13 +470,13 @@ real_t FactorGraph::update(int i, real_t damping)
 		real_t p0full = 0.0, p1full = 0.0;
 		bool changed = true;
 		for (int j = 0; j < n; ++j)
-			min_g[j] -= 1;
+			--min_g[j];
 		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
 				int const qj = v.t.size();
 				int const *b = &v.t[0];
-				int newming = upper_bound(b + min_g[j], b + qj - 1, gi) - b;
+				int newming = upper_bound(b + max(0, min_g[j]), b + qj - 1, gi) - b;
 				if (newming == min_g[j])
 					continue;
 				min_g[j] = newming;
