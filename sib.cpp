@@ -18,7 +18,7 @@
 
 using namespace std;
 
-pair<vector<tuple<int,int,int,real_t> >, vector<tuple<int,int,int> > >
+pair<vector<tuple<int,int,times_t,real_t> >, vector<tuple<int,int,times_t> > >
 read_files(char const * cont_file, char const * obs_file)
 {
 	string line;
@@ -29,8 +29,8 @@ read_files(char const * cont_file, char const * obs_file)
 		exit(EXIT_FAILURE);
 	}
 
-	auto contacts = vector<tuple<int,int,int,real_t> >();
-	auto observations = vector<tuple<int,int,int> >();
+	auto contacts = vector<tuple<int,int,times_t,real_t> >();
+	auto observations = vector<tuple<int,int,times_t> >();
 
 	int nlines = 0;
 	while (getline(cont, line)) {

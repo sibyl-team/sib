@@ -52,9 +52,9 @@ ExpDiscrete make_exp_discrete(py::list & l)
 
 template<class T> string print(const T & t) { return lexical_cast<string>(t); }
 
-map<int, vector<int> >
+map<int, vector<times_t> >
 get_times(FactorGraph const & f) {
-        map<int, vector<int> > times;
+        map<int, vector<times_t> > times;
         for (int i = 0; i < int(f.nodes.size()); ++i) {
             times[i] = f.nodes[i].times;
             times[i].pop_back();
@@ -154,18 +154,18 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
-                vector<tuple<int,int,int,real_t>>,
-                vector<tuple<int,int,int>>,
+                vector<tuple<int,int,times_t,real_t>>,
+                vector<tuple<int,int,times_t>>,
                 vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
                 py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0),
-                py::arg("contacts") = vector<tuple<int,int,int,real_t>>(),
-                py::arg("observations") = vector<tuple<int,int,int>>(),
+                py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
+                py::arg("observations") = vector<tuple<int,int,times_t>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration, "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &print<FactorGraph>)
-        .def("append_contact", (void (FactorGraph::*)(int,int,int,real_t,real_t)) &FactorGraph::append_contact,
+        .def("append_contact", (void (FactorGraph::*)(int,int,times_t,real_t,real_t)) &FactorGraph::append_contact,
                 py::arg("i"),
                 py::arg("j"),
                 py::arg("t"),

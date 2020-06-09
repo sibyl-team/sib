@@ -59,7 +59,7 @@ struct Node {
 		}
 
 	}
-	void push_back_time(int t) {
+	void push_back_time(times_t t) {
 		times.back() = t;
 		times.push_back(Tinf);
                 ht.push_back(ht.back());
@@ -69,7 +69,7 @@ struct Node {
 	}
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
-	std::vector<int> times;
+	std::vector<times_t> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
 	std::vector<real_t> ht;  // message infection times T[ni+2]
@@ -84,18 +84,18 @@ class FactorGraph {
 public:
 	std::vector<Node> nodes;
 	FactorGraph(Params const & params,
-		std::vector<std::tuple<int,int,int,real_t> > const & contacts,
-		std::vector<std::tuple<int, int, int> > const & obs,
+		std::vector<std::tuple<int,int,times_t,real_t> > const & contacts,
+		std::vector<std::tuple<int,int,times_t> > const & obs,
 		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
 			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
-	void append_contact(int i, int j, int t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
-	void drop_contacts(int t);
-	void append_observation(int i, int s, int t);
+	void append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
+	void drop_contacts(times_t t);
+	void append_observation(int i, int s, times_t t);
 	void add_node(int i);
 	void init();
-	void set_field(int i, std::vector<int> const & sobs, std::vector<int> const & tobs);
-	void reset_observations(std::vector<std::tuple<int, int, int> > const & obs);
+	void set_field(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);
+	void reset_observations(std::vector<std::tuple<int, int, times_t> > const & obs);
 	real_t update(int i, real_t damping);
 	void show_graph();
 	void show_beliefs(std::ostream &);

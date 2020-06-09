@@ -39,7 +39,7 @@ void cumsum(Mes & m, int a, int b)
 
 
 
-void FactorGraph::append_observation(int i, int s, int t)
+void FactorGraph::append_observation(int i, int s, times_t t)
 {
 	add_node(i);
 	Node & n = nodes[i];
@@ -118,7 +118,7 @@ Mes & operator--(Mes & msg)
 }
 
 
-void FactorGraph::drop_contacts(int t)
+void FactorGraph::drop_contacts(times_t t)
 {
 	for (int i = 0; i < int(nodes.size()); ++i) {
 		Node & fi = nodes[i];
@@ -134,7 +134,7 @@ void FactorGraph::drop_contacts(int t)
 	}
 }
 
-void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t lambdaji)
+void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji)
 {
 	if (i == j)
 		throw invalid_argument("self loops are not allowed");
@@ -198,8 +198,8 @@ void FactorGraph::append_contact(int i, int j, int t, real_t lambdaij, real_t la
 
 
 FactorGraph::FactorGraph(Params const & params,
-		vector<tuple<int,int,int,real_t> > const & contacts,
-		vector<tuple<int, int, int> > const & obs,
+		vector<tuple<int, int, times_t, real_t> > const & contacts,
+		vector<tuple<int, int, times_t> > const & obs,
 		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
 	params(params)
 {
@@ -242,9 +242,9 @@ void FactorGraph::add_node(int i)
 }
 
 
-void FactorGraph::reset_observations(vector<tuple<int, int, int> > const & obs)
+void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & obs)
 {
-	vector<vector<int>> tobs(nodes.size());
+	vector<vector<times_t>> tobs(nodes.size());
 	vector<vector<int>> sobs(nodes.size());
 	for (auto it = obs.begin(); it != obs.end(); ++it) {
 		sobs[get<0>(*it)].push_back(get<1>(*it));
@@ -256,7 +256,7 @@ void FactorGraph::reset_observations(vector<tuple<int, int, int> > const & obs)
 }
 
 
-void FactorGraph::set_field(int i, vector<int> const & sobs, vector<int> const & tobs)
+void FactorGraph::set_field(int i, vector<int> const & sobs, vector<times_t> const & tobs)
 {
 	// this assumes ordered observation times
 	int qi = nodes[i].times.size();

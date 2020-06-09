@@ -8,6 +8,7 @@
 
 
 typedef double real_t;
+typedef int times_t;
 
 struct Proba
 {
