@@ -30,6 +30,7 @@ void drop_time(FactorGraph & fg, int t)
 				}
 			}
                 }
+		f.times[0] = t;
         }
 }
 
