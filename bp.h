@@ -46,6 +46,8 @@ struct Node {
 	Node(std::shared_ptr<Proba> prob_i, std::shared_ptr<Proba> prob_r, int index) :
 		prob_i(prob_i),
 		prob_r(prob_r),
+		prob_i0(prob_i),
+		prob_r0(prob_r),
 		f_(0),
 		index(index)
 	{
@@ -69,6 +71,8 @@ struct Node {
 	}
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
+	std::shared_ptr<Proba> prob_i0;
+	std::shared_ptr<Proba> prob_r0;
 	std::vector<times_t> times;
 	std::vector<real_t> bt;  // marginals infection times T[ni+2]
 	std::vector<real_t> bg;  // marginals recovery times G[ni+2]
@@ -86,8 +90,7 @@ public:
 	FactorGraph(Params const & params,
 		std::vector<std::tuple<int,int,times_t,real_t> > const & contacts,
 		std::vector<std::tuple<int,int,times_t> > const & obs,
-		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals 
-			= std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
+		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals = std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
 	void append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
 	void drop_contacts(times_t t);
