@@ -207,7 +207,9 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("times", &Node::times, "event times of this node")
         .def_readonly("index", &Node::index, "node index (deprecated, do not use)")
         .def_readonly("prob_i", &Node::prob_i, "probability of infection as function of t-ti")
-        .def_readonly("prob_r", &Node::prob_r, "cumulative probability of recovery P(tr>t)");
+        .def_readonly("prob_r", &Node::prob_r, "cumulative probability of recovery P(tr>t)")
+        .def_readonly("prob_i0", &Node::prob_i0, "probability of infection as function of t-ti for ti=0")
+        .def_readonly("prob_r0", &Node::prob_r0, "cumulative probability of recovery P(tr>t) for ti=0");
 
     m.def("set_num_threads", &omp_set_num_threads, "sets the maximum number of simultaneous cpu threads");
     m.def("version", [](){return VERSION;}, "compiled version of sib");
