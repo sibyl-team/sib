@@ -1,4 +1,4 @@
-INC=-I${CONDA_PREFIX}/include
+INC=-Ilib -I${CONDA_PREFIX}/include
 VERSION=$(shell git show -s --pretty="%h %ad %d")
 CFLAGS=-fPIC -std=c++11 -Wall -O3 -g -fopenmp ${INC}
 SO=_sib$(shell python3-config --extension-suffix)
