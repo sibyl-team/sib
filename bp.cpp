@@ -200,7 +200,7 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int, int, times_t, real_t> > const & contacts,
 		vector<tuple<int, int, times_t> > const & obs,
-		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
+		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
 	params(params)
 {
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
@@ -208,6 +208,8 @@ FactorGraph::FactorGraph(Params const & params,
 		Node & n = nodes[get<0>(*it)];
 		n.prob_i = get<1>(*it);
 		n.prob_r = get<2>(*it);
+		n.prob_i0 = get<3>(*it);
+		n.prob_r0 = get<4>(*it);
 	}
 	auto ic = contacts.begin(), ec = contacts.end();
 	auto io = obs.begin(), eo = obs.end();
@@ -404,8 +406,6 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 real_t FactorGraph::update(int i, real_t damping)
 {
 	Node & f = nodes[i];
-	Proba const & prob_i = *f.prob_i;
-	Proba const & prob_r = *f.prob_r;
 	int const n = f.neighs.size();
 	int const qi = f.bt.size();
 
@@ -438,6 +438,8 @@ real_t FactorGraph::update(int i, real_t damping)
 	// main loop
 	real_t za = 0.0;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
+		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
+		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
 		update_limits(ti, f, min_in, min_out);
 
 		for (int j = 0; j < n; ++j) {

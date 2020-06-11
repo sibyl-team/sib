@@ -156,12 +156,12 @@ PYBIND11_MODULE(_sib, m) {
         .def(py::init<Params const &,
                 vector<tuple<int,int,times_t,real_t>>,
                 vector<tuple<int,int,times_t>>,
-                vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>
+                vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
                 py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0),
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
                 py::arg("observations") = vector<tuple<int,int,times_t>>(),
-                py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>>>())
+                py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration, "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &print<FactorGraph>)
