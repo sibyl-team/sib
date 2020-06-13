@@ -204,6 +204,8 @@ FactorGraph::FactorGraph(Params const & params,
 	params(params)
 {
 	for (auto it = individuals.begin(); it != individuals.end(); ++it) {
+		if (!get<1>(*it) || !get<1>(*it) || !get<1>(*it)|| !get<1>(*it))
+			throw invalid_argument("invalid individual definition");
 		add_node(get<0>(*it));
 		Node & n = nodes[get<0>(*it)];
 		n.prob_i = get<1>(*it);
