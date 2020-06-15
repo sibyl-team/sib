@@ -98,7 +98,6 @@ void check_index(FactorGraph const & G, int i)
 
 
 
-
 PYBIND11_MODULE(_sib, m) {
     // py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
@@ -106,7 +105,8 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
     //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
 
-    py::class_<Proba, shared_ptr<Proba>>(m, "Proba");
+    py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
+        .def("__call__", [](Proba const & p, real_t d) { return p(d); } );
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
         .def(py::init<real_t>(), py::arg("p") = 1.0)
@@ -126,6 +126,7 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
         .def(py::init(&make_discrete))
+        .def(py::init<Proba const &, int>())
         .def_readwrite("p", &PriorDiscrete::p)
         .def("__repr__", &print<PriorDiscrete>);
 

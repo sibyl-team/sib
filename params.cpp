@@ -23,6 +23,13 @@ Params::Params(shared_ptr<Proba> const & pi,
 			throw std::invalid_argument("invalid probability definition");
 	}
 
+PriorDiscrete::PriorDiscrete(Proba const & pr, int T) : p(T)
+{
+        for (int t = 0; t < T; ++t) {
+            p[t] = pr(t);
+        }
+}
+
 std::ostream & operator<<(std::ostream & ost, Params const & p)
 {
     return ost << "Params("
