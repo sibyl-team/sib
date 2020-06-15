@@ -123,7 +123,7 @@ class SibillaTest(unittest.TestCase):
         sib.set_num_threads(NUM_CPUS)
         ## LOAD BELIEFS
         self.loaded_beliefs = load_run_data(FOLDER/BELIEFS_FILE,self.n_inst,self.num_nodes)
-        self.loaded_fields = load_run_data(FOLDER/FIELDS_FILE,self.n_inst,self.num_nodes)
+        #self.loaded_fields = load_run_data(FOLDER/FIELDS_FILE,self.n_inst,self.num_nodes)
 
     def test_inference(self):
         print("\n--- Executing trial runs ---")
@@ -156,7 +156,7 @@ class SibillaTest(unittest.TestCase):
                 #with self.subTest(inst=i,node=n):
                 msg_fail = "Test on inst {} for node {} failed".format(i,n)
                 self.assertEqual(np.all(beliefs_fields[i][n][0] - self.loaded_beliefs[i][n] < 1e-12),True,msg_fail)
-                self.assertEqual(np.all(beliefs_fields[i][n][1] == self.loaded_fields[i][n]),True,msg_fail)
+                #self.assertEqual(np.all(beliefs_fields[i][n][1] == self.loaded_fields[i][n]),True,msg_fail)
 
 
 if __name__ == '__main__':

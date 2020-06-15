@@ -44,7 +44,7 @@ void FactorGraph::append_observation(int i, int s, times_t t)
 	add_node(i);
 	Node & n = nodes[i];
         if (t < n.times[n.times.size() - 2]) {
-		cerr << t << " " << n.times[n.times.size() - 2] << endl;
+		cerr << t << " < " << n.times[n.times.size() - 2] << endl;
                 throw invalid_argument("observation time too small");
 	} else if (t > n.times[n.times.size() - 2]) {
 		n.push_back_time(t);
@@ -53,33 +53,63 @@ void FactorGraph::append_observation(int i, int s, times_t t)
                         n.neighs[j].t.back() = n.times.size() - 1;
                 }
         }
+	set_field(i, s, n.times.size() - 2);
+}
+
+void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & obs)
+{
+	vector<vector<times_t>> tobs(nodes.size());
+	vector<vector<int>> sobs(nodes.size());
+	for (auto it = obs.begin(); it != obs.end(); ++it) {
+		sobs[get<0>(*it)].push_back(get<1>(*it));
+		tobs[get<0>(*it)].push_back(get<2>(*it));
+	}
+	for (int i = 0; i < int(nodes.size()); ++i) {
+		fill(nodes[i].ht.begin(), nodes[i].ht.end(), 1.0);
+		fill(nodes[i].hg.begin(), nodes[i].hg.end(), 1.0);
+		set_fields(i, sobs[i], tobs[i]);
+	}
+}
+
+void FactorGraph::set_fields(int i, vector<int> const & sobs, vector<times_t> const & tobs)
+{
+	// this assumes ordered observation times
+	int qi = nodes[i].times.size();
+	int t = 0;
+	for (int k = 0; k < int(tobs.size()); ++k) {
+		int state = sobs[k];
+		int to = tobs[k];
+		while (nodes[i].times[t] != to && t < qi)
+			t++;
+		if (nodes[i].times[t] != to) {
+			throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
+		}
+		set_field(i, state, t);
+	}
+}
+
+void FactorGraph::set_field(int i, int s, int tobs)
+{
+	Node & n = nodes[i];
         int qi = n.times.size();
-        int tobs = qi - 2;
-	int tl = 0, gl = 0;
-	int tu = qi, gu = qi;
         switch (s) {
                 case 0:
-                        tl = max(tl, tobs);
-                        gl = max(gl, tobs);
+			for (int t = 0; t < qi; ++t)
+				n.ht[t] *= params.fn_rate * (t < tobs) + (1 - params.fn_rate) * (t >= tobs);
                         break;
                 case 1:
-                        tu = min(tu, tobs - 1);
-                        gl = max(gl, tobs);
+			for (int t = 0; t < qi; ++t) {
+				n.ht[t] *= (1 - params.fp_rate) * (t < tobs) + params.fp_rate * (t >= tobs);
+				n.hg[t] *= (t >= tobs);
+			}
                         break;
                 case 2:
-                        tu = min(tu, tobs - 1);
-                        gu = min(gu, tobs - 1);
+			for (int t = 0; t < qi; ++t) {
+				n.ht[t] *= (t < tobs);
+				n.hg[t] *= (t < tobs);
+			}
                         break;
-                default:
-			// anything else just adds timepoint but no constraint
-                        break;
-
         }
-
-	for(int t = 0; t < qi; ++t) {
-		n.ht[t] *= (tl <= t && t <= tu);
-		n.hg[t] *= (gl <= t && t <= gu);
-	}
 }
 
 Mes & operator++(Mes & msg)
@@ -245,60 +275,6 @@ void FactorGraph::add_node(int i)
 		nodes.push_back(Node(params.prob_i, params.prob_r, j));
 }
 
-
-void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & obs)
-{
-	vector<vector<times_t>> tobs(nodes.size());
-	vector<vector<int>> sobs(nodes.size());
-	for (auto it = obs.begin(); it != obs.end(); ++it) {
-		sobs[get<0>(*it)].push_back(get<1>(*it));
-		tobs[get<0>(*it)].push_back(get<2>(*it));
-	}
-	for (int i = 0; i < int(nodes.size()); ++i) {
-		set_field(i, sobs[i], tobs[i]);
-	}
-}
-
-
-void FactorGraph::set_field(int i, vector<int> const & sobs, vector<times_t> const & tobs)
-{
-	// this assumes ordered observation times
-	int qi = nodes[i].times.size();
-	int tl = 0, gl = 0;
-	int tu = qi;
-	int gu = qi;
-	int t = 0;
-	for (int k = 0; k < int(tobs.size()); ++k) {
-		int state = sobs[k];
-		int to = tobs[k];
-		while (nodes[i].times[t] != to && t < qi)
-			t++;
-		if (nodes[i].times[t] != to) {
-			throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
-		}
-		switch (state) {
-			case 0:
-				tl = max(tl, t);
-				gl = max(gl, t);
-				break;
-			case 1:
-				tu = min(tu, t - 1);
-				gl = max(gl, t);
-				break;
-			case 2:
-				tu = min(tu, t - 1);
-				gu = min(gu, t - 1);
-				break;
-			case -1:
-				break;
-		}
-	}
-
-	for(int t = 0; t < qi; ++t) {
-		nodes[i].ht[t] = (tl <= t && t <= tu);
-		nodes[i].hg[t] = (gl <= t && t <= gu);
-	}
-}
 
 void FactorGraph::show_graph()
 {

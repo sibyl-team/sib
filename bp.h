@@ -97,7 +97,8 @@ public:
 	void append_observation(int i, int s, times_t t);
 	void add_node(int i);
 	void init();
-	void set_field(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);
+	void set_fields(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);
+	void set_field(int i, int s, int t);
 	void reset_observations(std::vector<std::tuple<int, int, times_t> > const & obs);
 	real_t update(int i, real_t damping);
 	void show_graph();

@@ -86,9 +86,10 @@ struct Params {
 	std::shared_ptr<Proba> prob_r;
 	real_t pseed;
 	real_t psus;
-	real_t softconstraint;
+	real_t fp_rate;
+	real_t fn_rate;
 	real_t pautoinf;
-	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus, real_t softconstraint, real_t pautoinf);
+	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus, real_t fp_rate, real_t fn_rate, real_t pautoinf);
 };
 
 std::ostream & operator<<(std::ostream &, Params const &);
