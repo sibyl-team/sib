@@ -6,13 +6,15 @@ Params::Params(shared_ptr<Proba> const & pi,
         shared_ptr<Proba> const & pr,
         real_t pseed,
         real_t psus,
-        real_t softconstraint,
+        real_t fp_rate,
+        real_t fn_rate,
         real_t pautoinf) :
 		prob_i(pi),
 		prob_r(pr),
 		pseed(pseed),
 		psus(psus),
-		softconstraint(softconstraint),
+		fp_rate(fp_rate),
+		fn_rate(fn_rate),
 		pautoinf(pautoinf)
 	{
 		if (pseed + psus > 1)
@@ -28,6 +30,8 @@ std::ostream & operator<<(std::ostream & ost, Params const & p)
         << ",prob_r=" << *p.prob_r
         << ",pseed=" << p.pseed
         << ",psus=" << p.psus
+        << ",fp_rate=" << p.fp_rate
+        << ",fn_rate=" << p.fn_rate
         << ",pautoinf=" << p.pautoinf << ")";
 }
 
