@@ -4,12 +4,6 @@
 
 using namespace std;
 
-template<class T>
-void erase_first_time(vector<T> & p)
-{
-        p.erase(p.begin() + 1, p.begin() + 2);
-}
-
 void drop_time(FactorGraph & fg, int t)
 {
         fg.drop_contacts(t);
@@ -17,11 +11,11 @@ void drop_time(FactorGraph & fg, int t)
         for (int i = 0; i < n; ++i) {
                 Node & f = fg.nodes[i];
                 if (t == f.times[1]) {
-                        erase_first_time(f.bt);
-                        erase_first_time(f.bg);
-                        erase_first_time(f.ht);
-                        erase_first_time(f.hg);
-                        erase_first_time(f.times);
+                        f.bt.erase(f.bt.begin());
+                        f.bg.erase(f.bg.begin());
+                        f.ht.erase(f.ht.begin());
+                        f.hg.erase(f.hg.begin());
+			f.times.erase(f.times.begin() + 1);
 			int m = f.neighs.size();
 			for (int j = 0; j < m; ++j) {
 				Neigh & v = f.neighs[j];
