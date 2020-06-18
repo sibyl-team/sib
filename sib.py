@@ -38,13 +38,12 @@ def marginal_t(n, t):
 
     return M
 
-def compact_printer(tol=2):
-    def callback(t,err,f):
-        ret = '\r' if err < tol else '\n'
-        print(f"{t} {err:1.3e}      {ret}", end="", flush=True)
-    return callback
-
-def iterate(f, maxit=100, tol=1e-3, damping=0.0, callback=compact_printer()):
+def iterate(f,
+        maxit=100,
+        tol=1e-3,
+        damping=0.0,
+        callback=lambda t,e,f : print(f"sib.iterate(damp={damping}): {t}/{maxit} {e:1.3e}/{tol}", end='      \r')
+    ):
     for t in range(maxit):
         err = f.update(damping)
         if callback(t, err, f) == False:
