@@ -151,6 +151,11 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 
 [Alfredo Braunstein](alfredo.braunstein@polito.it), [Alessandro Ingrosso](alessingrosso@gmail.com) ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Anna Paola Muntoni](), [Luca Dall'Asta](luca.dallasta@polito.it), [Fabio Mazza](), [Giovanni Catania](), [Indaco Biazzo](indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni))
 
+<p float="left">
+<img src="examples/figs/polito_log.png" width="186" height="66">
+<img src="examples/figs/columbia_logo.jpg" width="100" height="100">
+</p>
+
 ## Acknowledgements
 This project has been partially funded by Fondazione CRT through call "La Ricerca dei Talenti", project SIBYL.
 
