@@ -1,6 +1,11 @@
 # Epidemic tracing through Statistical Inference
 
 
+## Table of contents
+* [Message-Passing strategies for epidemic tracing](#message-passing-strategies-for-epidemic-tracing)
+* [Epidemic Control](#epidemic-control)
+* [Inference of epidemic parameters](#inference-of-epidemic-parameters)
+
 ## Message-Passing strategies for epidemic tracing
 
 Description:
