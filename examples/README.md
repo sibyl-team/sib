@@ -9,10 +9,10 @@
 
 ## Message-Passing strategies for epidemic tracing
 
-We show the effectiveness of strategies built on message-passing, **Belief Propagation**\[1\] and **Mean-Field**\[3\], and compare with a simple heuristic strategy for estimating infection risk consisting in ranking each individual by the number of contacts other individuals that either showed symptoms of various degrees orhave been tested positive:
+We show the effectiveness of strategies built on message-passing, **Belief Propagation**\[1,2\] and **Mean-Field**\[3,4\], and compare with a simple heuristic strategy for estimating infection risk consisting in ranking each individual by the number of contacts other individuals that either showed symptoms of various degrees orhave been tested positive:
 
-* **BP**: message-passing approximation procedure for complex probability. In our case, we build a probability distribution over all possible histories of disease spreading. The inference procedure consists in passing a set of so-called *cavity messages* along the edges of the network. At convergence, BP equations yield an approximation to the posterior distribution given the observations and the current estimate of transmission and recovery parameters. This method, that represents an exact Bayesian inference on networks without loops [1], has beens hown to produce excellent results in a variety of partially observable settingson disease spreading;
-* **MF**: Mean-Field simplification of Dynamical Message Passing equations [3]. These equations are derived from the full dynamical process where variables are the full trajectories. See https://github.com/sphinxteam/sir_inference for more details;
+* **BP**: we build a probability distribution over all possible histories of disease spreading \[1\]. The inference procedure consists in passing a set of so-called *cavity messages* along the edges of the network. At convergence, BP equations yield an approximation to the posterior distribution given the observations and the current estimate of transmission and recovery parameters. This method, that represents an exact Bayesian inference on networks without loops \[1\], has beens hown to produce excellent results in a variety of partially observable settingson disease spreading;
+* **MF**: Mean-Field simplification of Dynamical Message Passing equations \[3\]. These equations are derived from the full dynamical process where variables are the full trajectories. See https://github.com/sphinxteam/sir_inference for more details;
 * **Tracing**: at time t, individuals are ranked according to the number of contacts with individuals who tested positive in the time interval \[t−τ, t\[.
 
 ## ROCS
@@ -24,7 +24,9 @@ Averaged ROC area at different epidemic size, changing app adoptions (100\%,66\%
 
 ![](./figs/auc.gif)
 
-## Epidemic control: OpenABM model
+## Epidemic control
+
+We employ realistic individual-based models [4] to investigate a number of intervention strategies aiming at containing epidemic outbreaks, such as case-based measures (e.g. individual and household quarantine and mobility restrictions).  
 
 [OpenABM-Covid19](https://github.com/BDI-pathogens/OpenABM-Covid19) is an agent-based model (ABM) developed by [L. Ferretti](https://sites.google.com/view/lucaferretti) and the [Fraser group](https://www.coronavirus-fraser-group.org/) to simulate the spread of Covid-19 in a urban population.
 
@@ -47,8 +49,8 @@ Their states are observed on a daily basis.
 ## References
 
 - Belief propagation on trajectories:  
-[F. Altarelli, A. Braunstein, L. Dall’Asta, A. Lage-Castellanos, and R. Zecchina, PRL 2014](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)  
-[A. Braunstein and A. Ingrosso, Sci. Rep. 2016](https://www.nature.com/articles/srep27538)
+\[1\] [A. Braunstein and A. Ingrosso, Sci. Rep. 2016](https://www.nature.com/articles/srep27538)  
+\[2\] [F. Altarelli, A. Braunstein, L. Dall’Asta, A. Lage-Castellanos, and R. Zecchina, PRL 2014](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
 - Mean-Field risk estimation:  
-[A. Y. Lokhov, M. Mézard, H. Ohta, and L. Zdeborová, PRE 2014](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.90.012801)  
-[A. Y. Lokhov, M. Mézard, and L. Zdeborová, PRE 2015](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.91.012811)
+\[3\] [A. Y. Lokhov, M. Mézard, H. Ohta, and L. Zdeborová, PRE 2014](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.90.012801)  
+\[4\] [A. Y. Lokhov, M. Mézard, and L. Zdeborová, PRE 2015](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.91.012811)
