@@ -37,13 +37,14 @@ class get_pybind_include(object):
 ext_modules = [
     Extension(
         '_sib',
-        ["bp.cpp",
-        #"bp.h",
-        #"cavity.h",
-        "params.cpp",
-        #"params.h",
-        "pysib.cpp",
-        "drop.cpp"
+        ["src/" + x for x in
+            ["bp.cpp",
+            #"bp.h",
+            #"cavity.h",
+            "params.cpp",
+            #"params.h",
+            "pysib.cpp",
+            "drop.cpp"
         ],
         define_macros=[('VERSION', '"' + subprocess.Popen(['git', 'show', '-s',
             '--pretty=%h %ad %d'],

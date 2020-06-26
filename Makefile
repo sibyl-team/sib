@@ -1,29 +1,28 @@
-INC=-Ilib -I${CONDA_PREFIX}/include
+INC=-Ilib $(patsubst %, -I%/include, ${CONDA_PREFIX})
 VERSION=$(shell git show -s --pretty="%h %ad %d")
 CFLAGS=-fPIC -std=c++11 -Wall -O3 -g -fopenmp ${INC}
-SO=_sib$(shell python3-config --extension-suffix)
+SO=build/_sib$(shell python3-config --extension-suffix)
 LINK=-lgomp -lm -DVERSION="\"${VERSION}\""
 PYINC=$(shell python3 -m pybind11 --includes)
+BUILD=build
+OBJS=$(patsubst %, ${BUILD}/%, params.o bp.o drop.o)
 CXX=g++
 
-all: sib ${SO}
-
-params.o: params.cpp params.h
-	${CXX} ${CFLAGS} -c params.cpp -o $@
-bp.o: bp.cpp bp.h cavity.h
-	${CXX} ${CFLAGS} -c bp.cpp -o $@
-sib: bp.o params.o sib.cpp
-	${CXX} ${CFLAGS} params.o bp.o sib.cpp ${LINK} -o $@
-drop.o: drop.cpp
-	${CXX} ${CFLAGS} -c drop.cpp -o $@
-${SO}: bp.o params.o drop.o pysib.cpp
-	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o drop.o pysib.cpp -o $@
+all: build sib ${SO}
+build:
+	mkdir -p build
+${OBJS}: build/%.o : src/%.cpp src/params.h
+	${CXX} ${CFLAGS} -c $< -o $@
+sib: ${OBJS} build src/sib.cpp
+	${CXX} ${CFLAGS} ${OBJS} src/sib.cpp ${LINK} -o $@
+${SO}: ${OBJS} build src/pysib.cpp
+	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} ${OBJS} src/pysib.cpp -o $@
 
 test: all
 	python3 test/run_tests.py
 
 
 clean:
-	rm -f sib ${SO} *.o
+	rm -f sib ${OBJS} ${SO}
 
 .PHONY: test

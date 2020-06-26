@@ -1,6 +1,5 @@
-from _sib import *
-
-import _sib
+from build import _sib
+from build._sib import *
 
 __module_file__ = _sib.__file__
 
