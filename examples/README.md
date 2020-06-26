@@ -9,7 +9,14 @@ Description:
 - BP
 - MF
 
-ROCS
+## ROCS
+ROC curves and precisions at differents epidemic sizes. 
+
+![](./figs/roc_.png)
+
+Averaged ROC area at different epidemic size, changing app adoptions (100\%,66\%, 62\%, 55\%) :
+
+![](./figs/auc.gif)
 
 ## Epidemic control
 
