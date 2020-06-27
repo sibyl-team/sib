@@ -40,9 +40,11 @@ Intervention results in a network of 50K nodes:
 ## Inference of epidemic parameters
 
 From the BP messages it is possible to compute an approximation of the log-likelihood of the data, the so-called *Bethe-free* entropy. This quantity allows us to infer the hyper-parameters of the epidemic model such as the infection rate or the recovery rate thorugh a gradient ascent of the log-likelihood with respect of the target parameters. 
-As an example of the effectiness of this procedure, we report here a plot of the Bethe-free entropy as a function of the shape and rate parameters \( $\alpha$, $\beta$ \) of the Gamma distribution associated with the recovery probability of the Open-ABM model.
-The temporal graph used here consists in 10K nodes and all contacts up to day T = 30. After 5 initial days, 10 % of the nodes are selected uniformly at random and observed on a daily basis.
-We also report the values of the AUC in the \( $\alpha$, $\beta$ \) plane associated with the inference of the infected nodes at time T = 30.
+
+As an example of the effectiness of this procedure, we report here a plot of the Bethe-free entropy as a function of the shape and rate parameters \( \alpha, \beta \) of the Gamma distribution associated with the recovery probability of the Open-ABM model. The blue point in the 2D plot corresponds to the maximum log-likelihood point.
+
+The temporal graph used here consists in 10K nodes and all contacts up to day T = 30. After 5 initial days, 10 % of the nodes are selected uniformly at random and observed on a daily basis. 
+We also report the values of the AUC in the \( \alpha, \beta \) plane associated with the inference of the infected nodes at time T = 30.
 
 
 ![inference_auc_parameters_10K](figs/inference_parameters_openABM_gamma.png)
