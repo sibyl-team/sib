@@ -78,9 +78,7 @@ sib.Params(
         [default 1e-2]
     psus: Float - optional
         Prior to be susceptible.
-        [default: 0.5]
-    softconstraint: Float
-        Soft the observations constraints.
+        [default: 0.5]        
 
   
     Returns
@@ -140,8 +138,8 @@ Iterate the BP messages.
       If the error of the update of BP equation is less than `tol`the iteration stop.
     damping: float -- optional
       Damping parameter to help the convergence of BP equation.
-    callback: function(iter_n, err, f)
-      Function callback, called after each iteration. Take as argument, number of current iteration (iter_n), error (err), and the FactorGraph (f). 
+    callback: function(iter_n, err, f) -- optional
+      Function callback, called after each iteration. Take as argument the number of current iteration (iter_n), error (err), and the FactorGraph (f). 
 ```
 
 ## Contributions
@@ -153,7 +151,7 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 ## Maintainers
 [The sibyl-team](https://github.com/sibyl-team):
 
-[Alfredo Braunstein](alfredo.braunstein@polito.it), [Alessandro Ingrosso](alessingrosso@gmail.com) ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Anna Paola Muntoni](), [Luca Dall'Asta](luca.dallasta@polito.it), [Fabio Mazza](), [Giovanni Catania](), [Indaco Biazzo](indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni))
+[Alfredo Braunstein](alfredo.braunstein@polito.it), [Alessandro Ingrosso](alessingrosso@gmail.com), ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Indaco Biazzo](indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni)), [Luca Dall'Asta](luca.dallasta@polito.it), [Anna Paola Muntoni](),  [Fabio Mazza](), [Giovanni Catania]()
 
 <p float="left">
 <img src="examples/figs/polito_log.png" width="186" height="66">
