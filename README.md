@@ -149,9 +149,9 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 [Apache License 2.0](LICENSE)
 
 ## Maintainers
-[The sibyl-team](https://github.com/sibyl-team):
+The [sibyl-team](https://github.com/sibyl-team):
 
-[Alfredo Braunstein](alfredo.braunstein@polito.it), [Alessandro Ingrosso](alessingrosso@gmail.com), ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Indaco Biazzo](indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni)), [Luca Dall'Asta](luca.dallasta@polito.it), [Anna Paola Muntoni](),  [Fabio Mazza](), [Giovanni Catania]()
+[Alfredo Braunstein](alfredo.braunstein@polito.it), [Alessandro Ingrosso](alessingrosso@gmail.com) ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Indaco Biazzo](indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni)), [Luca Dall'Asta](luca.dallasta@polito.it), [Anna Paola Muntoni](),  [Fabio Mazza](), [Giovanni Catania]()
 
 <p float="left">
 <img src="examples/figs/polito_log.png" width="186" height="66">
