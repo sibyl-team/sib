@@ -18,7 +18,9 @@ We show the effectiveness of strategies built on message-passing, **Belief Propa
 ## ROCS
 ROC curves and precisions at differents epidemic sizes:
 
-![](./figs/roc_.png)
+<p align="center">
+  <img src="./figs/roc_.png" width="700" height="550">
+</p>
 
 [comment]: # "Averaged ROC area at different epidemic size, changing app adoptions (100\%,66\%, 62\%, 55\%)"
 
@@ -28,7 +30,7 @@ ROC curves and precisions at differents epidemic sizes:
 
 We employ realistic individual-based models [4] to investigate a number of intervention strategies aiming at containing epidemic outbreaks, such as case-based measures (e.g. individual and household quarantine and mobility restrictions).  
 
-[OpenABM-Covid19](https://github.com/BDI-pathogens/OpenABM-Covid19) is an agent-based model (ABM) developed by [L. Ferretti](https://sites.google.com/view/lucaferretti) and the [Fraser group](https://www.coronavirus-fraser-group.org/) to simulate the spread of Covid-19 in a urban population.
+[OpenABM-Covid19](https://github.com/BDI-pathogens/OpenABM-Covid19) is an agent-based model (ABM) developed by Oxford's [Fraser group](https://www.coronavirus-fraser-group.org/) to simulate the spread of Covid-19 in a urban population.
 
 An Intervention API that allows testing of risk assessment and quarantine strategies can be found at the following link: https://github.com/aleingrosso/OpenABM-Covid19.  
 
@@ -48,7 +50,7 @@ We also report the values of the AUC in the (𝛼, 𝛽) plane associated with t
 
 
 <p align="center">
-  <img src="figs/inference_parameters_openABM_gamma.png" width="500" height="400">
+  <img src="figs/inference_parameters_openABM_gamma.png" width="700" height="550">
 </p>
 
 
@@ -57,8 +59,6 @@ We also report the values of the AUC in the (𝛼, 𝛽) plane associated with t
 
 
 ## References
-
-- Belief propagation on trajectories:  
 
 \[1\] [Bayesian inference of epidemics on networks via belief propagation, F Altarelli, A Braunstein, L Dall’Asta, A Lage-Castellanos, R Zecchina. Physical review letters 112 (11), 118701](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
 
