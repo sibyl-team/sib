@@ -41,7 +41,7 @@ When not installing with `pip`, make sure to include the `sib` folder into the p
 
 ## Results
 
- Have a look at [document](./examples/README.md) for some results on the containment of the Covid-19 epidemics. 
+ Have a look at this [document](./examples/README.md) for some preliminary results on the containment of the Covid-19 epidemics. 
  
  ## Reference
  This code implements and expands the method described in this [paper](https://www.nature.com/articles/srep27538).
