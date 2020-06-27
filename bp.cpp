@@ -543,7 +543,7 @@ real_t FactorGraph::update(int i, real_t damping)
         if (za) {
 #pragma omp critical
 		// params.lambda += params.learn_rate * max(dzlam/za, 0.0);
-		params.mu += params.learn_rate * max(dzmu/za, 0.0);
+		params.mu += params.learn_rate * dzmu/za;
 	}
 	//recompute probs (for now, just set mu internally)
 	// for(int i = 0; i < nodes.size(); ++i)
