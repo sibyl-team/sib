@@ -47,7 +47,12 @@ The temporal graph used here consists in 10K nodes and all contacts up to day T 
 We also report the values of the AUC in the (𝛼, 𝛽) plane associated with the inference of the infected nodes at time T = 30.
 
 
-![inference_auc_parameters_10K](figs/inference_parameters_openABM_gamma.png)
+<p align="center">
+  <img src="figs/inference_parameters_openABM_gamma.png" width="1122" height="852">
+</p>
+
+
+[comment]: # "![inference_auc_parameters_10K](figs/inference_parameters_openABM_gamma.png)"
 
 
 
