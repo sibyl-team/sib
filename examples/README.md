@@ -13,7 +13,7 @@ We show the effectiveness of strategies built on message-passing, **Belief Propa
 
 * **BP**: we build a probability distribution over all possible histories of disease spreading \[1\]. The inference procedure consists in passing a set of so-called *cavity messages* along the edges of the network. At convergence, BP equations yield an approximation to the posterior distribution given the observations and the current estimate of transmission and recovery parameters. This method, that represents an exact Bayesian inference on networks without loops \[2\], has beens hown to produce excellent results in a variety of partially observable settingson disease spreading;
 * **MF**: Mean-Field simplification of Dynamical Message Passing equations. These equations are derived from the full dynamical process where variables are the full trajectories. See https://github.com/sphinxteam/sir_inference for more details;
-* **Tracing**: at time t, individuals are ranked according to the number of contacts with individuals who tested positive in the time interval \[t−τ, t\[.
+* **Tracing**: at time t, individuals are ranked according to the number of contacts with individuals who tested positive in the time interval \[t−τ, t\].
 
 ## ROCS
 ROC curves and precisions at differents epidemic sizes:
