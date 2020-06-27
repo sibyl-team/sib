@@ -9,7 +9,7 @@
 
 ## Message-Passing strategies for epidemic tracing
 
-We show the effectiveness of strategies built on message-passing, **Belief Propagation**\[1,2\] and **Mean-Field**\[3,4\], and compare with a simple heuristic strategy for estimating infection risk consisting in ranking each individual by the number of contacts other individuals that either showed symptoms of various degrees orhave been tested positive:
+We show the effectiveness of strategies built on message-passing, **Belief Propagation**\[1,2,3,4,5,6\] and [**Mean-Field**](https://github.com/sphinxteam/sir_inference), and compare with a simple heuristic strategy for estimating infection risk consisting in ranking each individual by the number of contacts other individuals that either showed symptoms of various degrees orhave been tested positive:
 
 * **BP**: we build a probability distribution over all possible histories of disease spreading \[1\]. The inference procedure consists in passing a set of so-called *cavity messages* along the edges of the network. At convergence, BP equations yield an approximation to the posterior distribution given the observations and the current estimate of transmission and recovery parameters. This method, that represents an exact Bayesian inference on networks without loops \[1\], has beens hown to produce excellent results in a variety of partially observable settingson disease spreading;
 * **MF**: Mean-Field simplification of Dynamical Message Passing equations \[3\]. These equations are derived from the full dynamical process where variables are the full trajectories. See https://github.com/sphinxteam/sir_inference for more details;
@@ -18,21 +18,29 @@ We show the effectiveness of strategies built on message-passing, **Belief Propa
 ## ROCS
 ROC curves and precisions at differents epidemic sizes:
 
-![](./figs/roc_.png)
+<p align="center">
+  <img src="./figs/roc_.png" width="800" height="200">
+</p>
 
-Averaged ROC area at different epidemic size, changing app adoptions (100\%,66\%, 62\%, 55\%) :
+[comment]: # "Averaged ROC area at different epidemic size, changing app adoptions (100\%,66\%, 62\%, 55\%)"
 
-![](./figs/auc.gif)
+[comment]: # "![](./figs/auc.gif)"
 
 ## Epidemic control
 
-We employ realistic individual-based models [4] to investigate a number of intervention strategies aiming at containing epidemic outbreaks, such as case-based measures (e.g. individual and household quarantine and mobility restrictions).  
+We employ realistic individual-based models to investigate a number of intervention strategies aiming at containing epidemic outbreaks, such as case-based measures (e.g. individual and household quarantine and mobility restrictions).  
 
-[OpenABM-Covid19](https://github.com/BDI-pathogens/OpenABM-Covid19) is an agent-based model (ABM) developed by [L. Ferretti](https://sites.google.com/view/lucaferretti) and the [Fraser group](https://www.coronavirus-fraser-group.org/) to simulate the spread of Covid-19 in a urban population.
+[OpenABM-Covid19](https://github.com/BDI-pathogens/OpenABM-Covid19) is an agent-based model (ABM) developed by Oxford's [Fraser group](https://www.coronavirus-fraser-group.org/) to simulate the spread of Covid-19 in a urban population.
 
 An Intervention API that allows testing of risk assessment and quarantine strategies can be found at the following link: https://github.com/aleingrosso/OpenABM-Covid19.  
 
 Intervention results in a network of 50K nodes:
+
+<p align="center">
+  <img src="figs/anim_50K_log.gif">
+</p>
+
+The population is seeded with 10 infected individuals at day 0. Intervention strategies start at day 10.
 
 ![intervention_multiple_50K](figs/N50K_o400_linear_and_log.svg)
 
@@ -47,15 +55,27 @@ The temporal graph used here consists in 10K nodes and all contacts up to day T 
 We also report the values of the AUC in the (𝛼, 𝛽) plane associated with the inference of the infected nodes at time T = 30.
 
 
-![inference_auc_parameters_10K](figs/inference_parameters_openABM_gamma.png)
+<p align="center">
+  <img src="figs/inference_parameters_openABM_gamma.png" width="700" height="550">
+</p>
+
+
+[comment]: # "![inference_auc_parameters_10K](figs/inference_parameters_openABM_gamma.png)"
 
 
 
 ## References
 
-- Belief propagation on trajectories:  
-\[1\] [A. Braunstein and A. Ingrosso, Sci. Rep. 2016](https://www.nature.com/articles/srep27538)  
-\[2\] [F. Altarelli, A. Braunstein, L. Dall’Asta, A. Lage-Castellanos, and R. Zecchina, PRL 2014](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
-- Mean-Field risk estimation:  
-\[3\] [A. Y. Lokhov, M. Mézard, H. Ohta, and L. Zdeborová, PRE 2014](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.90.012801)  
-\[4\] [A. Y. Lokhov, M. Mézard, and L. Zdeborová, PRE 2015](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.91.012811)
+\[1\] [Bayesian inference of epidemics on networks via belief propagation, F Altarelli, A Braunstein, L Dall’Asta, A Lage-Castellanos, R Zecchina. Physical review letters 112 (11), 118701](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
+
+\[2\] [Inference of causality in epidemics on temporal contact networks, A Braunstein, A Ingrosso, Scientific reports 6, 27538, ](https://www.nature.com/articles/srep27538)
+
+\[3\] [The patient-zero problem with noisy observations. F Altarelli, A Braunstein, L Dall’Asta, A Ingrosso, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2014 (10), P10016](https://iopscience.iop.org/article/10.1088/1742-5468/2014/10/P10016/meta)
+
+\[4\] [Containing epidemic outbreaks by message-passing techniques. F Altarelli, A Braunstein, L Dall’Asta, JR Wakeling, R Zecchina. Physical Review X 4 (2), 021024](https://journals.aps.org/prx/abstract/10.1103/PhysRevX.4.021024)
+
+\[5\] [Large deviations of cascade processes on graphs. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Physical Review E 87 (6), 062115](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.87.062115)
+
+\[6\] [Optimizing spread dynamics on graphs by message passing. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2013 (09), P09011](https://iopscience.iop.org/article/10.1088/1742-5468/2013/09/P09011/meta)
+
+
