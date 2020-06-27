@@ -388,7 +388,7 @@ real_t FactorGraph::update(int i, real_t damping)
 	int const qi = f.bt.size();
 
 	// allocate buffers
-	vector<Mes> UU, HH, M, R;
+	vector<Mes> UU, HH, M, R, dM, dR;
 	vector<real_t> ut(qi), ug(qi);
 	vector<vector<real_t>> CG0, CG01;
 	for (int j = 0; j < n; ++j) {
@@ -398,7 +398,9 @@ real_t FactorGraph::update(int i, real_t damping)
 		v.unlock();
 		UU.push_back(Mes(v.t.size()));
 		R.push_back(Mes(v.t.size()));
+		dR.push_back(Mes(v.t.size()));
 		M.push_back(Mes(v.t.size()));
+		dM.push_back(Mes(v.t.size()));
 		CG0.push_back(vector<real_t>(v.t.size() + 1));
 		CG01.push_back(vector<real_t>(v.t.size() + 1));
 	}
@@ -415,8 +417,8 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	// main loop
 	real_t za = 0.0;
-	// real_t dzlam = 0.0;
 	real_t dzmu = 0.0;
+	real_t dzlam = 0.0;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -425,26 +427,46 @@ real_t FactorGraph::update(int i, real_t damping)
 		for (int j = 0; j < n; ++j) {
 			Mes & m = M[j]; // no need to clear, just use the bottom right corner
 			Mes & r = R[j];
+			Mes & dm = dM[j];
+			Mes & dr = dR[j];
 			Neigh const & v = f.neighs[j];
 			Mes const & h = HH[j];
 			int const qj = h.qj;
 
 			real_t pi = 1;
+			real_t dpi = 0;
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
-				real_t const l =  prob_i(f.times[tij]-f.times[ti], v.lambdas[sij]);
+				real_t const l =  prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+				int dj = sij - min_out[j];
+				real_t const pi1 = pow(1 - l, dj);
+				real_t const dpi1 = dj > 0 ? pow(1 - l, dj - 1) : 0;
+				//grad l
+				real_t const dl = prob_i.der(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
-					r(sji, sij) = l * pi * h(sji, qj - 1);;
+					r(sji, sij) = l * pi * h(sji, qj - 1);
+					//grad m & r
+					real_t dtemp = dl * pi + l * dpi; 
+					dm(sji, sij) = dtemp * h(sji, sij);
+					dr(sji, sij) = dtemp * h(sji, qj - 1);
 				}
 				pi *= 1 - l;
+				dpi = (1 - l) * dpi - l * pi;
+				// if (abs(dpi - dpi1) > 1e-10)
+	                		// throw invalid_argument("no no no");
 			}
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
+				dm(sji, qj - 1) = dpi * h(sji, qj - 1);
+				dr(sji, qj - 1) = dpi * h(sji, qj - 1);
 			}
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
+			//grad m & r
+			cumsum(dm, min_in[j], min_out[j]);
+			cumsum(dr, min_in[j], min_out[j]);
 			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			fill(CG0[j].begin(), CG0[j].end(), 0.0);
 		}
@@ -465,6 +487,9 @@ real_t FactorGraph::update(int i, real_t damping)
 				changed = true;
 				Mes & m = M[j];
 				Mes & r = R[j];
+				//grad m & r
+				Mes & dm = dM[j];
+				Mes & dr = dR[j];
 				/*
 				   .-----min_out
 				   |   .-- min_g
@@ -484,6 +509,9 @@ real_t FactorGraph::update(int i, real_t damping)
 				   */
 				C0[j] = m(min_in[j],  min_out[j]) - m(min_in[j],  min_g[j]) + r(min_in[j],  min_g[j]);
 				C1[j] = m(min_out[j], min_out[j]) - m(min_out[j], min_g[j]) + r(min_out[j], min_g[j]);
+				//grad C
+				dC0[j] = dm(min_in[j],  min_out[j]) - dm(min_in[j],  min_g[j]) + dr(min_in[j],  min_g[j]);
+				dC1[j] = dm(min_out[j], min_out[j]) - dm(min_out[j], min_g[j]) + dr(min_out[j], min_g[j]);
 			}
 			if (changed) {
 				changed = false;
@@ -499,11 +527,11 @@ real_t FactorGraph::update(int i, real_t damping)
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
-			//gradient
+			//grad mu
 			dzmu += ht[ti] * f.hg[gi] * da;
-			// for (int j = 0; j < n; ++j)
-				// dzlam += sg * ht[ti] * f.hg[gi] * (ti == 0 || ti == qi - 1 ? P0[j]*dC0[j] : P0[j]*dC0[j] - P1[j]*dC1[j]);
-
+			//grad lambda
+			for (int j = 0; j < n; ++j)
+				dzlam += pg * ht[ti] * f.hg[gi] * (ti == 0 || ti == qi - 1 ? P0[j]*dC0[j] : P0[j]*dC0[j] - P1[j]*dC1[j] * (1-params.pautoinf));
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			for (int j = 0; j < n; ++j) {
 				CG0[j][min_g[j]] += P0[j] * b;
@@ -523,7 +551,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				real_t c = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					int const tij = v.t[sij];
-					real_t const l = prob_i(f.times[tij] - f.times[ti],  v.lambdas[sij]);
+					real_t const l = prob_i(f.times[tij] - f.times[ti]) * v.lambdas[sij];
 					//note: CG[sij + 1] counts everything with gi >= sij
 					UU[j](sij, sji) += CG[sij + 1] * pi * l;
 					c += (CG[0] - CG[sij + 1]) * pi * l;
@@ -541,11 +569,9 @@ real_t FactorGraph::update(int i, real_t damping)
 	}
 	//update parameters
         if (za) {
-		f.dmu_ = params.learn_rate * dzmu/za;
+		f.dmu_ = dzmu/za;
+		f.dlambda_ = dzlam/za;
 	}
-	//recompute probs (for now, just set mu internally)
-	// for(int i = 0; i < nodes.size(); ++i)
-		// nodes[i].prob_r.mu = params.mu;
 
 	//compute beliefs on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));

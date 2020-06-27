@@ -14,7 +14,6 @@ struct Proba
 {
 	virtual real_t operator()(real_t) const = 0;
 	virtual real_t der(real_t d) const { return 0; };
-	virtual real_t operator()(real_t d, real_t lambda) const { return operator()(d)*lambda; }
 	virtual void print(std::ostream &) const = 0;
 };
 
@@ -39,7 +38,6 @@ struct ExpDiscrete : public Proba
 {
 	ExpDiscrete(std::vector<real_t> const & p) : p(p) {}
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
-	real_t operator()(real_t d, real_t lambda) const { return 1.0-std::exp(-operator()(d)*lambda); }
 	std::vector<real_t> p;
 	void print(std::ostream & ost) const {
 	    ost << "ExpDiscrete(";

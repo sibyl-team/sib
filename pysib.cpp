@@ -212,6 +212,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("bg", &Node::bg, "belief on gi")
         .def_readonly("err", &Node::err_, "error on update")
         .def_readonly("dmu_", &Node::dmu_, "mu grad")
+        .def_readonly("dlambda_", &Node::dlambda_, "lambda grad")
         .def_readonly("times", &Node::times, "event times of this node")
         .def_readonly("index", &Node::index, "node index (deprecated, do not use)")
         .def_readonly("prob_i", &Node::prob_i, "probability of infection as function of t-ti")

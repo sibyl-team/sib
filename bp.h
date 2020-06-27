@@ -50,7 +50,8 @@ struct Node {
 		prob_r0(prob_r),
 		f_(0),
 		index(index),
-		dmu_(0.)
+		dmu_(0.),
+		dlambda_(0.)
 	{
 		times.push_back(-1);
 		times.push_back(Tinf);
@@ -84,6 +85,7 @@ struct Node {
 	real_t err_;
 	int index;
 	real_t dmu_;
+	real_t dlambda_;
 };
 
 class FactorGraph {
