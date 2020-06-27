@@ -36,6 +36,12 @@ An Intervention API that allows testing of risk assessment and quarantine strate
 
 Intervention results in a network of 50K nodes:
 
+<p align="center">
+  <img src="figs/anim_50K_log.gif">
+</p>
+
+The population is seeded with 10 infected individuals at day 0. Intervention strategies start at day 10.
+
 ![intervention_multiple_50K](figs/N50K_o400_linear_and_log.svg)
 
 
