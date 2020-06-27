@@ -9,9 +9,9 @@
 
 ## Message-Passing strategies for epidemic tracing
 
-We show the effectiveness of strategies built on message-passing, **Belief Propagation**\[1,2,3,4,5,6\] and [**Mean-Field**](https://github.com/sphinxteam/sir_inference), and compare with a simple heuristic strategy for estimating infection risk consisting in ranking each individual by the number of contacts other individuals that either showed symptoms of various degrees orhave been tested positive:
+We show the effectiveness of strategies built on message-passing, **Belief Propagation** \[1,2,3,4,5,6\] and [**Mean-Field**](https://github.com/sphinxteam/sir_inference), and compare with a simple heuristic strategy for estimating infection risk consisting in ranking each individual by the number of contacts other individuals that either showed symptoms of various degrees orhave been tested positive:
 
-* **BP**: we build a probability distribution over all possible histories of disease spreading [\[1\]](#ref1). The inference procedure consists in passing a set of so-called *cavity messages* along the edges of the network. At convergence, BP equations yield an approximation to the posterior distribution given the observations and the current estimate of transmission and recovery parameters. This method, that represents an exact Bayesian inference on networks without loops [\[2\]](#ref2), has beens hown to produce excellent results in a variety of partially observable settingson disease spreading;
+* **BP**: we build a probability distribution over all possible histories of disease spreading \[1\]. The inference procedure consists in passing a set of so-called *cavity messages* along the edges of the network. At convergence, BP equations yield an approximation to the posterior distribution given the observations and the current estimate of transmission and recovery parameters. This method, that represents an exact Bayesian inference on networks without loops \[2\], has beens hown to produce excellent results in a variety of partially observable settingson disease spreading;
 * **MF**: Mean-Field simplification of Dynamical Message Passing equations. These equations are derived from the full dynamical process where variables are the full trajectories. See https://github.com/sphinxteam/sir_inference for more details;
 * **Tracing**: at time t, individuals are ranked according to the number of contacts with individuals who tested positive in the time interval \[t−τ, t\[.
 
@@ -66,9 +66,9 @@ We also report the values of the AUC in the (𝛼, 𝛽) plane associated with t
 
 ## References
 
-\[1\] <p id="ref1" />[Inference of causality in epidemics on temporal contact networks, A Braunstein, A Ingrosso, Scientific reports 6, 27538, ](https://www.nature.com/articles/srep27538)
+\[1\] [Inference of causality in epidemics on temporal contact networks, A Braunstein, A Ingrosso, Scientific reports 6, 27538, ](https://www.nature.com/articles/srep27538)
 
-\[2\] <p id="ref2" />[Bayesian inference of epidemics on networks via belief propagation, F Altarelli, A Braunstein, L Dall’Asta, A Lage-Castellanos, R Zecchina. Physical review letters 112 (11), 118701](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
+\[2\] [Bayesian inference of epidemics on networks via belief propagation, F Altarelli, A Braunstein, L Dall’Asta, A Lage-Castellanos, R Zecchina. Physical review letters 112 (11), 118701](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
 
 \[3\] [The patient-zero problem with noisy observations. F Altarelli, A Braunstein, L Dall’Asta, A Ingrosso, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2014 (10), P10016](https://iopscience.iop.org/article/10.1088/1742-5468/2014/10/P10016/meta)
 
