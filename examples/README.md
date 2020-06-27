@@ -19,7 +19,7 @@ We show the effectiveness of strategies built on message-passing, **Belief Propa
 ROC curves and precisions at differents epidemic sizes:
 
 <p align="center">
-  <img src="./figs/roc_.png" width="800" height="250">
+  <img src="./figs/roc_.png" width="800" height="200">
 </p>
 
 [comment]: # "Averaged ROC area at different epidemic size, changing app adoptions (100\%,66\%, 62\%, 55\%)"
