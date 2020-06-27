@@ -66,7 +66,7 @@ We also report the values of the AUC in the (𝛼, 𝛽) plane associated with t
 
 \[3\] [The patient-zero problem with noisy observations. F Altarelli, A Braunstein, L Dall’Asta, A Ingrosso, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2014 (10), P10016](https://iopscience.iop.org/article/10.1088/1742-5468/2014/10/P10016/meta)
 
-\[4\] [Containing epidemic outbreaks by message-passing techniques. F Altarelli, A Braunstein, L Dall’Asta, JR Wakeling, R Zecchina. Physical Review X 4 (2), 021024] (https://journals.aps.org/prx/abstract/10.1103/PhysRevX.4.021024)
+\[4\] [Containing epidemic outbreaks by message-passing techniques. F Altarelli, A Braunstein, L Dall’Asta, JR Wakeling, R Zecchina. Physical Review X 4 (2), 021024](https://journals.aps.org/prx/abstract/10.1103/PhysRevX.4.021024)
 
 \[5\] [Large deviations of cascade processes on graphs. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Physical Review E 87 (6), 062115](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.87.062115)
 
