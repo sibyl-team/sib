@@ -47,9 +47,9 @@ The population is seeded with 10 infected individuals at day 0. Intervention str
 
 ## Inference of epidemic parameters
 
-From the BP messages it is possible to compute an approximation of the log-likelihood of the data, the so-called *Bethe-free* entropy. This quantity allows us to infer the hyper-parameters of the epidemic model such as the infection rate or the recovery rate thorugh a gradient ascent of the log-likelihood with respect of the target parameters. 
+From the BP messages it is possible to compute an approximation of the log-likelihood of the data, the so-called *Bethe free entropy*. This quantity allows us to infer the hyper-parameters of the epidemic model such as the infection rate or the recovery rate thorugh a gradient ascent of the log-likelihood with respect to the target parameters. 
 
-As an example of the effectiness of this procedure, we report here a plot of the Bethe-free entropy as a function of the shape and rate parameters (𝛼, 𝛽) of the Gamma distribution of the recovery time. The blue point in the 2D plot corresponds to the maximum log-likelihood point.
+As an example of the effectiness of this procedure, we report here a plot of the Bethe free entropy as a function of the shape and rate parameters (𝛼, 𝛽) of the Gamma distribution of the recovery time. The blue point in the 2D plot corresponds to the maximum log-likelihood point.
 
 The temporal graph used here consists in 10K nodes and all contacts up to day T = 30. After 5 initial days, 10 % of the nodes are selected uniformly at random and observed on a daily basis. 
 We also report the values of the AUC in the (𝛼, 𝛽) plane associated with the inference of the infected nodes at time T = 30.
