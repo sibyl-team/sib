@@ -39,6 +39,10 @@ When not installing with `pip`, make sure to include the `sib` folder into the p
 
  Have a look at this [notebook](./examples/dummy_test.ipynb).
 
+## Results
+
+ Have a look at [document](./examples/README.md) for some results on the containment of the Covid-19 epidemics. 
+ 
  ## Reference
  This code implements and expands the method described in this [paper](https://www.nature.com/articles/srep27538).
 
