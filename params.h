@@ -13,7 +13,9 @@ typedef int times_t;
 struct Proba
 {
 	virtual real_t operator()(real_t) const = 0;
-	virtual real_t der(real_t d) const { return 0; };
+	virtual void addgrad(real_t d, real_t p) { };
+	virtual void initgrad() {};
+	virtual void ascend(real_t p) {};
 	virtual real_t operator()(real_t d, real_t lambda) const { return operator()(d)*lambda; }
 	virtual void print(std::ostream &) const = 0;
 };
@@ -55,7 +57,6 @@ struct Uniform : public Proba
 	Uniform(real_t p) : p(p) {}
 	real_t p;
 	real_t operator()(real_t d) const { return p; }
-	real_t der(real_t d) { return 1; };
 	std::istream & operator>>(std::istream & ist) { return ist >> p; }
 	void print(std::ostream & ost) const { ost << "Uniform(" << p << ")"; }
 };
@@ -65,10 +66,16 @@ struct Uniform : public Proba
 
 struct Exponential : public Proba
 {
-	Exponential(real_t mu) : mu(mu) {}
+	Exponential(real_t mu) : mu(mu), dmu(0) {}
 	real_t mu;
+	real_t dmu;
 	real_t operator()(real_t d) const { return exp(-mu*d); }
-	real_t der(real_t d) const { return -d * exp(-mu*d); }
+	void addgrad(real_t d, real_t p) { dmu += -d * exp(-mu*d) * p; }
+	void initgrad() { dmu = 0; }
+	void ascend(real_t p) {
+#pragma omp critical
+		mu += dmu * p;
+	};
 	std::istream & operator>>(std::istream & ist) { return ist >> mu; }
 	void print(std::ostream & ost) const { ost << "Exponential("<< mu << ")"; }
 };
@@ -80,7 +87,6 @@ struct Gamma : public Proba
 	real_t mu;
 	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
 	real_t operator()(real_t d) const { return boost::math::gamma_q(k,d*mu); }
-	real_t der(real_t d) const { return (d-k/mu)*boost::math::gamma_p(k,d*mu); }
 	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
 	void print(std::ostream & ost) const { ost << "Gamma(" << k << "," << mu << ")"; }
 };
