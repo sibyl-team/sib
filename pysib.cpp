@@ -136,7 +136,7 @@ PYBIND11_MODULE(_sib, m) {
         .def("__repr__", &print<ExpDiscrete>);
 
     py::class_<Params>(m, "Params")
-        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t>(),
+        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t, real_t>(),
                 "SIB Params class. prob_i and prob_r parameters are defaults.",
                 py::arg("prob_i") = *new Uniform(1.0),
                 py::arg("prob_r") = *new Exponential(0.1),
@@ -144,7 +144,9 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("psus") = 0.5,
                 py::arg("fp_rate") = 0.0,
                 py::arg("fn_rate") = 0.0,
-                py::arg("pautoinf") = 0.0)
+                py::arg("pautoinf") = 0.0,
+                py::arg("mu") = 0.0,
+                py::arg("learn_rate") = 0.0)
 
         .def_readwrite("prob_r", &Params::prob_r)
         .def_readwrite("prob_i", &Params::prob_i)
@@ -153,6 +155,8 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("fp_rate", &Params::fp_rate)
         .def_readwrite("fn_rate", &Params::fn_rate)
         .def_readwrite("pautoinf", &Params::pautoinf)
+        .def_readwrite("mu", &Params::mu)
+        .def_readwrite("learn_rate", &Params::learn_rate)
         .def("__repr__", &print<Params>);
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
@@ -161,7 +165,7 @@ PYBIND11_MODULE(_sib, m) {
                 vector<tuple<int,int,times_t>>,
                 vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
-                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0),
+                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0, 0.0, 0.0),
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
                 py::arg("observations") = vector<tuple<int,int,times_t>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
