@@ -440,22 +440,23 @@ real_t FactorGraph::update(int i, real_t damping)
 				real_t const l =  prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				int dj = sij - min_out[j];
 				real_t const pi1 = pow(1 - l, dj);
-				real_t const dpi1 = dj > 0 ? pow(1 - l, dj - 1) : 0;
+				real_t const dpi1 = - dj * pow(1 - l, dj - 1);
 				//grad l
 				real_t const dl = prob_i.der(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
-					m(sji, sij) = l * pi * h(sji, sij);
-					r(sji, sij) = l * pi * h(sji, qj - 1);
+					m(sji, sij) = l * pi1 * h(sji, sij);
+					r(sji, sij) = l * pi1 * h(sji, qj - 1);
 					//grad m & r
-					real_t dtemp = dl * pi + l * dpi; 
+					real_t dtemp = dl * pi1 + l * dpi1; 
 					dm(sji, sij) = dtemp * h(sji, sij);
 					dr(sji, sij) = dtemp * h(sji, qj - 1);
 				}
 				pi *= 1 - l;
 				dpi = (1 - l) * dpi - l * pi;
-				// if (abs(dpi - dpi1) > 1e-10)
-	                		// throw invalid_argument("no no no");
+				if (abs(dpi - dpi1) > 1e-10)
+	                		throw invalid_argument("no no no");
 			}
+			// real_t dpi1 = - (qj - 1 - min_out[j]) * pow(1 - l, qj - 2 - min_out[j]);
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
