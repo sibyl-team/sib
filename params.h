@@ -2,21 +2,22 @@
 #define PARAMS_H
 
 #include <boost/math/special_functions/gamma.hpp>
+#include <boost/math/differentiation/autodiff.hpp>
 #include <iostream>
 #include <exception>
 #include <memory>
 
 
+using namespace boost::math::differentiation;
 typedef double real_t;
 typedef int times_t;
 
 struct Proba
 {
 	virtual real_t operator()(real_t) const = 0;
-	virtual void addgrad(real_t d, real_t p) { };
-	virtual void initgrad() {};
-	virtual void ascend(real_t p) {};
-	virtual real_t operator()(real_t d, real_t lambda) const { return operator()(d)*lambda; }
+	virtual void grad_add(real_t d, real_t p) { };
+	virtual void grad_init() {};
+	virtual void grad_mul(real_t) {};
 	virtual void print(std::ostream &) const = 0;
 };
 
@@ -37,20 +38,6 @@ struct PriorDiscrete : public Proba
 };
 
 
-struct ExpDiscrete : public Proba
-{
-	ExpDiscrete(std::vector<real_t> const & p) : p(p) {}
-	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
-	real_t operator()(real_t d, real_t lambda) const { return 1.0-std::exp(-operator()(d)*lambda); }
-	std::vector<real_t> p;
-	void print(std::ostream & ost) const {
-	    ost << "ExpDiscrete(";
-	    for (auto it = p.begin(); it < p.end() - 1; ++it)
-		ost << *it << ",";
-	    ost << p.back() << ")";
-	}
-};
-
 
 struct Uniform : public Proba
 {
@@ -70,12 +57,9 @@ struct Exponential : public Proba
 	real_t mu;
 	real_t dmu;
 	real_t operator()(real_t d) const { return exp(-mu*d); }
-	void addgrad(real_t d, real_t p) { dmu += -d * exp(-mu*d) * p; }
-	void initgrad() { dmu = 0; }
-	void ascend(real_t p) {
-#pragma omp critical
-		mu += dmu * p;
-	};
+	void grad_add(real_t d, real_t p) { dmu += -d * exp(-mu*d) * p; }
+	void grad_mul(real_t p) { dmu *= p; }
+	void grad_init() { dmu = 0; }
 	std::istream & operator>>(std::istream & ist) { return ist >> mu; }
 	void print(std::ostream & ost) const { ost << "Exponential("<< mu << ")"; }
 };
@@ -85,8 +69,20 @@ struct Gamma : public Proba
 {
 	real_t k;
 	real_t mu;
-	Gamma(real_t k, real_t mu) : k(k), mu(mu) {}
+	real_t dk;
+	real_t dmu;
+	Gamma(real_t k, real_t mu) : k(k), mu(mu), dk(0), dmu(0) {}
 	real_t operator()(real_t d) const { return boost::math::gamma_q(k,d*mu); }
+	void grad_init() { dk = 0.0; dmu = 0.0; }
+	void grad_add(real_t d, real_t p) {
+  		auto const x = make_ftuple<real_t, 1, 1>(k, mu);
+		auto const & xk = std::get<0>(x);
+		auto const & xmu = std::get<1>(x);
+		auto const f = boost::math::gamma_q(xk, xmu*d);
+		dk += f.derivative(1,0) * p;
+		dmu += f.derivative(0,1) * p;
+	}
+	void grad_mul(real_t p) { dk *= p; dmu *= p; }
 	std::istream & operator>>(std::istream & ist) { return ist >> k >> mu; }
 	void print(std::ostream & ost) const { ost << "Gamma(" << k << "," << mu << ")"; }
 };

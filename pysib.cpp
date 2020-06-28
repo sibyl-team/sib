@@ -43,13 +43,6 @@ PriorDiscrete make_discrete(py::list & l)
 }
 
 
-ExpDiscrete make_exp_discrete(py::list & l)
-{
-    return ExpDiscrete(make_vector(l));
-}
-
-
-
 template<class T> string print(const T & t) { return lexical_cast<string>(t); }
 
 map<int, vector<times_t> >
@@ -116,12 +109,15 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<Exponential, Proba, shared_ptr<Exponential>>(m, "Exponential")
         .def(py::init<real_t>(), py::arg("mu") = 0.1)
         .def_readwrite("mu", &Exponential::mu)
+        .def_readwrite("dmu", &Exponential::dmu)
         .def("__repr__", &print<Exponential>);
 
     py::class_<Gamma, Proba, shared_ptr<Gamma>>(m, "Gamma")
         .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
         .def_readwrite("k", &Gamma::k)
         .def_readwrite("mu", &Gamma::mu)
+        .def_readwrite("dk", &Gamma::dk)
+        .def_readwrite("dmu", &Gamma::dmu)
         .def("__repr__", &print<Gamma>);
 
     py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
@@ -129,11 +125,6 @@ PYBIND11_MODULE(_sib, m) {
         .def(py::init<Proba const &, int>())
         .def_readwrite("p", &PriorDiscrete::p)
         .def("__repr__", &print<PriorDiscrete>);
-
-    py::class_<ExpDiscrete, Proba, shared_ptr<ExpDiscrete>>(m, "ExpDiscrete")
-        .def(py::init(&make_exp_discrete))
-        .def_readwrite("p", &ExpDiscrete::p)
-        .def("__repr__", &print<ExpDiscrete>);
 
     py::class_<Params>(m, "Params")
         .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t, real_t>(),

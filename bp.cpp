@@ -416,7 +416,7 @@ real_t FactorGraph::update(int i, real_t damping)
 	// main loop
 	real_t za = 0.0;
 	// real_t dzlam = 0.0;
-	f.prob_r->initgrad();
+	f.prob_r->grad_init();
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -432,7 +432,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			real_t pi = 1;
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
-				real_t const l =  prob_i(f.times[tij]-f.times[ti], v.lambdas[sij]);
+				real_t const l =  prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);;
@@ -498,10 +498,10 @@ real_t FactorGraph::update(int i, real_t damping)
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
-
-			prob_r.addgrad(f.times[gi] - f.times[ti], p * ht[ti] * f.hg[gi]);
+			//dmu += prob_r.der(d) * p * ht[ti] * f.hg[gi]
+			prob_r.grad_add(f.times[gi] - f.times[ti], p * ht[ti] * f.hg[gi]);
 			if (gi < qi - 1)
-				prob_r.addgrad(-(f.times[gi + 1] - f.times[ti]), p * ht[ti] * f.hg[gi]);
+				prob_r.grad_add(f.times[gi + 1] - f.times[ti], -p * ht[ti] * f.hg[gi]);
 
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			for (int j = 0; j < n; ++j) {
@@ -522,7 +522,7 @@ real_t FactorGraph::update(int i, real_t damping)
 				real_t c = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					int const tij = v.t[sij];
-					real_t const l = prob_i(f.times[tij] - f.times[ti],  v.lambdas[sij]);
+					real_t const l = prob_i(f.times[tij] - f.times[ti]) * v.lambdas[sij];
 					//note: CG[sij + 1] counts everything with gi >= sij
 					UU[j](sij, sji) += CG[sij + 1] * pi * l;
 					c += (CG[0] - CG[sij + 1]) * pi * l;
@@ -540,7 +540,9 @@ real_t FactorGraph::update(int i, real_t damping)
 	}
 	//update parameters
         if (za)
-		f.prob_r->ascend(params.learn_rate/za); // theta += learn_rate * grad/za;
+		f.prob_r->grad_mul(1/za); // theta += learn_rate * grad/za;
+	else
+		f.prob_r->grad_init();
 
 	//compute beliefs on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
