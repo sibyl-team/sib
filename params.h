@@ -25,7 +25,7 @@ std::ostream & operator<<(std::ostream & ost, Proba const & p);
 
 struct PriorDiscrete : public Proba
 {
-	PriorDiscrete(std::vector<real_t> const & p) : p(p) {}
+	PriorDiscrete(std::vector<real_t> const & p) : p(p), dp(p.size()) {}
 	PriorDiscrete(Proba const & p, int T);
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	std::vector<real_t> p;

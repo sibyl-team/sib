@@ -10,7 +10,7 @@ all: sib ${SO}
 
 params.o: params.cpp params.h
 	${CXX} ${CFLAGS} -c params.cpp -o $@
-bp.o: bp.cpp bp.h cavity.h
+bp.o: bp.cpp bp.h cavity.h params.h
 	${CXX} ${CFLAGS} -c bp.cpp -o $@
 sib: bp.o params.o sib.cpp
 	${CXX} ${CFLAGS} params.o bp.o sib.cpp ${LINK} -o $@
