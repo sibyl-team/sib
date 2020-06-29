@@ -53,7 +53,7 @@ struct Uniform : public Proba
 	Uniform(real_t p) : p(p) {}
 	real_t p;
 	real_t operator()(real_t d) const { return p; }
-	real_t der(real_t d) { return 1; };
+	real_t der(real_t d) const { return 1; };
 	std::istream & operator>>(std::istream & ist) { return ist >> p; }
 	void print(std::ostream & ost) const { ost << "Uniform(" << p << ")"; }
 };
