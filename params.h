@@ -38,7 +38,7 @@ struct PriorDiscrete : public Proba
 	PriorDiscrete(std::vector<real_t> const & p) : Proba(p.size()) { for (int t = 0; t < int(p.size()); ++t) theta(t) = p[t]; }
 	PriorDiscrete(Proba const & p, int T);
 	real_t operator()(real_t d) const { return d < 0 || d >= int(theta.size()) ? 0.0 : theta(d); }
-	RealParams grad(real_t d) {
+	RealParams grad(real_t d) const {
 		int const T = theta.size();
 		RealParams dp(T);
 		for (int t = 0; t < T; ++t)
@@ -59,6 +59,7 @@ struct Uniform : public Proba
 {
 	Uniform(real_t p) : Proba(RealParams(1,p)) {}
 	real_t operator()(real_t d) const { return theta(0); }
+	RealParams grad(real_t d) const { return RealParams(1, 1.0); }
 	void print(std::ostream & ost) const { ost << "Uniform(" << theta(0) << ")"; }
 };
 
@@ -69,7 +70,7 @@ struct Exponential : public Proba
 {
 	Exponential(real_t mu) : Proba(RealParams(1,mu)) {}
 	real_t operator()(real_t d) const { return exp(-theta(0)*d); }
-	RealParams grad(real_t d) { return RealParams(1, -d * exp(-theta(0)*d)); }
+	RealParams grad(real_t d) const { return RealParams(1, -d * exp(-theta(0)*d)); }
 	void print(std::ostream & ost) const { ost << "Exponential("<< theta(0) << ")"; }
 };
 
@@ -78,7 +79,7 @@ struct Gamma : public Proba
 {
 	Gamma(real_t k, real_t mu) : Proba(2) {}
 	real_t operator()(real_t d) const { return boost::math::gamma_q(theta(0),d*theta(1)); }
-	RealParams grad(real_t d) {
+	RealParams grad(real_t d) const {
   		auto const x = boost::math::differentiation::make_ftuple<real_t, 1, 1>(theta(0), theta(1));
 		auto const & xk = std::get<0>(x);
 		auto const & xmu = std::get<1>(x);

@@ -109,13 +109,13 @@ void mysetter(Proba & p, real_t x)
 PYBIND11_MODULE(_sib, m) {
 
     py::class_<RealParams>(m, "RealParams", py::buffer_protocol())
-        .def_buffer([](RealParams &m) -> py::buffer_info {
+        .def_buffer([](RealParams &p) -> py::buffer_info {
             return py::buffer_info(
-                &m[0],                               /* Pointer to buffer */
+                &p[0],                               /* Pointer to buffer */
                 sizeof(real_t),                          /* Size of one scalar */
                 py::format_descriptor<real_t>::format(), /* Python struct-style format descriptor */
                 1,                                      /* Number of dimensions */
-                { m.size() },                 /* Buffer dimensions */
+                { p.size() },                 /* Buffer dimensions */
                 { sizeof(real_t) }             /* Strides (in bytes) for each index */
                 );
         });
@@ -127,6 +127,7 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
+        .def("grad", [](Proba const & p, real_t d) { return p.grad(d); } )
         .def_readwrite("theta", &Proba::theta, "params vector");
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
