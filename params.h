@@ -29,6 +29,22 @@ struct PriorDiscrete : public Proba
 	PriorDiscrete(Proba const & p, int T);
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0 : p[d]; }
 	std::vector<real_t> p;
+	std::vector<real_t> dp;
+	void grad_add(real_t d, real_t w) {
+		int T = p.size();
+		for (int t = 0; t < T; ++t)
+			dp[t] += (-(T-t)/T + (t <= d)) * w;
+	}
+	void grad_mul(real_t w) {
+		int T = p.size();
+		for (int t = 0; t < T; ++t)
+			dp[t] *= w;
+       	}
+	void grad_init() {
+		int T = p.size();
+		for (int t = 0; t < T; ++t)
+			dp[t] = 0;
+	}
 	void print(std::ostream & ost) const {
 	    ost << "PriorDiscrete(";
 	    for (auto it = p.begin(); it < p.end() - 1; ++it)
@@ -78,7 +94,7 @@ struct Gamma : public Proba
   		auto const x = make_ftuple<real_t, 1, 1>(k, mu);
 		auto const & xk = std::get<0>(x);
 		auto const & xmu = std::get<1>(x);
-		auto const f = boost::math::gamma_q(xk, xmu*d);
+		auto const f = boost::math::gamma_q(xk, xmu * d);
 		dk += f.derivative(1,0) * p;
 		dmu += f.derivative(0,1) * p;
 	}

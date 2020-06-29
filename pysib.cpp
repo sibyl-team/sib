@@ -124,6 +124,7 @@ PYBIND11_MODULE(_sib, m) {
         .def(py::init(&make_discrete))
         .def(py::init<Proba const &, int>())
         .def_readwrite("p", &PriorDiscrete::p)
+        .def_readwrite("dp", &PriorDiscrete::dp)
         .def("__repr__", &print<PriorDiscrete>);
 
     py::class_<Params>(m, "Params")
