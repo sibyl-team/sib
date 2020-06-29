@@ -440,14 +440,11 @@ real_t FactorGraph::update(int i, real_t damping)
 			int const qj = h.qj;
 
 			real_t pi = 1;
-			auto dpi = RealParams(f.prob_r->theta.size(), 0.0);
+			RealParams dpi = zero_i;
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
 				real_t const l = prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				int dj = sij - min_out[j];
-				//grad l
-				// real_t const pi1 = pow(1 - l, dj);
-				// real_t const dpi1 = - dj * pow(1 - l, dj - 1);
 				auto const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
@@ -523,28 +520,26 @@ real_t FactorGraph::update(int i, real_t damping)
 				p1full = cavity(C1.begin(), C1.end(), P1.begin(), 1.0, multiplies<real_t>());
 			}
 			//messages to ti, gi
-			real_t const pg = prob_r(f.times[gi] - f.times[ti]) - (gi >= qi - 1 ? 0.0 : prob_r(f.times[gi + 1] - f.times[ti]));
-			auto const dpg = gi >= qi - 1 ? prob_r.grad(f.times[gi] - f.times[ti])
-			       : prob_r.grad(f.times[gi] - f.times[ti])	- prob_r.grad(f.times[gi + 1] - f.times[ti]);
-
-			real_t const a = pg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full * (1-params.pautoinf));
-			auto const da = dpg * (ti == 0 || ti == qi - 1 ? p0full : p0full - p1full * (1-params.pautoinf));
-			ug[gi] += ht[ti] * a;
-			ut[ti] += f.hg[gi] * a;
-			za += ht[ti] * f.hg[gi] * a;
+			auto const d1 = f.times[gi] - f.times[ti];
+			auto const d2 = f.times[gi + 1] - f.times[ti];
+			real_t const pg = gi >= qi - 1 ? prob_r(d1) : (prob_r(d1) -  prob_r(d2));
+			auto const dpg = gi >= qi - 1 ? prob_r.grad(d1) : (prob_r.grad(d1) - prob_r.grad(d2));
+			real_t const c = ti == 0 || ti == qi - 1 ? p0full : (p0full - p1full * (1 - params.pautoinf));
+			ug[gi] += ht[ti] * pg * c;
+			ut[ti] += f.hg[gi] * pg * c;
+			real_t const b = ht[ti] * f.hg[gi] * pg;
+			za += b * c;
 			//grad mu
-			dzmu += ht[ti] * f.hg[gi] * da;
+			dzmu += ht[ti] * f.hg[gi] * dpg * c;
 			//grad lambda
 			for (int j = 0; j < n; ++j) {
-				if (ti == 0 || ti == qi - 1)
-					dzlam += pg * ht[ti] * f.hg[gi] * P0[j]*dC0[j];
-				else
-					dzlam += pg * ht[ti] * f.hg[gi] * (P0[j]*dC0[j] - P1[j]*dC1[j] * (1-params.pautoinf));
+				dzlam += b * P0[j] * dC0[j];
+				if (!(ti == 0 || ti == qi - 1))
+					dzlam -= b * P1[j] * dC1[j] * (1 - params.pautoinf);
 			}
-			real_t const b = ht[ti] * f.hg[gi] * pg;
 			for (int j = 0; j < n; ++j) {
-				CG0[j][min_g[j]] += P0[j] * b;
-				CG01[j][min_g[j]] += (P0[j] - P1[j] * (1 - params.pautoinf)) * b;
+				CG0[j][min_g[j]] += b * P0[j];
+				CG01[j][min_g[j]] += b * (P0[j] - P1[j] * (1 - params.pautoinf));
 			}
 		}
 		//messages to sij, sji

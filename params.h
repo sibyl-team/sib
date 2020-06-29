@@ -21,7 +21,7 @@ struct Proba
 	template<class T>
 	Proba(T const & n) : theta(n) {}
 	virtual real_t operator()(real_t) const = 0;
-	virtual RealParams grad(real_t d) const { return RealParams(theta.size(), 0.0); };
+	virtual RealParams grad(real_t d) const = 0;
 	virtual void print(std::ostream &) const = 0;
 	std::istream & operator>>(std::istream & ist) {
 		for (int i = 0; i < int(theta.size()); ++i)
