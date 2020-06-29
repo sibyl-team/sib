@@ -451,7 +451,7 @@ real_t FactorGraph::update(int i, real_t damping)
 					dm(sji, sij) = dtemp * h(sji, sij);
 					dr(sji, sij) = dtemp * h(sji, qj - 1);
 				}
-				dpi = - (dj + 1) * pi;
+				dpi = - (dj + 1) * pi * dl;
 				pi *= 1 - l;
 			}
 			for (int sji = min_in[j]; sji < qj; ++sji) {
