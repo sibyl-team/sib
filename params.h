@@ -70,7 +70,7 @@ struct Exponential : public Proba
 {
 	Exponential(real_t mu) : Proba(RealParams(1,mu)) {}
 	real_t operator()(real_t d) const { return exp(-theta(0)*d); }
-	RealParams grad(real_t d) const { return RealParams(1, -d * exp(-theta(0)*d)); }
+	RealParams grad(real_t d) const { return RealParams(1, -d*exp(-theta(0)*d)); }
 	void print(std::ostream & ost) const { ost << "Exponential("<< theta(0) << ")"; }
 };
 
