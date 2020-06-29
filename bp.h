@@ -17,15 +17,19 @@
 extern int const Tinf;
 
 
-struct Mes : public std::vector<real_t>
+template<class T>
+struct Message : public std::vector<T>
 {
-	Mes(size_t qj, real_t val = 0.0) : vector<real_t>(qj*qj, val), qj(qj) {}
-	void clear() { std::fill(begin(), end(), 0.0); }
+	Message(size_t qj, T const & val) : std::vector<T>(qj*qj, val), qj(qj) {}
+	Message(size_t qj) : std::vector<T>(qj*qj), qj(qj) {}
+	void clear() { for (int i = 0; i < int(std::vector<T>::size()); ++i) std::vector<T>::operator[](i)*=0.0; }
 	size_t dim() const { return qj;}
-	inline real_t & operator()(int sji, int sij) { return operator[](qj * sij + sji); }
-	inline real_t const & operator()(int sji, int sij) const { return operator[](qj * sij + sji); }
+	inline T & operator()(int sji, int sij) { return std::vector<T>::operator[](qj * sij + sji); }
+	inline T const & operator()(int sji, int sij) const { return std::vector<T>::operator[](qj * sij + sji); }
 	size_t qj;
 };
+
+typedef Message<real_t> Mes;
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos), t(1, Tinf), lambdas(1, 0.0), msg(1, 1.0) {
@@ -49,9 +53,9 @@ struct Node {
 		prob_i0(prob_i),
 		prob_r0(prob_r),
 		f_(0),
-		index(index),
-		dmu_(0.),
-		dlambda_(0.)
+		df_r(RealParams(prob_r->theta.size(), 0.0)),
+		df_i(RealParams(prob_i->theta.size(), 0.0)),
+		index(index)
 	{
 		times.push_back(-1);
 		times.push_back(Tinf);
@@ -83,9 +87,9 @@ struct Node {
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 	real_t err_;
+	RealParams df_r;
+	RealParams df_i;
 	int index;
-	real_t dmu_;
-	real_t dlambda_;
 };
 
 class FactorGraph {

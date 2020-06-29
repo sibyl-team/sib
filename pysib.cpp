@@ -27,6 +27,10 @@ namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
+
+
+
+
 vector<real_t> make_vector(py::list & l)
 {
     vector<real_t> v(l.size());
@@ -41,13 +45,6 @@ PriorDiscrete make_discrete(py::list & l)
 {
     return PriorDiscrete(make_vector(l));
 }
-
-
-ExpDiscrete make_exp_discrete(py::list & l)
-{
-    return ExpDiscrete(make_vector(l));
-}
-
 
 
 template<class T> string print(const T & t) { return lexical_cast<string>(t); }
@@ -97,8 +94,31 @@ void check_index(FactorGraph const & G, int i)
 }
 
 
+template<int i>
+real_t mygetter(Proba & p)
+{
+    return p.theta(i);
+}
+
+template<int i>
+void mysetter(Proba & p, real_t x)
+{
+    p.theta(i) = x;
+}
 
 PYBIND11_MODULE(_sib, m) {
+
+    py::class_<RealParams>(m, "RealParams", py::buffer_protocol())
+        .def_buffer([](RealParams &m) -> py::buffer_info {
+            return py::buffer_info(
+                &m[0],                               /* Pointer to buffer */
+                sizeof(real_t),                          /* Size of one scalar */
+                py::format_descriptor<real_t>::format(), /* Python struct-style format descriptor */
+                1,                                      /* Number of dimensions */
+                { m.size() },                 /* Buffer dimensions */
+                { sizeof(real_t) }             /* Strides (in bytes) for each index */
+                );
+        });
     // py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
@@ -106,37 +126,33 @@ PYBIND11_MODULE(_sib, m) {
     //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
-        .def("__call__", [](Proba const & p, real_t d) { return p(d); } );
+        .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
+        .def_readwrite("theta", &Proba::theta, "params vector");
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
         .def(py::init<real_t>(), py::arg("p") = 1.0)
-        .def_readwrite("p", &Uniform::p)
+        .def_property("p", &mygetter<0>, &mysetter<0>)
         .def("__repr__", &print<Uniform>);
 
     py::class_<Exponential, Proba, shared_ptr<Exponential>>(m, "Exponential")
         .def(py::init<real_t>(), py::arg("mu") = 0.1)
-        .def_readwrite("mu", &Exponential::mu)
+        .def_property("mu", &mygetter<0>, &mysetter<0>)
         .def("__repr__", &print<Exponential>);
 
     py::class_<Gamma, Proba, shared_ptr<Gamma>>(m, "Gamma")
         .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
-        .def_readwrite("k", &Gamma::k)
-        .def_readwrite("mu", &Gamma::mu)
+        .def_property("k", &mygetter<0>, &mysetter<0>)
+        .def_property("mu", &mygetter<1>, &mysetter<1>)
         .def("__repr__", &print<Gamma>);
 
     py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
         .def(py::init(&make_discrete))
         .def(py::init<Proba const &, int>())
-        .def_readwrite("p", &PriorDiscrete::p)
+        .def_readwrite("p", &Proba::theta)
         .def("__repr__", &print<PriorDiscrete>);
 
-    py::class_<ExpDiscrete, Proba, shared_ptr<ExpDiscrete>>(m, "ExpDiscrete")
-        .def(py::init(&make_exp_discrete))
-        .def_readwrite("p", &ExpDiscrete::p)
-        .def("__repr__", &print<ExpDiscrete>);
-
     py::class_<Params>(m, "Params")
-        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t, real_t>(),
+        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t>(),
                 "SIB Params class. prob_i and prob_r parameters are defaults.",
                 py::arg("prob_i") = *new Uniform(1.0),
                 py::arg("prob_r") = *new Exponential(0.1),
@@ -145,7 +161,6 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("fp_rate") = 0.0,
                 py::arg("fn_rate") = 0.0,
                 py::arg("pautoinf") = 0.0,
-                py::arg("mu") = 0.0,
                 py::arg("learn_rate") = 0.0)
 
         .def_readwrite("prob_r", &Params::prob_r)
@@ -155,7 +170,6 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("fp_rate", &Params::fp_rate)
         .def_readwrite("fn_rate", &Params::fn_rate)
         .def_readwrite("pautoinf", &Params::pautoinf)
-        .def_readwrite("mu", &Params::mu)
         .def_readwrite("learn_rate", &Params::learn_rate)
         .def("__repr__", &print<Params>);
 
@@ -165,7 +179,7 @@ PYBIND11_MODULE(_sib, m) {
                 vector<tuple<int,int,times_t>>,
                 vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
-                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0, 0.0, 0.0),
+                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0, 0.0),
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
                 py::arg("observations") = vector<tuple<int,int,times_t>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
@@ -211,8 +225,6 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("bt", &Node::bt, "belief on ti")
         .def_readonly("bg", &Node::bg, "belief on gi")
         .def_readonly("err", &Node::err_, "error on update")
-        .def_readonly("dmu_", &Node::dmu_, "mu grad")
-        .def_readonly("dlambda_", &Node::dlambda_, "lambda grad")
         .def_readonly("times", &Node::times, "event times of this node")
         .def_readonly("index", &Node::index, "node index (deprecated, do not use)")
         .def_readonly("prob_i", &Node::prob_i, "probability of infection as function of t-ti")
