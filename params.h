@@ -53,7 +53,25 @@ struct PriorDiscrete : public Proba
 	}
 };
 
-
+struct Cached : public Proba
+{
+	Cached(std::shared_ptr<Proba> const & prob, int T) : Proba(prob->theta), prob(prob), p(T), dp(T) {
+		recompute();
+	}
+	std::shared_ptr<Proba> prob;
+	std::vector<real_t> p;
+	std::vector<RealParams> dp;
+	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0: p[d]; }
+	RealParams grad(real_t d) const { return d < 0 || d >= int(dp.size()) ? RealParams(theta.size(), 0.0) : dp[d]; }
+	void recompute() {
+		prob->theta = theta;
+		for (int d = 0; d < int(p.size()); ++d) {
+			p[d] = (*prob)(d);
+			dp[d] = (*prob).grad(d);
+		}
+	}
+	void print(std::ostream & ost) const { ost << "Cached(" << prob << ")"; }
+};
 
 struct Uniform : public Proba
 {

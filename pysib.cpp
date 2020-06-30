@@ -109,6 +109,15 @@ void mysetter(Proba & p, real_t x)
 PYBIND11_MODULE(_sib, m) {
 
     py::class_<RealParams>(m, "RealParams", py::buffer_protocol())
+        .def(py::init([](py::buffer const b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<real_t>::format() || info.ndim != 1)
+                throw std::runtime_error("Incompatible buffer format!");
+
+                auto v = new RealParams(info.shape[0]);
+                memcpy(&(*v)[0], info.ptr, sizeof(real_t) * (size_t) (v->size()));
+                return v;
+                }))
         .def_buffer([](RealParams &p) -> py::buffer_info {
             return py::buffer_info(
                 &p[0],                               /* Pointer to buffer */
@@ -118,7 +127,18 @@ PYBIND11_MODULE(_sib, m) {
                 { p.size() },                 /* Buffer dimensions */
                 { sizeof(real_t) }             /* Strides (in bytes) for each index */
                 );
-        });
+        })
+        .def("__getitem__", [](const RealParams &p, ssize_t i) {
+                if (i > int(p.size()))
+                    throw py::index_error();
+                return p[i];
+                })
+        .def("__setitem__", [](RealParams &p, ssize_t i, real_t v) {
+                if (i > int(p.size()))
+                    throw py::index_error();
+                p[i] = v;
+                })
+        .def("__repr__", &print<RealParams>);
     // py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
@@ -152,6 +172,12 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("p", &Proba::theta)
         .def("__repr__", &print<PriorDiscrete>);
 
+    py::class_<Cached, Proba, shared_ptr<Cached>>(m, "Cached")
+        .def(py::init<std::shared_ptr<Proba> const &, int>())
+        .def_readonly("p", &Proba::theta)
+        .def("update", [](Cached & c, RealParams const & p) -> void { c.theta = p; c.recompute();})
+        .def("update", [](Cached & c) { c.recompute(); })
+        .def("__repr__", [](Cached const & c) { return "Cached("+print(*c.prob)+","+lexical_cast<string>(c.p.size())+")"; });
     py::class_<Params>(m, "Params")
         .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t>(),
                 "SIB Params class. prob_i and prob_r parameters are defaults.",
