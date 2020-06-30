@@ -383,7 +383,7 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 }
 
 
-real_t FactorGraph::update(int i, real_t damping)
+real_t FactorGraph::update(int i, real_t damping, bool learn)
 {
 	Node & f = nodes[i];
 	int const n = f.neighs.size();
@@ -396,6 +396,7 @@ real_t FactorGraph::update(int i, real_t damping)
 	vector<Message<RealParams>> dM, dR;
 	vector<real_t> ut(qi), ug(qi);
 	vector<vector<real_t>> CG0, CG01;
+	vector<RealParams> dC0, dC1;
 	for (int j = 0; j < n; ++j) {
 		Neigh const & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
 		v.lock();
@@ -403,15 +404,18 @@ real_t FactorGraph::update(int i, real_t damping)
 		v.unlock();
 		UU.push_back(Mes(v.t.size()));
 		R.push_back(Mes(v.t.size()));
-		dR.push_back(Message<RealParams>(v.t.size(), zero_r));
 		M.push_back(Mes(v.t.size()));
-		dM.push_back(Message<RealParams>(v.t.size(), zero_r));
 		CG0.push_back(vector<real_t>(v.t.size() + 1));
 		CG01.push_back(vector<real_t>(v.t.size() + 1));
+		if (learn) {
+			dR.push_back(Message<RealParams>(v.t.size(), zero_r));
+			dM.push_back(Message<RealParams>(v.t.size(), zero_r));
+			dC0.push_back(zero_i);
+			dC1.push_back(zero_i);
+		}
 	}
 	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
 	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
-	vector<RealParams> dC0(n, zero_i), dC1(n, zero_i);
 	vector<int> min_in(n), min_out(n);
 	vector<real_t> ht = f.ht;
 
@@ -433,14 +437,15 @@ real_t FactorGraph::update(int i, real_t damping)
 		for (int j = 0; j < n; ++j) {
 			Mes & m = M[j]; // no need to clear, just use the bottom right corner
 			Mes & r = R[j];
-			Message<RealParams> & dm = dM[j];
-			Message<RealParams> & dr = dR[j];
 			Neigh const & v = f.neighs[j];
 			Mes const & h = HH[j];
 			int const qj = h.qj;
 
 			real_t pi = 1;
 			RealParams dpi = zero_i;
+
+			Message<RealParams> & dm = dM[j];
+			Message<RealParams> & dr = dR[j];
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
 				real_t const l = prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
@@ -448,27 +453,36 @@ real_t FactorGraph::update(int i, real_t damping)
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);
-					//grad m & r
-					RealParams dtemp = dl * pi + l * dpi;
-					dm(sji, sij) = dtemp * h(sji, sij);
-					dr(sji, sij) = dtemp * h(sji, qj - 1);
 				}
-				dpi = -(sij - min_out[j] + 1) * pi * dl;
+				if (learn) {
+					RealParams const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+					for (int sji = min_in[j]; sji < qj; ++sji) {
+						//grad m & r
+						RealParams dtemp = dl * pi + l * dpi;
+						dm(sji, sij) = dtemp * h(sji, sij);
+						dr(sji, sij) = dtemp * h(sji, qj - 1);
+					}
+					dpi = -(sij - min_out[j] + 1) * pi * dl;
+				}
 				pi *= 1 - l;
 			}
 
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
-				dm(sji, qj - 1) = dpi * h(sji, qj - 1);
-				dr(sji, qj - 1) = dpi * h(sji, qj - 1);
+				if (learn) {
+					dm(sji, qj - 1) = dpi * h(sji, qj - 1);
+					dr(sji, qj - 1) = dpi * h(sji, qj - 1);
+				}
 			}
 
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
 			//grad m & r
-			cumsum(dm, min_in[j], min_out[j]);
-			cumsum(dr, min_in[j], min_out[j]);
+			if (learn) {
+				cumsum(dm, min_in[j], min_out[j]);
+				cumsum(dr, min_in[j], min_out[j]);
+			}
 			fill(CG01[j].begin(), CG01[j].end(), 0.0);
 			fill(CG0[j].begin(), CG0[j].end(), 0.0);
 		}
@@ -490,8 +504,6 @@ real_t FactorGraph::update(int i, real_t damping)
 				Mes & m = M[j];
 				Mes & r = R[j];
 				//grad m & r
-				auto & dm = dM[j];
-				auto & dr = dR[j];
 				/*
 				   .-----min_out
 				   |   .-- min_g
@@ -512,8 +524,12 @@ real_t FactorGraph::update(int i, real_t damping)
 				C0[j] = m(min_in[j],  min_out[j]) - m(min_in[j],  min_g[j]) + r(min_in[j],  min_g[j]);
 				C1[j] = m(min_out[j], min_out[j]) - m(min_out[j], min_g[j]) + r(min_out[j], min_g[j]);
 				//grad C
-				dC0[j] = dm(min_in[j],  min_out[j]) - dm(min_in[j],  min_g[j]) + dr(min_in[j],  min_g[j]);
-				dC1[j] = dm(min_out[j], min_out[j]) - dm(min_out[j], min_g[j]) + dr(min_out[j], min_g[j]);
+				if (learn) {
+					auto & dm = dM[j];
+					auto & dr = dR[j];
+					dC0[j] = dm(min_in[j],  min_out[j]) - dm(min_in[j],  min_g[j]) + dr(min_in[j],  min_g[j]);
+					dC1[j] = dm(min_out[j], min_out[j]) - dm(min_out[j], min_g[j]) + dr(min_out[j], min_g[j]);
+				}
 			}
 			if (changed) {
 				changed = false;
@@ -524,19 +540,21 @@ real_t FactorGraph::update(int i, real_t damping)
 			auto const d1 = f.times[gi] - f.times[ti];
 			auto const d2 = f.times[gi + 1] - f.times[ti];
 			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(d2) : prob_r(d1);
-			RealParams const dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
 			real_t const c = ti == 0 || ti == qi - 1 ? p0full : (p0full - p1full * (1 - params.pautoinf));
 			ug[gi] += ht[ti] * pg * c;
 			ut[ti] += f.hg[gi] * pg * c;
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			za += b * c;
-			//grad mu
-			dzr += ht[ti] * f.hg[gi] * dpg * c;
-			//grad lambda
-			for (int j = 0; j < n; ++j) {
-				dzi += b * P0[j] * dC0[j];
-				if (0 < ti && ti < qi - 1)
-					dzi -= b * P1[j] * dC1[j] * (1 - params.pautoinf);
+			if (learn) {
+				//grad mu
+				RealParams const dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
+				dzr += ht[ti] * f.hg[gi] * dpg * c;
+				//grad lambda
+				for (int j = 0; j < n; ++j) {
+					dzi += b * P0[j] * dC0[j];
+					if (0 < ti && ti < qi - 1)
+						dzi -= b * P1[j] * dC1[j] * (1 - params.pautoinf);
+				}
 			}
 			for (int j = 0; j < n; ++j) {
 				CG0[j][min_g[j]] += b * P0[j];
@@ -573,7 +591,7 @@ real_t FactorGraph::update(int i, real_t damping)
 		ug[t] *= f.hg[t];
 	}
 	//update parameters
-        if (za) {
+	if (learn && za) {
 		f.df_r = dzr/za;
 		f.df_i = dzi/za;
 	}
@@ -602,7 +620,7 @@ real_t FactorGraph::update(int i, real_t damping)
 
 }
 
-real_t FactorGraph::iteration(real_t damping)
+real_t FactorGraph::iteration(real_t damping, bool learn)
 {
 	int const N = nodes.size();
 	real_t err = 0.0;
@@ -612,7 +630,7 @@ real_t FactorGraph::iteration(real_t damping)
 	random_shuffle(perm.begin(), perm.end());
 #pragma omp parallel for reduction(max:err)
 	for(int i = 0; i < N; ++i)
-		err = max(err, update(perm[i], damping));
+		err = max(err, update(perm[i], damping, learn));
 	return err;
 }
 
@@ -624,11 +642,11 @@ real_t FactorGraph::loglikelihood() const
 	return L;
 }
 
-real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping)
+real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping, bool learn)
 {
 	real_t err = numeric_limits<real_t>::infinity();
 	for (int it = 1; it <= maxit; ++it) {
-		err = iteration(damping);
+		err = iteration(damping, learn);
 		cout << "it: " << it << " err: " << err << endl;
 		if (err < tol)
 			break;

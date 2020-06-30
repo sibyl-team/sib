@@ -184,7 +184,10 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
                 py::arg("observations") = vector<tuple<int,int,times_t>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
-        .def("update", &FactorGraph::iteration, "perform one iteration")
+        .def("update", &FactorGraph::iteration,
+                py::arg("damping") = 0.0,
+                py::arg("leadn") = false,
+                "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &print<FactorGraph>)
         .def("append_contact", (void (FactorGraph::*)(int,int,times_t,real_t,real_t)) &FactorGraph::append_contact,

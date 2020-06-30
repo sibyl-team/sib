@@ -108,11 +108,11 @@ public:
 	void set_fields(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);
 	void set_field(int i, int s, int t);
 	void reset_observations(std::vector<std::tuple<int, int, times_t> > const & obs);
-	real_t update(int i, real_t damping);
+	real_t update(int i, real_t damping, bool learn = false);
 	void show_graph();
 	void show_beliefs(std::ostream &);
-	real_t iterate(int maxit, real_t tol, real_t damping);
-	real_t iteration(real_t damping);
+	real_t iterate(int maxit, real_t tol, real_t damping, bool learn = false);
+	real_t iteration(real_t damping, bool learn = false);
 	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
 	Params params;
