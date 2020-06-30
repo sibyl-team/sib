@@ -186,7 +186,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration,
                 py::arg("damping") = 0.0,
-                py::arg("leadn") = false,
+                py::arg("learn") = false,
                 "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &print<FactorGraph>)
