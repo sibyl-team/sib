@@ -57,7 +57,7 @@ struct PriorDiscrete : public Proba
 
 struct Uniform : public Proba
 {
-	Uniform(real_t p) : Proba(RealParams(1,p)) {}
+	Uniform(real_t p) : Proba(RealParams(1, p)) {}
 	real_t operator()(real_t d) const { return theta(0); }
 	RealParams grad(real_t d) const { return RealParams(1, 1.0); }
 	void print(std::ostream & ost) const { ost << "Uniform(" << theta(0) << ")"; }

@@ -423,8 +423,8 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	// main loop
 	real_t za = 0.0;
-	auto dzmu = zero_r;
-	auto dzlam = zero_i;
+	RealParams dzr = zero_r;
+	RealParams dzi = zero_i;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -444,7 +444,6 @@ real_t FactorGraph::update(int i, real_t damping)
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
 				real_t const l = prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
-				int dj = sij - min_out[j];
 				auto const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
@@ -454,7 +453,7 @@ real_t FactorGraph::update(int i, real_t damping)
 					dm(sji, sij) = dtemp * h(sji, sij);
 					dr(sji, sij) = dtemp * h(sji, qj - 1);
 				}
-				dpi = -(dj + 1) * pi * dl;
+				dpi = -(sij - min_out[j] + 1) * pi * dl;
 				pi *= 1 - l;
 			}
 			for (int sji = min_in[j]; sji < qj; ++sji) {
@@ -522,20 +521,20 @@ real_t FactorGraph::update(int i, real_t damping)
 			//messages to ti, gi
 			auto const d1 = f.times[gi] - f.times[ti];
 			auto const d2 = f.times[gi + 1] - f.times[ti];
-			real_t const pg = gi >= qi - 1 ? prob_r(d1) : (prob_r(d1) -  prob_r(d2));
-			auto const dpg = gi >= qi - 1 ? prob_r.grad(d1) : (prob_r.grad(d1) - prob_r.grad(d2));
+			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(d2) : prob_r(d1);
+			auto const dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
 			real_t const c = ti == 0 || ti == qi - 1 ? p0full : (p0full - p1full * (1 - params.pautoinf));
 			ug[gi] += ht[ti] * pg * c;
 			ut[ti] += f.hg[gi] * pg * c;
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			za += b * c;
 			//grad mu
-			dzmu += ht[ti] * f.hg[gi] * dpg * c;
+			dzr += ht[ti] * f.hg[gi] * dpg * c;
 			//grad lambda
 			for (int j = 0; j < n; ++j) {
-				dzlam += b * P0[j] * dC0[j];
-				if (!(ti == 0 || ti == qi - 1))
-					dzlam -= b * P1[j] * dC1[j] * (1 - params.pautoinf);
+				dzi += b * P0[j] * dC0[j];
+				if (0 < ti && ti < qi - 1)
+					dzi -= b * P1[j] * dC1[j] * (1 - params.pautoinf);
 			}
 			for (int j = 0; j < n; ++j) {
 				CG0[j][min_g[j]] += b * P0[j];
@@ -573,8 +572,8 @@ real_t FactorGraph::update(int i, real_t damping)
 	}
 	//update parameters
         if (za) {
-		f.df_r = dzmu/za;
-		f.df_i = dzlam/za;
+		f.df_r = dzr/za;
+		f.df_i = dzi/za;
 	}
 
 	//compute beliefs on t,g
