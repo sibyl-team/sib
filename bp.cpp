@@ -389,8 +389,8 @@ real_t FactorGraph::update(int i, real_t damping)
 	int const n = f.neighs.size();
 	int const qi = f.bt.size();
 
-	auto const zero_r = RealParams(f.prob_r->theta.size(), 0.0);
-	auto const zero_i = RealParams(f.prob_i->theta.size(), 0.0);
+	RealParams const zero_r = RealParams(f.prob_r->theta.size(), 0.0);
+	RealParams const zero_i = RealParams(f.prob_i->theta.size(), 0.0);
 	// allocate buffers
 	vector<Mes> UU, HH, M, R;
 	vector<Message<RealParams>> dM, dR;
@@ -444,24 +444,26 @@ real_t FactorGraph::update(int i, real_t damping)
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
 				real_t const l = prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
-				auto const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+				RealParams const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);
 					//grad m & r
-					auto dtemp = dl * pi + l * dpi;
+					RealParams dtemp = dl * pi + l * dpi;
 					dm(sji, sij) = dtemp * h(sji, sij);
 					dr(sji, sij) = dtemp * h(sji, qj - 1);
 				}
 				dpi = -(sij - min_out[j] + 1) * pi * dl;
 				pi *= 1 - l;
 			}
+
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
 				dm(sji, qj - 1) = dpi * h(sji, qj - 1);
 				dr(sji, qj - 1) = dpi * h(sji, qj - 1);
 			}
+
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
 			//grad m & r
@@ -522,7 +524,7 @@ real_t FactorGraph::update(int i, real_t damping)
 			auto const d1 = f.times[gi] - f.times[ti];
 			auto const d2 = f.times[gi + 1] - f.times[ti];
 			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(d2) : prob_r(d1);
-			auto const dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
+			RealParams const dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
 			real_t const c = ti == 0 || ti == qi - 1 ? p0full : (p0full - p1full * (1 - params.pautoinf));
 			ug[gi] += ht[ti] * pg * c;
 			ut[ti] += f.hg[gi] * pg * c;
