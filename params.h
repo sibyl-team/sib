@@ -77,7 +77,7 @@ struct Exponential : public Proba
 
 struct Gamma : public Proba
 {
-	Gamma(real_t k, real_t mu) : Proba(2) { theta(0) = k; theta(1) == mu; }
+	Gamma(real_t k, real_t mu) : Proba(2) { theta(0) = k; theta(1) = mu; }
 	real_t operator()(real_t d) const { return boost::math::gamma_q(theta(0), d * theta(1)); }
 	RealParams grad(real_t d) const {
   		auto const x = boost::math::differentiation::make_ftuple<real_t, 1, 1>(theta(0), theta(1));
