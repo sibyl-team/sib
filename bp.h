@@ -103,6 +103,7 @@ public:
 	void append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
 	void drop_contacts(times_t t);
 	void append_observation(int i, int s, times_t t);
+	void append_time(int i, times_t t);
 	void add_node(int i);
 	void init();
 	void set_fields(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);

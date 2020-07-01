@@ -39,9 +39,7 @@ void cumsum(Message<T> & m, int a, int b)
 	}
 }
 
-
-
-void FactorGraph::append_observation(int i, int s, times_t t)
+void FactorGraph::append_time(int i, times_t t)
 {
 	add_node(i);
 	Node & n = nodes[i];
@@ -55,8 +53,15 @@ void FactorGraph::append_observation(int i, int s, times_t t)
                         n.neighs[j].t.back() = n.times.size() - 1;
                 }
         }
-	set_field(i, s, n.times.size() - 2);
 }
+
+void FactorGraph::append_observation(int i, int s, times_t t)
+{
+	append_time(i, t);
+	set_field(i, s, t);
+}
+
+
 
 void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & obs)
 {
@@ -66,29 +71,68 @@ void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & o
 		sobs[get<0>(*it)].push_back(get<1>(*it));
 		tobs[get<0>(*it)].push_back(get<2>(*it));
 	}
+	int largeT = 0;
 	for (int i = 0; i < int(nodes.size()); ++i) {
-		fill(nodes[i].ht.begin(), nodes[i].ht.end(), 1.0);
-		fill(nodes[i].hg.begin(), nodes[i].hg.end(), 1.0);
-		set_fields(i, sobs[i], tobs[i]);
+		largeT = max(largeT, int(nodes[i].times.size()));
+	}
+	vector<int> FS(largeT), FI(largeT), TS(largeT), TI(largeT), TR(largeT);
+	vector<real_t> pFS(largeT, 1.0), pFI(largeT, 1.0), pTS(largeT, 1.0), pTI(largeT, 1.0);
+
+	for (int t = 1; t < largeT; ++t) {
+		pTI[t] = pTI[t-1] * (1-params.fp_rate);
+		pFI[t] = pFI[t-1] * params.fp_rate;
+		pTS[t] = pTS[t-1] * (1-params.fn_rate);
+		pFS[t] = pFS[t-1] * params.fn_rate;
+	}
+	for (int i = 0; i < int(nodes.size()); ++i) {
+		fill(TS.begin(), TS.end(), 0);
+		fill(FS.begin(), FS.end(), 0);
+		fill(TI.begin(), TI.end(), 0);
+		fill(FI.begin(), FI.end(), 0);
+		fill(TR.begin(), TR.end(), 0);
+		// this assumes ordered observation times
+		int T = nodes[i].times.size();
+		int t = 0;
+		for (int k = 0; k < int(tobs[i].size()); ++k) {
+			int state = sobs[i][k];
+			int to = tobs[i][k];
+			while (nodes[i].times[t] != to && t < T)
+				t++;
+			if (nodes[i].times[t] != to)
+				throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
+			switch(state) {
+				case 0:
+					FS[0]++;
+					FS[t]--;
+					TS[t+1]++;
+					break;
+				case 1:
+					TI[0]++;
+					TI[t-1]--;
+					FI[t]++;
+					TR[0]++;
+					TR[t]--;
+					break;
+				case 2:
+					TR[t]++;
+					TI[t]++;
+					break;
+			}
+		}
+		int fs = 0, fi = 0, ts = 0, ti = 0, tr = 0;
+		for (int t = 0; t < T; ++t) {
+			fs += FS[t];
+			fi += FI[t];
+			ts += TS[t];
+			ti += TI[t];
+			tr += TR[t];
+			nodes[i].ht[t] = pFS[fs] * pTS[ts] * pFI[fi] * pTI[ti];
+			nodes[i].hg[t] = tr == 0;
+
+		}
 	}
 }
 
-void FactorGraph::set_fields(int i, vector<int> const & sobs, vector<times_t> const & tobs)
-{
-	// this assumes ordered observation times
-	int qi = nodes[i].times.size();
-	int t = 0;
-	for (int k = 0; k < int(tobs.size()); ++k) {
-		int state = sobs[k];
-		int to = tobs[k];
-		while (nodes[i].times[t] != to && t < qi)
-			t++;
-		if (nodes[i].times[t] != to) {
-			throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
-		}
-		set_field(i, state, t);
-	}
-}
 
 void FactorGraph::set_field(int i, int s, int tobs)
 {
@@ -256,10 +300,11 @@ FactorGraph::FactorGraph(Params const & params,
 			ic++;
 		} else {
 			// cerr << "appending obs" << get<0>(*io) << " " <<  get<1>(*io)<< " " <<  get<2>(*io)  << endl;
-			append_observation(get<0>(*io), get<1>(*io), get<2>(*io));
+			append_time(get<0>(*io), get<2>(*io));
 			io++;
 		}
 	}
+	reset_observations(obs);
 }
 
 int FactorGraph::find_neighbor(int i, int j) const
@@ -276,7 +321,6 @@ void FactorGraph::add_node(int i)
 	for (int j = nodes.size(); j < i + 1; ++j)
 		nodes.push_back(Node(params.prob_i, params.prob_r, j));
 }
-
 
 void FactorGraph::show_graph()
 {
@@ -358,7 +402,6 @@ real_t setmes(vector<real_t> & from, vector<real_t> & to, real_t damp)
 	return err;
 }
 
-
 ostream & operator<<(ostream & o, vector<real_t> const & m)
 {
 	o << "{";
@@ -381,7 +424,6 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 		min_out[j] = min_in[j] + (v.t[min_in[j]] == ti && min_in[j] < qj - 1);
 	}
 }
-
 
 real_t FactorGraph::update(int i, real_t damping, bool learn)
 {
@@ -653,8 +695,6 @@ real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping, bool learn)
 	}
 	return err;
 }
-
-
 
 ostream & operator<<(ostream & ost, FactorGraph const & f)
 {
