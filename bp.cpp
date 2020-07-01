@@ -449,7 +449,6 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
 				real_t const l = prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
-				RealParams const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);
