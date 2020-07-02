@@ -27,10 +27,11 @@ int const Tinf = 1000000;
 template<class T>
 void cumsum(Message<T> & m, int a, int b)
 {
+	T r;
 	for (int sij = m.qj - 2; sij >= b; --sij)
 		m(m.qj - 1, sij) += m(m.qj -1, sij + 1);
 	for (int sji = m.qj - 2; sji >= a; --sji) {
-		T r = m(sji, m.qj - 1);
+		r = m(sji, m.qj - 1);
 		m(sji, m.qj - 1) += m(sji + 1, m.qj - 1);
 		for (int sij = m.qj - 2; sij >= b; --sij) {
 			r += m(sji, sij);
@@ -469,8 +470,8 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 
 	// main loop
 	real_t za = 0.0;
-	RealParams dzr = zero_r;
-	RealParams dzi = zero_i;
+	RealParams dzr = zero_r, dpg = zero_r;
+	RealParams dzi = zero_i, dl = zero_i, dtemp =  zero_i, dpi = zero_i;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -484,7 +485,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			int const qj = h.qj;
 
 			real_t pi = 1;
-			RealParams dpi = zero_i;
+			dpi = zero_i;
 
 			Message<RealParams> & dm = dM[j];
 			Message<RealParams> & dr = dR[j];
@@ -496,8 +497,8 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 					r(sji, sij) = l * pi * h(sji, qj - 1);
 				}
 				if (learn) {
-					RealParams const dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
-					RealParams const dtemp = dl * pi + l * dpi;
+					dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+					dtemp = dl * pi + l * dpi;
 					for (int sji = min_in[j]; sji < qj; ++sji) {
 						//grad m & r
 						dm(sji, sij) = dtemp * h(sji, sij);
@@ -588,7 +589,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			za += b * c;
 			if (learn) {
 				//grad mu
-				RealParams const dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
+				dpg = gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1);
 				dzr += ht[ti] * f.hg[gi] * dpg * c;
 				//grad lambda
 				for (int j = 0; j < n; ++j) {
