@@ -24,18 +24,20 @@ using namespace std;
 
 int const Tinf = 1000000;
 
+inline real_t & noalias(real_t & v) { return v; }
+
 template<class T>
 void cumsum(Message<T> & m, int a, int b)
 {
-	T r;
+	T r = m(0, 0);
 	for (int sij = m.qj - 2; sij >= b; --sij)
 		m(m.qj - 1, sij) += m(m.qj -1, sij + 1);
 	for (int sji = m.qj - 2; sji >= a; --sji) {
-		r = m(sji, m.qj - 1);
+		noalias(r) = m(sji, m.qj - 1);
 		m(sji, m.qj - 1) += m(sji + 1, m.qj - 1);
 		for (int sij = m.qj - 2; sij >= b; --sij) {
 			r += m(sji, sij);
-			m(sji, sij) = r + m(sji + 1, sij);
+			noalias(m(sji, sij)) = r + m(sji + 1, sij);
 		}
 	}
 }
@@ -497,14 +499,14 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 					r(sji, sij) = l * pi * h(sji, qj - 1);
 				}
 				if (learn) {
-					dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
-					dtemp = dl * pi + l * dpi;
+					noalias(dl) = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+					noalias(dtemp) = dl * pi + l * dpi;
 					for (int sji = min_in[j]; sji < qj; ++sji) {
 						//grad m & r
-						dm(sji, sij) = dtemp * h(sji, sij);
-						dr(sji, sij) = dtemp * h(sji, qj - 1);
+						noalias(dm(sji, sij)) = dtemp * h(sji, sij);
+						noalias(dr(sji, sij)) = dtemp * h(sji, qj - 1);
 					}
-					dpi = -(sij - min_out[j] + 1) * pi * dl;
+					noalias(dpi) = -(sij - min_out[j] + 1) * pi * dl;
 				}
 				pi *= 1 - l;
 			}
@@ -513,8 +515,8 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
 				if (learn) {
-					dm(sji, qj - 1) = dpi * h(sji, qj - 1);
-					dr(sji, qj - 1) = dpi * h(sji, qj - 1);
+					noalias(dm(sji, qj - 1)) = dpi * h(sji, qj - 1);
+					noalias(dr(sji, qj - 1)) = dpi * h(sji, qj - 1);
 				}
 			}
 
