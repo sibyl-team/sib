@@ -28,7 +28,7 @@ Params::Params(shared_ptr<Proba> const & pi,
 PriorDiscrete::PriorDiscrete(Proba const & pr, int T) : Proba(T)
 {
         for (int t = 0; t < T; ++t) {
-            theta(t) = pr(t);
+            theta[t] = pr(t);
         }
 }
 

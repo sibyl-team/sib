@@ -18,10 +18,10 @@
 #include "drop.h"
 
 
+PYBIND11_MAKE_OPAQUE(std::valarray<real_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
 PYBIND11_MAKE_OPAQUE(std::vector<Node>);
-//PYBIND11_MAKE_OPAQUE(std::vector<tuple<real_t, real_t, real_t>>);
 
 namespace py = pybind11;
 using namespace std;
@@ -97,17 +97,16 @@ void check_index(FactorGraph const & G, int i)
 template<int i>
 real_t mygetter(Proba & p)
 {
-    return p.theta(i);
+    return p.theta[i];
 }
 
 template<int i>
 void mysetter(Proba & p, real_t x)
 {
-    p.theta(i) = x;
+    p.theta[i] = x;
 }
 
 PYBIND11_MODULE(_sib, m) {
-
     py::class_<RealParams>(m, "RealParams", py::buffer_protocol())
         .def(py::init([](py::buffer const b) {
                 py::buffer_info info = b.request();
@@ -138,10 +137,10 @@ PYBIND11_MODULE(_sib, m) {
                     throw py::index_error();
                 p[i] = v;
                 })
-        .def("__repr__", &print<RealParams>);
+        .def("__repr__", [](RealParams const & p) { string s = "RealParams["; for (auto x : p) s += lexical_cast<string>(x) + " "; return s + "]";} );
     // py::add_ostream_redirect(m, "ostream_redirect");
-    py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
+    py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
     //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
 

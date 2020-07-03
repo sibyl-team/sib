@@ -3,8 +3,7 @@
 
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/differentiation/autodiff.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
+#include <valarray>
 
 #include <iostream>
 #include <exception>
@@ -14,7 +13,7 @@
 typedef double real_t;
 typedef int times_t;
 
-typedef boost::numeric::ublas::vector<real_t> RealParams;
+typedef std::valarray<real_t> RealParams;
 
 struct Proba
 {
@@ -25,7 +24,7 @@ struct Proba
 	virtual void print(std::ostream &) const = 0;
 	std::istream & operator>>(std::istream & ist) {
 		for (int i = 0; i < int(theta.size()); ++i)
-			return ist >> theta(i);
+			return ist >> theta[i];
 		return ist;
 	}
 	RealParams theta;
@@ -35,9 +34,9 @@ std::ostream & operator<<(std::ostream & ost, Proba const & p);
 
 struct PriorDiscrete : public Proba
 {
-	PriorDiscrete(std::vector<real_t> const & p) : Proba(p.size()) { for (int t = 0; t < int(p.size()); ++t) theta(t) = p[t]; }
+	PriorDiscrete(std::vector<real_t> const & p) : Proba(p.size()) { for (size_t t = 0; t < p.size(); ++t) theta[t] = p[t]; }
 	PriorDiscrete(Proba const & p, int T);
-	real_t operator()(real_t d) const { return d < 0 || d >= int(theta.size()) ? 0.0 : theta(d); }
+	real_t operator()(real_t d) const { return d < 0 || d >= int(theta.size()) ? 0.0 : theta[d]; }
 	RealParams const & grad(real_t d) const {
 		int const T = theta.size();
 		for (int t = 0; t < T; ++t)
@@ -46,16 +45,16 @@ struct PriorDiscrete : public Proba
 	}
 	void print(std::ostream & ost) const {
 		ost << "PriorDiscrete(";
-		for (auto it = theta.begin(); it < theta.end() - 1; ++it)
-			ost << *it << ",";
-		ost << *theta.end() << ")";
+		for (size_t i = 0; i < theta.size() - 1; ++i)
+			ost << theta[i] << ",";
+		ost << theta[theta.size() - 1] << ")";
 	}
 	mutable RealParams dtheta;
 };
 
 struct Cached : public Proba
 {
-	Cached(std::shared_ptr<Proba> const & prob, int T) : Proba(prob->theta), prob(prob), p(T), dp(T), zero(prob->theta.size(), 0.0) {
+	Cached(std::shared_ptr<Proba> const & prob, int T) : Proba(prob->theta), prob(prob), p(T), dp(T), zero(0.0, prob->theta.size()) {
 		recompute();
 	}
 	std::shared_ptr<Proba> prob;
@@ -66,7 +65,7 @@ struct Cached : public Proba
 	RealParams const & grad(real_t d) const { return d < 0 || d >= int(dp.size()) ? zero : dp[d]; }
 	void recompute() {
 		prob->theta = theta;
-		for (int d = 0; d < int(p.size()); ++d) {
+		for (size_t d = 0; d < p.size(); ++d) {
 			p[d] = (*prob)(d);
 			dp[d] = (*prob).grad(d);
 		}
@@ -76,10 +75,10 @@ struct Cached : public Proba
 
 struct Uniform : public Proba
 {
-	Uniform(real_t p) : Proba(RealParams(1, p)), dtheta(RealParams(1, 1.0)) {}
-	real_t operator()(real_t d) const { return theta(0); }
+	Uniform(real_t p) : Proba(RealParams({p})), dtheta(RealParams({1.0})) {}
+	real_t operator()(real_t d) const { return theta[0]; }
 	RealParams const & grad(real_t d) const { return dtheta; }
-	void print(std::ostream & ost) const { ost << "Uniform(" << theta(0) << ")"; }
+	void print(std::ostream & ost) const { ost << "Uniform(" << theta[0] << ")"; }
 	mutable RealParams dtheta;
 };
 
@@ -88,28 +87,28 @@ struct Uniform : public Proba
 
 struct Exponential : public Proba
 {
-	Exponential(real_t mu) : Proba(RealParams(1,mu)), dtheta(1, 0.0) {}
-	real_t operator()(real_t d) const { return exp(-theta(0)*d); }
-	RealParams const & grad(real_t d) const { dtheta(0) = -d*exp(-theta(0)*d); return dtheta; }
-	void print(std::ostream & ost) const { ost << "Exponential("<< theta(0) << ")"; }
+	Exponential(real_t mu) : Proba(RealParams({mu})), dtheta({0,1}) {}
+	real_t operator()(real_t d) const { return exp(-theta[0]*d); }
+	RealParams const & grad(real_t d) const { dtheta[0]= -d*exp(-theta[0]*d); return dtheta; }
+	void print(std::ostream & ost) const { ost << "Exponential("<< theta[0] << ")"; }
 	mutable RealParams dtheta;
 };
 
 
 struct Gamma : public Proba
 {
-	Gamma(real_t k, real_t mu) : Proba(2), dtheta(2) { theta(0) = k; theta(1) = mu; }
-	real_t operator()(real_t d) const { return boost::math::gamma_q(theta(0), d * theta(1)); }
+	Gamma(real_t k, real_t mu) : Proba(RealParams({k,mu})), dtheta({0.0, 0.0}) {}
+	real_t operator()(real_t d) const { return boost::math::gamma_q(theta[0], d * theta[1]); }
 	RealParams const & grad(real_t d) const {
-  		auto const x = boost::math::differentiation::make_ftuple<real_t, 1, 1>(theta(0), theta(1));
+  		auto const x = boost::math::differentiation::make_ftuple<real_t, 1, 1>(theta[0], theta[1]);
 		auto const & xk = std::get<0>(x);
 		auto const & xmu = std::get<1>(x);
 		auto const f = boost::math::gamma_q(xk, xmu * d);
-		dtheta(0) = f.derivative(1,0);
-		dtheta(1) = f.derivative(0,1);
+		dtheta[0] = f.derivative(1,0);
+		dtheta[1] = f.derivative(0,1);
 		return dtheta;
 	}
-	void print(std::ostream & ost) const { ost << "Gamma(" << theta(0) << "," << theta(1) << ")"; }
+	void print(std::ostream & ost) const { ost << "Gamma(" << theta[0] << "," << theta[1] << ")"; }
 	mutable RealParams dtheta;
 };
 

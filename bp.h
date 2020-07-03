@@ -53,8 +53,8 @@ struct Node {
 		prob_i0(prob_i),
 		prob_r0(prob_r),
 		f_(0),
-		df_r(RealParams(prob_r->theta.size(), 0.0)),
-		df_i(RealParams(prob_i->theta.size(), 0.0)),
+		df_r(RealParams(0.0, prob_r->theta.size())),
+		df_i(RealParams(0.0, prob_i->theta.size())),
 		index(index)
 	{
 		times.push_back(-1);
