@@ -87,7 +87,7 @@ struct Uniform : public Proba
 
 struct Exponential : public Proba
 {
-	Exponential(real_t mu) : Proba(RealParams({mu})), dtheta({0,1}) {}
+	Exponential(real_t mu) : Proba(RealParams({mu})), dtheta({0}) {}
 	real_t operator()(real_t d) const { return exp(-theta[0]*d); }
 	RealParams const & grad(real_t d) const { dtheta[0]= -d*exp(-theta[0]*d); return dtheta; }
 	void print(std::ostream & ost) const { ost << "Exponential("<< theta[0] << ")"; }
@@ -100,6 +100,11 @@ struct Gamma : public Proba
 	Gamma(real_t k, real_t mu) : Proba(RealParams({k,mu})), dtheta({0.0, 0.0}) {}
 	real_t operator()(real_t d) const { return boost::math::gamma_q(theta[0], d * theta[1]); }
 	RealParams const & grad(real_t d) const {
+		if (!d) {
+			dtheta[0] = 0.0;
+			dtheta[1] = 0.0;
+			return dtheta;
+		}
   		auto const x = boost::math::differentiation::make_ftuple<real_t, 1, 1>(theta[0], theta[1]);
 		auto const & xk = std::get<0>(x);
 		auto const & xmu = std::get<1>(x);
