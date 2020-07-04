@@ -389,7 +389,7 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	// allocate buffers
 	vector<Mes> UU, HH, M, R;
-	vector<real_t> ut(qi), ug(qi);
+	vector<real_t> ut(qi), ug(qi), utg(qi);
 	vector<vector<real_t>> CG0, CG01;
 	for (int j = 0; j < n; ++j) {
 		Neigh const & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
@@ -415,6 +415,7 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	// main loop
 	real_t za = 0.0;
+	real_t infectivity_ = 0.0;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -495,13 +496,17 @@ real_t FactorGraph::update(int i, real_t damping)
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
-
+			if ((gi>qi-3) && (ti< qi-1) ){
+				infectivity_ += ht[ti] * f.hg[gi] * a * prob_i(f.times[qi-2]-f.times[ti],1.0);
+			}
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			for (int j = 0; j < n; ++j) {
 				CG0[j][min_g[j]] += P0[j] * b;
 				CG01[j][min_g[j]] += (P0[j] - P1[j] * (1 - params.pautoinf)) * b;
 			}
-		}
+
+		} // end of gi cycle
+		// utg[ti]+= ht[ti] * (f.hg[qi-1] + f.hg[qi-2] ) * a;
 		//messages to sij, sji
 		for (int j = 0; j < n; ++j) {
 			partial_sum(CG0[j].rbegin(), CG0[j].rend(), CG0[j].rbegin());
@@ -524,13 +529,15 @@ real_t FactorGraph::update(int i, real_t damping)
 				UU[j](qj - 1, sji) += c + CG[0] * pi;
 			}
 		}
-	}
+	} // end of ti cycle
 	f.f_ = log(za);
+	f.infectivity = infectivity_;
 	//apply external fields on t,h
 	for (int t = 0; t < qi; ++t) {
 		ut[t] *= ht[t];
 		ug[t] *= f.hg[t];
 	}
+
 	//compute beliefs on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
 	f.err_ = diff;
@@ -612,4 +619,3 @@ ostream & operator<<(ostream & ost, FactorGraph const & f)
 		<< "            edges: " << nedge << " ("  << nasym <<  " asymmetric)\n"
 		<< "    time contacts: " << ncont;
 }
-

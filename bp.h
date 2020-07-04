@@ -81,6 +81,7 @@ struct Node {
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 	real_t err_;
+	real_t infectivity;
 	int index;
 };
 
