@@ -146,7 +146,7 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
-        .def("grad", [](Proba const & p, real_t d) { return p.grad(d); } )
+        .def("grad", [](Proba const & p, real_t d) { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta;} )
         .def_readwrite("theta", &Proba::theta, "params vector");
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")

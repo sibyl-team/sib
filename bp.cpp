@@ -470,7 +470,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 
 	// main loop
 	real_t za = 0.0;
-	RealParams dzr = zero_r;
+	RealParams dzr = zero_r, dp1 = zero_r, dp2 = zero_r;
 	RealParams dzi = zero_i, dl = zero_i, dtemp = zero_i, dpi = zero_i;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
@@ -497,7 +497,8 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 					r(sji, sij) = l * pi * h(sji, qj - 1);
 				}
 				if (learn) {
-					dl = prob_i.grad(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+					prob_i.grad(dl, f.times[tij]-f.times[ti]);
+					dl *= v.lambdas[sij];
 					dtemp = dl * pi + l * dpi;
 					for (int sji = min_in[j]; sji < qj; ++sji) {
 						//grad m & r
@@ -589,7 +590,9 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			za += b * c;
 			if (learn) {
 				//grad mu
-				dzr += ht[ti] * f.hg[gi] * (gi < qi - 1 ? prob_r.grad(d1) - prob_r.grad(d2) : prob_r.grad(d1)) * c;
+				prob_r.grad(dp1, d1);
+				prob_r.grad(dp2, d2);
+				dzr += ht[ti] * f.hg[gi] * (gi < qi - 1 ? dp1 - dp2 : dp1) * c;
 				//grad lambda
 				for (int j = 0; j < n; ++j) {
 					dzi += b * P0[j] * dC0[j];
