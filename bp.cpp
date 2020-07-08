@@ -471,7 +471,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 	// main loop
 	real_t za = 0.0;
 	RealParams dzr = zero_r, dp1 = zero_r, dp2 = zero_r;
-	RealParams dzi = zero_i, dl = zero_i, dlpi = zero_i, dpi = zero_i, ds = zero_i;
+	RealParams dzi = zero_i, dl = zero_i, dpi = zero_i, dlpi = zero_i;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -487,7 +487,6 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 
 			real_t pi = 1;
 			dpi = zero_i;
-			ds = zero_i;
 
 			Message<RealParams> & dm = dM[j];
 			Message<RealParams> & dr = dR[j];
