@@ -57,21 +57,20 @@ struct PiecewiseLinear : public Proba
 		real_t const x = d / step;
 		if (x < 0 || x > theta.size() - 1)
 			return 0;
-		int k = x;
+		int const k = x;
 		if (k == x)
 			return theta[k];
-		return (k + 1 - x) * theta[k] + (x - k) *  theta[k + 1];
+		return (k + 1 - x) * theta[k] + (x - k) * theta[k + 1];
 	}
 	void grad(RealParams & dtheta, real_t d) const {
-		for (auto & x : dtheta)
-			x = 0.0;
+		std::fill(std::begin(dtheta), std::end(dtheta), real_t(0.0));
 		real_t const x = d / step;
 		if (x < 0 || x > theta.size() - 1)
 			return;
-		int k = x;
-		if (k == x)
+		int const k = x;
+		if (k == x) {
 			dtheta[k] = 1.0;
-		else {
+		} else {
 			dtheta[k] = k + 1 - x;
 			dtheta[k + 1] = x - k;
 		}
