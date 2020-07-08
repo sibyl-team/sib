@@ -31,24 +31,58 @@ struct Proba
 };
 
 std::ostream & operator<<(std::ostream & ost, Proba const & p);
+std::ostream & operator<<(std::ostream & ost, RealParams const & p);
 
 struct PriorDiscrete : public Proba
 {
-	PriorDiscrete(std::vector<real_t> const & p) : Proba(p.size()) { for (size_t t = 0; t < p.size(); ++t) theta[t] = p[t]; }
+	// PriorDiscrete(std::vector<real_t> const & p) : Proba(p.size()) { for (size_t t = 0; t < p.size(); ++t) theta[t] = p[t]; }
+	PriorDiscrete(RealParams const & p) : Proba(p) {}
 	PriorDiscrete(Proba const & p, int T);
 	real_t operator()(real_t d) const { return d < 0 || d >= int(theta.size()) ? 0.0 : theta[d]; }
 	void grad(RealParams & dtheta, real_t d) const {
 		for (auto & x : dtheta)
 			x = 0.0;
-		dtheta[d] = 1.0;
+		if (d < dtheta.size())
+			dtheta[d] = 1.0;
 	}
 	void print(std::ostream & ost) const {
-		ost << "PriorDiscrete(";
-		for (size_t i = 0; i < theta.size() - 1; ++i)
-			ost << theta[i] << ",";
-		ost << theta[theta.size() - 1] << ")";
+		ost << "PriorDiscrete(" << theta << ")";
 	}
 };
+
+struct PiecewiseLinear : public Proba
+{
+	PiecewiseLinear(RealParams const & p, real_t step) : Proba(p), step(step) {}
+	real_t operator()(real_t d) const {
+		real_t const x = d / step;
+		if (x < 0 || x > theta.size() - 1)
+			return 0;
+		int k = x;
+		if (k == x)
+			return theta[k];
+		return (k + 1 - x) * theta[k] + (x - k) *  theta[k + 1];
+	}
+	void grad(RealParams & dtheta, real_t d) const {
+		for (auto & x : dtheta)
+			x = 0.0;
+		real_t const x = d / step;
+		if (x < 0 || x > theta.size() - 1)
+			return;
+		int k = x;
+		if (k == x)
+			dtheta[k] = 1.0;
+		else {
+			dtheta[k] = k + 1 - x;
+			dtheta[k + 1] = x - k;
+		}
+	}
+	void print(std::ostream & ost) const {
+		ost << "PieceWiseLinear(" << theta << ")";
+	}
+	real_t step;
+};
+
+
 
 struct Cached : public Proba
 {

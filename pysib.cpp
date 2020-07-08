@@ -41,11 +41,6 @@ vector<real_t> make_vector(py::list & l)
     return v;
 }
 
-PriorDiscrete make_discrete(py::list & l)
-{
-    return PriorDiscrete(make_vector(l));
-}
-
 
 template<class T> string print(const T & t) { return lexical_cast<string>(t); }
 
@@ -117,6 +112,8 @@ PYBIND11_MODULE(_sib, m) {
                 memcpy(&(*v)[0], info.ptr, sizeof(real_t) * (size_t) (v->size()));
                 return v;
                 }))
+        .def(py::init([](vector<real_t> const & p)->RealParams {return RealParams(&p[0], p.size());}))
+        .def(py::init([](py::list & l)->RealParams {auto v = make_vector(l); return RealParams(&v[0], v.size());}))
         .def_buffer([](RealParams &p) -> py::buffer_info {
             return py::buffer_info(
                 &p[0],                               /* Pointer to buffer */
@@ -137,7 +134,13 @@ PYBIND11_MODULE(_sib, m) {
                     throw py::index_error();
                 p[i] = v;
                 })
-        .def("__repr__", [](RealParams const & p) { string s = "RealParams["; for (auto x : p) s += lexical_cast<string>(x) + " "; return s + "]";} );
+        .def("__repr__", [](RealParams &p) {
+                    string s = "RealParams([";
+                    for (size_t i = 0; i < p.size(); ++i)
+                        s += (i ? ",":"") + lexical_cast<string>(p[i]);
+                    s+="])";
+                    return s;
+                });
     // py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
@@ -166,15 +169,22 @@ PYBIND11_MODULE(_sib, m) {
         .def("__repr__", &print<Gamma>);
 
     py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
-        .def(py::init(&make_discrete))
+        .def(py::init<RealParams const &>(), py::arg("theta"))
         .def(py::init<Proba const &, int>())
-        .def_readwrite("p", &Proba::theta)
         .def("__repr__", &print<PriorDiscrete>);
+
+    py::class_<PiecewiseLinear, Proba, shared_ptr<PiecewiseLinear>>(m, "PiecewiseLinear")
+        .def(py::init<RealParams const &, real_t>(), py::arg("theta"), py::arg("step") = 1.0)
+        .def("__repr__", &print<PiecewiseLinear>);
 
     py::class_<Cached, Proba, shared_ptr<Cached>>(m, "Cached")
         .def(py::init<std::shared_ptr<Proba> const &, int>())
         .def_readonly("p", &Proba::theta)
-        .def("update", [](Cached & c, RealParams const & p) -> void { c.theta = p; c.recompute();})
+        .def("update", [](Cached & c, RealParams const & p) -> void {
+                if (c.theta.size() != p.size())
+                    throw invalid_argument("argument has wrong size");
+                    c.theta = p;
+                    c.recompute();})
         .def("update", [](Cached & c) { c.recompute(); })
         .def("__repr__", [](Cached const & c) { return "Cached("+print(*c.prob)+","+lexical_cast<string>(c.p.size())+")"; });
     py::class_<Params>(m, "Params")

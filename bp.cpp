@@ -475,6 +475,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
+		bool const dolearn = (ti > 0) && learn;
 		update_limits(ti, f, min_in, min_out);
 
 		for (int j = 0; j < n; ++j) {
@@ -496,7 +497,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);
 				}
-				if (learn) {
+				if (dolearn) {
 					prob_i.grad(dl, f.times[tij]-f.times[ti]);
 					dl *= v.lambdas[sij];
 					dtemp = dl * pi + l * dpi;
@@ -513,7 +514,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			for (int sji = min_in[j]; sji < qj; ++sji) {
 				m(sji, qj - 1) = pi * h(sji, qj - 1);
 				r(sji, qj - 1) = pi * h(sji, qj - 1);
-				if (learn) {
+				if (dolearn) {
 					dm(sji, qj - 1) = dpi * h(sji, qj - 1);
 					dr(sji, qj - 1) = dpi * h(sji, qj - 1);
 				}
@@ -522,7 +523,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			cumsum(m, min_in[j], min_out[j]);
 			cumsum(r, min_in[j], min_out[j]);
 			//grad m & r
-			if (learn) {
+			if (dolearn) {
 				cumsum(dm, min_in[j], min_out[j]);
 				cumsum(dr, min_in[j], min_out[j]);
 			}
@@ -567,7 +568,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				C0[j] = m(min_in[j],  min_out[j]) - m(min_in[j],  min_g[j]) + r(min_in[j],  min_g[j]);
 				C1[j] = m(min_out[j], min_out[j]) - m(min_out[j], min_g[j]) + r(min_out[j], min_g[j]);
 				//grad C
-				if (learn) {
+				if (dolearn) {
 					auto & dm = dM[j];
 					auto & dr = dR[j];
 					dC0[j] = dm(min_in[j],  min_out[j]) - dm(min_in[j],  min_g[j]) + dr(min_in[j],  min_g[j]);
@@ -588,12 +589,16 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			ut[ti] += f.hg[gi] * pg * c;
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			za += b * c;
-			if (learn) {
-				//grad mu
+			if (dolearn) {
+				//grad theta_r
 				prob_r.grad(dp1, d1);
-				prob_r.grad(dp2, d2);
-				dzr += ht[ti] * f.hg[gi] * (gi < qi - 1 ? dp1 - dp2 : dp1) * c;
-				//grad lambda
+				if (gi < qi - 1) {
+					prob_r.grad(dp2, d2);
+					dzr += ht[ti] * f.hg[gi] * (dp1 - dp2) * c;
+				} else {
+					dzr += ht[ti] * f.hg[gi] * dp1 * c;
+				}
+				//grad theta_i
 				for (int j = 0; j < n; ++j) {
 					dzi += b * P0[j] * dC0[j];
 					if (0 < ti && ti < qi - 1)

@@ -1,4 +1,6 @@
 #include "params.h"
+#include <iterator>
+#include <algorithm>
 
 using namespace std;
 
@@ -46,3 +48,12 @@ std::ostream & operator<<(std::ostream & ost, Params const & p)
 }
 
 std::ostream & operator<<(std::ostream & ost, Proba const & p) { p.print(ost); return ost; }
+
+
+std::ostream & operator<<(std::ostream & ost, RealParams const & p)
+{
+        ost << "RealParams([";
+        for (size_t i = 0; i < p.size(); ++i)
+            ost << (i ? ",":"")  << p[i];
+        return ost << "])";
+}
