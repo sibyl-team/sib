@@ -38,9 +38,9 @@ struct PriorDiscrete : public Proba
 	PriorDiscrete(Proba const & p, int T);
 	real_t operator()(real_t d) const { return d < 0 || d >= int(theta.size()) ? 0.0 : theta[d]; }
 	void grad(RealParams & dtheta, real_t d) const {
-		int const T = theta.size();
-		for (int t = 0; t < T; ++t)
-			dtheta[t] = (-(T-t)*1.0/T + (t <= d));
+		for (auto & x : dtheta)
+			x = 0.0;
+		dtheta[d] = 1.0;
 	}
 	void print(std::ostream & ost) const {
 		ost << "PriorDiscrete(";
