@@ -415,7 +415,7 @@ real_t FactorGraph::update(int i, real_t damping)
 
 	// main loop
 	real_t za = 0.0;
-	real_t infectivity_ = 0.0;
+	real_t infectivity = 0.0;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
@@ -496,8 +496,8 @@ real_t FactorGraph::update(int i, real_t damping)
 			ug[gi] += ht[ti] * a;
 			ut[ti] += f.hg[gi] * a;
 			za += ht[ti] * f.hg[gi] * a;
-			if ((gi>qi-3) && (ti< qi-1) ){
-				infectivity_ += ht[ti] * f.hg[gi] * a * prob_i(f.times[qi-2]-f.times[ti],1.0);
+			if ( (gi>=qi-2) && (ti <= qi-2) ){
+				infectivity += ht[ti] * f.hg[gi] * a * prob_i(f.times[qi-2]-f.times[ti],1.0);
 			}
 			real_t const b = ht[ti] * f.hg[gi] * pg;
 			for (int j = 0; j < n; ++j) {
@@ -531,13 +531,12 @@ real_t FactorGraph::update(int i, real_t damping)
 		}
 	} // end of ti cycle
 	f.f_ = log(za);
-	f.infectivity = infectivity_;
 	//apply external fields on t,h
 	for (int t = 0; t < qi; ++t) {
 		ut[t] *= ht[t];
 		ug[t] *= f.hg[t];
 	}
-
+    f.infectivity_ = infectivity / za;
 	//compute beliefs on t,g
 	real_t diff = max(setmes(ut, f.bt, damping), setmes(ug, f.bg, damping));
 	f.err_ = diff;

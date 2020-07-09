@@ -49,6 +49,7 @@ struct Node {
 		prob_i0(prob_i),
 		prob_r0(prob_r),
 		f_(0),
+        infectivity_(0.0),
 		index(index)
 	{
 		times.push_back(-1);
@@ -81,7 +82,7 @@ struct Node {
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 	real_t err_;
-	real_t infectivity;
+	real_t infectivity_;
 	int index;
 };
 

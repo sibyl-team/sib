@@ -207,7 +207,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("bt", &Node::bt, "belief on ti")
         .def_readonly("bg", &Node::bg, "belief on gi")
         .def_readonly("err", &Node::err_, "error on update")
-        .def_readonly("infectivity", &Node::infectivity, "node infectivity at last (current) time")
+        .def_readonly("infectivity", &Node::infectivity_, "node infectivity at last (current) time")
         .def_readonly("times", &Node::times, "event times of this node")
         .def_readonly("index", &Node::index, "node index (deprecated, do not use)")
         .def_readonly("prob_i", &Node::prob_i, "probability of infection as function of t-ti")
