@@ -41,9 +41,6 @@ vector<real_t> make_vector(py::list & l)
     return v;
 }
 
-
-template<class T> string print(const T & t) { return lexical_cast<string>(t); }
-
 map<int, vector<times_t> >
 get_times(FactorGraph const & f) {
         map<int, vector<times_t> > times;
@@ -145,48 +142,40 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<int>>(m, "VectorInt");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
-    //py::bind_vector<std::vector<tuple<real_t, real_t, real_t>>(m, "VectorTuple");
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
         .def("grad", [](Proba const & p, real_t d) { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta;} )
-        .def_readwrite("theta", &Proba::theta, "params vector");
+        .def("__repr__", &lexical_cast<string, Proba>)
+        .def_property("theta", &Proba::get_theta, &Proba::set_theta);
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
         .def(py::init<real_t>(), py::arg("p") = 1.0)
-        .def_property("p", &mygetter<0>, &mysetter<0>)
-        .def("__repr__", &print<Uniform>);
+        .def_property("p", &mygetter<0>, &mysetter<0>);
 
     py::class_<Exponential, Proba, shared_ptr<Exponential>>(m, "Exponential")
         .def(py::init<real_t>(), py::arg("mu") = 0.1)
-        .def_property("mu", &mygetter<0>, &mysetter<0>)
-        .def("__repr__", &print<Exponential>);
+        .def_property("mu", &mygetter<0>, &mysetter<0>);
 
     py::class_<Gamma, Proba, shared_ptr<Gamma>>(m, "Gamma")
         .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
         .def_property("k", &mygetter<0>, &mysetter<0>)
-        .def_property("mu", &mygetter<1>, &mysetter<1>)
-        .def("__repr__", &print<Gamma>);
-
-    py::class_<PriorDiscrete, Proba, shared_ptr<PriorDiscrete>>(m, "PriorDiscrete")
-        .def(py::init<RealParams const &>(), py::arg("theta"))
-        .def(py::init<Proba const &, int>())
-        .def("__repr__", &print<PriorDiscrete>);
+        .def_property("mu", &mygetter<1>, &mysetter<1>);
 
     py::class_<PiecewiseLinear, Proba, shared_ptr<PiecewiseLinear>>(m, "PiecewiseLinear")
-        .def(py::init<RealParams const &, real_t>(), py::arg("theta"), py::arg("step") = 1.0)
-        .def("__repr__", &print<PiecewiseLinear>);
+        .def(py::init<RealParams const &, real_t>(), py::arg("theta"), py::arg("step") = 1.0);
 
     py::class_<Cached, Proba, shared_ptr<Cached>>(m, "Cached")
-        .def(py::init<std::shared_ptr<Proba> const &, int>())
-        .def_readonly("p", &Proba::theta)
-        .def("update", [](Cached & c, RealParams const & p) -> void {
-                if (c.theta.size() != p.size())
-                    throw invalid_argument("argument has wrong size");
-                    c.theta = p;
-                    c.recompute();})
-        .def("update", [](Cached & c) { c.recompute(); })
-        .def("__repr__", [](Cached const & c) { return "Cached("+print(*c.prob)+","+lexical_cast<string>(c.p.size())+")"; });
+        .def(py::init<std::shared_ptr<Proba> const &, int>(), py::arg("prob"), py::arg("T"))
+        .def_readonly("p", &Proba::theta);
+
+    py::class_<Scaled, Proba, shared_ptr<Scaled>>(m, "Scaled")
+        .def(py::init<std::shared_ptr<Proba> const &, real_t>());
+
+    py::class_<PDF, Proba, shared_ptr<PDF>>(m, "PDF")
+        .def(py::init<std::shared_ptr<Proba> const &>());
+
+
     py::class_<Params>(m, "Params")
         .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t>(),
                 "SIB Params class. prob_i and prob_r parameters are defaults.",
@@ -207,7 +196,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("fn_rate", &Params::fn_rate)
         .def_readwrite("pautoinf", &Params::pautoinf)
         .def_readwrite("learn_rate", &Params::learn_rate)
-        .def("__repr__", &print<Params>);
+        .def("__repr__", &lexical_cast<string, Params>);
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
@@ -224,7 +213,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("learn") = false,
                 "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
-        .def("__repr__", &print<FactorGraph>)
+        .def("__repr__", &lexical_cast<string, FactorGraph>)
         .def("append_contact", (void (FactorGraph::*)(int,int,times_t,real_t,real_t)) &FactorGraph::append_contact,
                 py::arg("i"),
                 py::arg("j"),

@@ -27,6 +27,8 @@ struct Proba
 			return ist >> theta[i];
 		return ist;
 	}
+	virtual void set_theta(RealParams const & newtheta) { theta = newtheta; }
+	virtual RealParams const & get_theta() const { return theta; }
 	RealParams theta;
 };
 
@@ -86,7 +88,7 @@ struct PiecewiseLinear : public Proba
 struct Cached : public Proba
 {
 	Cached(std::shared_ptr<Proba> const & prob, int T) : Proba(prob->theta), prob(prob), p(T), zero(0.0, prob->theta.size()), dp(T, zero)  {
-		recompute();
+		update();
 	}
 	std::shared_ptr<Proba> prob;
 	std::vector<real_t> p;
@@ -94,14 +96,41 @@ struct Cached : public Proba
 	std::vector<RealParams> dp;
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0: p[d]; }
 	void grad(RealParams & dtheta, real_t d) const { dtheta = d < 0 || d >= int(dp.size()) ? zero : dp[d]; }
-	void recompute() {
+	void update() {
 		prob->theta = theta;
 		for (size_t d = 0; d < p.size(); ++d) {
 			p[d] = (*prob)(d);
 			prob->grad(dp[d], d);
 		}
 	}
-	void print(std::ostream & ost) const { ost << "Cached(" << prob << ")"; }
+	void set_theta(RealParams const & newtheta) {
+		theta = newtheta;
+		update();
+	}
+	void print(std::ostream & ost) const { ost << "Cached(" << *prob << ",T=" << prob->theta.size() << ")"; }
+};
+
+struct Scaled : public Proba
+{
+	Scaled(std::shared_ptr<Proba> const & prob, real_t scale) : Proba(prob->theta.size() + 1), prob(prob) {
+		for (size_t i = 0; i < theta.size() - 1; ++i)
+			theta[i] = prob->theta[i];
+		theta[theta.size() - 1] = scale;
+	}
+	std::shared_ptr<Proba> prob;
+	void update() {	std::copy(std::begin(theta), std::end(theta)-1, std::begin(prob->theta)); }
+	real_t operator()(real_t d) const { return prob->operator()(d) * theta[theta.size()-1]; }
+	void grad(RealParams & dtheta, real_t d) const {
+		prob->grad(dtheta, d);
+		dtheta *= theta[theta.size() - 1];
+		dtheta[dtheta.size()-1] = prob->operator()(d);
+	}
+
+	void set_theta(RealParams const & newtheta) {
+		theta = newtheta;
+		std::copy(std::begin(theta), std::begin(theta) + prob->theta.size(), std::begin(prob->theta));
+	}
+	void print(std::ostream & ost) const { ost << "Scaled(" << *prob << ",scale=" << theta[theta.size()-1] << ")"; }
 };
 
 struct Uniform : public Proba
@@ -142,6 +171,26 @@ struct Gamma : public Proba
 		dtheta[1] = f.derivative(0,1);
 	}
 	void print(std::ostream & ost) const { ost << "Gamma(" << theta[0] << "," << theta[1] << ")"; }
+};
+
+
+struct PDF : public Proba
+{
+	PDF(std::shared_ptr<Proba> const & prob) : Proba(prob->theta), prob(prob) {}
+	std::shared_ptr<Proba> prob;
+	real_t operator()(real_t d) const { return prob->operator()(d) - prob->operator()(d+1); }
+	void grad(RealParams & dtheta, real_t d) const {
+		RealParams dtheta1(dtheta.size());
+		prob->grad(dtheta, d);
+		prob->grad(dtheta1, d + 1);
+		dtheta -= dtheta1;
+	}
+
+	void set_theta(RealParams const & newtheta) {
+		theta = newtheta;
+		std::copy(std::begin(theta), std::begin(theta) + prob->theta.size(), std::begin(prob->theta));
+	}
+	void print(std::ostream & ost) const { ost << "PDF(" << *prob << ")"; }
 };
 
 
