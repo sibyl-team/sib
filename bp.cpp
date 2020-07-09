@@ -289,6 +289,8 @@ FactorGraph::FactorGraph(Params const & params,
 		n.prob_r = get<2>(*it);
 		n.prob_i0 = get<3>(*it);
 		n.prob_r0 = get<4>(*it);
+		n.df_i = RealParams(n.prob_i->theta.size());
+		n.df_r = RealParams(n.prob_r->theta.size());
 	}
 	auto ic = contacts.begin(), ec = contacts.end();
 	auto io = obs.begin(), eo = obs.end();

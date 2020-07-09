@@ -53,8 +53,8 @@ struct Node {
 		prob_i0(prob_i),
 		prob_r0(prob_r),
 		f_(0),
-		df_r(RealParams(0.0, prob_r->theta.size())),
 		df_i(RealParams(0.0, prob_i->theta.size())),
+		df_r(RealParams(0.0, prob_r->theta.size())),
 		index(index)
 	{
 		times.push_back(-1);
@@ -87,8 +87,8 @@ struct Node {
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 	real_t err_;
-	RealParams df_r;
 	RealParams df_i;
+	RealParams df_r;
 	int index;
 };
 
