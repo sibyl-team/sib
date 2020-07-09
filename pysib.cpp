@@ -121,6 +121,7 @@ PYBIND11_MODULE(_sib, m) {
                 { sizeof(real_t) }             /* Strides (in bytes) for each index */
                 );
         })
+        .def("__add__", [](RealParams & p, RealParams & q)->RealParams { return p + q; })
         .def("__getitem__", [](const RealParams &p, ssize_t i) {
                 if (i > int(p.size()))
                     throw py::index_error();

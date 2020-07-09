@@ -28,7 +28,7 @@ struct Proba
 		return ist;
 	}
 	virtual void set_theta(RealParams const & newtheta) { theta = newtheta; }
-	virtual RealParams const & get_theta() const { return theta; }
+	virtual RealParams get_theta() const { return theta; }
 	RealParams theta;
 };
 
@@ -97,7 +97,7 @@ struct Cached : public Proba
 	real_t operator()(real_t d) const { return d < 0 || d >= int(p.size()) ? 0.0: p[d]; }
 	void grad(RealParams & dtheta, real_t d) const { dtheta = d < 0 || d >= int(dp.size()) ? zero : dp[d]; }
 	void update() {
-		prob->theta = theta;
+		prob->set_theta(theta);
 		for (size_t d = 0; d < p.size(); ++d) {
 			p[d] = (*prob)(d);
 			prob->grad(dp[d], d);
@@ -107,7 +107,7 @@ struct Cached : public Proba
 		theta = newtheta;
 		update();
 	}
-	void print(std::ostream & ost) const { ost << "Cached(" << *prob << ",T=" << prob->theta.size() << ")"; }
+	void print(std::ostream & ost) const { ost << "Cached(" << *prob << ",T=" << p.size() << ")"; }
 };
 
 struct Scaled : public Proba
@@ -118,7 +118,6 @@ struct Scaled : public Proba
 		theta[theta.size() - 1] = scale;
 	}
 	std::shared_ptr<Proba> prob;
-	void update() {	std::copy(std::begin(theta), std::end(theta)-1, std::begin(prob->theta)); }
 	real_t operator()(real_t d) const { return prob->operator()(d) * theta[theta.size()-1]; }
 	void grad(RealParams & dtheta, real_t d) const {
 		prob->grad(dtheta, d);
@@ -128,7 +127,7 @@ struct Scaled : public Proba
 
 	void set_theta(RealParams const & newtheta) {
 		theta = newtheta;
-		std::copy(std::begin(theta), std::begin(theta) + prob->theta.size(), std::begin(prob->theta));
+		prob->set_theta(RealParams(&theta[0], prob->theta.size()));
 	}
 	void print(std::ostream & ost) const { ost << "Scaled(" << *prob << ",scale=" << theta[theta.size()-1] << ")"; }
 };
@@ -188,7 +187,7 @@ struct PDF : public Proba
 
 	void set_theta(RealParams const & newtheta) {
 		theta = newtheta;
-		std::copy(std::begin(theta), std::begin(theta) + prob->theta.size(), std::begin(prob->theta));
+		prob->set_theta(RealParams(&theta[0], prob->theta.size()));
 	}
 	void print(std::ostream & ost) const { ost << "PDF(" << *prob << ")"; }
 };
