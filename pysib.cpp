@@ -171,7 +171,7 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("p", &Proba::theta);
 
     py::class_<Scaled, Proba, shared_ptr<Scaled>>(m, "Scaled")
-        .def(py::init<std::shared_ptr<Proba> const &, real_t>());
+        .def(py::init<std::shared_ptr<Proba> const &, real_t>(), py::arg("prob"), py::arg("scale") = 1.0);
 
     py::class_<PDF, Proba, shared_ptr<PDF>>(m, "PDF")
         .def(py::init<std::shared_ptr<Proba> const &>());
