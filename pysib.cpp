@@ -163,6 +163,10 @@ PYBIND11_MODULE(_sib, m) {
         .def_property("k", &mygetter<0>, &mysetter<0>)
         .def_property("mu", &mygetter<1>, &mysetter<1>);
 
+    py::class_<UnnormalizedGammaPDF, Proba, shared_ptr<UnnormalizedGammaPDF>>(m, "UnnormalizedGammaPDF")
+        .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
+        .def_property("k", &mygetter<0>, &mysetter<0>)
+        .def_property("mu", &mygetter<1>, &mysetter<1>);
     py::class_<PiecewiseLinear, Proba, shared_ptr<PiecewiseLinear>>(m, "PiecewiseLinear")
         .def(py::init<RealParams const &, real_t>(), py::arg("theta"), py::arg("step") = 1.0);
 
