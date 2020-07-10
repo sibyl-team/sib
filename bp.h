@@ -17,15 +17,19 @@
 extern int const Tinf;
 
 
-struct Mes : public std::vector<real_t>
+template<class T>
+struct Message : public std::vector<T>
 {
-	Mes(size_t qj, real_t val = 0.0) : vector<real_t>(qj*qj, val), qj(qj) {}
-	void clear() { std::fill(begin(), end(), 0.0); }
+	Message(size_t qj, T const & val) : std::vector<T>(qj*qj, val), qj(qj) {}
+	Message(size_t qj) : std::vector<T>(qj*qj), qj(qj) {}
+	void clear() { for (int i = 0; i < int(std::vector<T>::size()); ++i) std::vector<T>::operator[](i)*=0.0; }
 	size_t dim() const { return qj;}
-	inline real_t & operator()(int sji, int sij) { return operator[](qj * sij + sji); }
-	inline real_t const & operator()(int sji, int sij) const { return operator[](qj * sij + sji); }
+	inline T & operator()(int sji, int sij) { return std::vector<T>::operator[](qj * sij + sji); }
+	inline T const & operator()(int sji, int sij) const { return std::vector<T>::operator[](qj * sij + sji); }
 	size_t qj;
 };
+
+typedef Message<real_t> Mes;
 
 struct Neigh {
 	Neigh(int index, int pos) : index(index), pos(pos), t(1, Tinf), lambdas(1, 0.0), msg(1, 1.0) {
@@ -49,6 +53,8 @@ struct Node {
 		prob_i0(prob_i),
 		prob_r0(prob_r),
 		f_(0),
+		df_i(RealParams(0.0, prob_i->theta.size())),
+		df_r(RealParams(0.0, prob_r->theta.size())),
 		index(index)
 	{
 		times.push_back(-1);
@@ -81,6 +87,8 @@ struct Node {
 	std::vector<Neigh> neighs;	   // list of neighbors
 	real_t f_;
 	real_t err_;
+	RealParams df_i;
+	RealParams df_r;
 	int index;
 };
 
@@ -95,16 +103,17 @@ public:
 	void append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
 	void drop_contacts(times_t t);
 	void append_observation(int i, int s, times_t t);
+	void append_time(int i, times_t t);
 	void add_node(int i);
 	void init();
 	void set_fields(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);
 	void set_field(int i, int s, int t);
 	void reset_observations(std::vector<std::tuple<int, int, times_t> > const & obs);
-	real_t update(int i, real_t damping);
+	real_t update(int i, real_t damping, bool learn = false);
 	void show_graph();
 	void show_beliefs(std::ostream &);
-	real_t iterate(int maxit, real_t tol, real_t damping);
-	real_t iteration(real_t damping);
+	real_t iterate(int maxit, real_t tol, real_t damping, bool learn = false);
+	real_t iteration(real_t damping, bool learn = false);
 	real_t loglikelihood() const;
 	void show_msg(std::ostream &);
 	Params params;
