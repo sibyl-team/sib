@@ -117,12 +117,11 @@ struct Scaled : public Proba
 			theta[i] = prob->theta[i];
 		theta[theta.size() - 1] = scale;
 	}
-	std::shared_ptr<Proba> prob;
-	real_t operator()(real_t d) const { return prob->operator()(d) * theta[theta.size()-1]; }
+	real_t operator()(real_t d) const { return prob->operator()(d) * theta[theta.size() - 1]; }
 	void grad(RealParams & dtheta, real_t d) const {
 		prob->grad(dtheta, d);
 		dtheta *= theta[theta.size() - 1];
-		dtheta[dtheta.size()-1] = prob->operator()(d);
+		dtheta[dtheta.size() - 1] = prob->operator()(d);
 	}
 
 	void set_theta(RealParams const & newtheta) {
@@ -130,6 +129,7 @@ struct Scaled : public Proba
 		prob->set_theta(RealParams(&theta[0], prob->theta.size()));
 	}
 	void print(std::ostream & ost) const { ost << "Scaled(" << *prob << ",scale=" << theta[theta.size()-1] << ")"; }
+	std::shared_ptr<Proba> prob;
 };
 
 struct Uniform : public Proba
@@ -151,6 +151,17 @@ struct Exponential : public Proba
 	void print(std::ostream & ost) const { ost << "Exponential("<< theta[0] << ")"; }
 };
 
+struct UnnormalizedGammaPDF : public Proba
+{
+	UnnormalizedGammaPDF(real_t k, real_t mu) : Proba(RealParams({k,mu})) {}
+	real_t operator()(real_t d) const { return d ? exp(-theta[1] * d + (theta[0]-1) * log(d)) : 0.0; }
+	void grad(RealParams & dtheta, real_t d) const {
+		real_t const p = operator()(d);
+		dtheta[0] = d ? log(d) * p : 0.0;
+		dtheta[1] = -d * p;
+	}
+	void print(std::ostream & ost) const { ost << "UnnormalizedGammaPDF(" << theta[0] << "," << theta[1] << ")"; }
+};
 
 struct Gamma : public Proba
 {
@@ -163,9 +174,7 @@ struct Gamma : public Proba
 			return;
 		}
   		auto const x = boost::math::differentiation::make_ftuple<real_t, 1, 1>(theta[0], theta[1]);
-		auto const & xk = std::get<0>(x);
-		auto const & xmu = std::get<1>(x);
-		auto const f = boost::math::gamma_q(xk, xmu * d);
+		auto const f = boost::math::gamma_q(std::get<0>(x), std::get<1>(x) * d);
 		dtheta[0] = f.derivative(1,0);
 		dtheta[1] = f.derivative(0,1);
 	}
@@ -176,20 +185,20 @@ struct Gamma : public Proba
 struct PDF : public Proba
 {
 	PDF(std::shared_ptr<Proba> const & prob) : Proba(prob->theta), prob(prob) {}
-	std::shared_ptr<Proba> prob;
-	real_t operator()(real_t d) const { return prob->operator()(d) - prob->operator()(d+1); }
+	real_t operator()(real_t d) const { return prob->operator()(d) - prob->operator()(d + 1); }
 	void grad(RealParams & dtheta, real_t d) const {
-		RealParams dtheta1(dtheta.size());
 		prob->grad(dtheta, d);
+		RealParams dtheta1(dtheta.size());
 		prob->grad(dtheta1, d + 1);
 		dtheta -= dtheta1;
 	}
 
 	void set_theta(RealParams const & newtheta) {
 		theta = newtheta;
-		prob->set_theta(RealParams(&theta[0], prob->theta.size()));
+		prob->set_theta(theta);
 	}
 	void print(std::ostream & ost) const { ost << "PDF(" << *prob << ")"; }
+	std::shared_ptr<Proba> prob;
 };
 
 
