@@ -21,7 +21,7 @@ ${SO}: bp.o params.o drop.o pysib.cpp
 	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} params.o bp.o drop.o pysib.cpp -o $@
 
 test: all
-	python3 test/run_tests.py
+	${PYTHON} test/run_tests.py
 
 
 clean:
