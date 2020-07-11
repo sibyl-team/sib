@@ -1,9 +1,10 @@
+PYTHON=python3
 INC=-Ilib -I${CONDA_PREFIX}/include
 VERSION=$(shell git show -s --pretty="%h %ad %d")
 CFLAGS=-fPIC -std=c++11 -Wall -O3 -g -fopenmp ${INC}
-SO=_sib$(shell python3-config --extension-suffix)
+SO=_sib$(shell ${PYTHON}-config --extension-suffix)
 LINK=-lgomp -lm -DVERSION="\"${VERSION}\""
-PYINC=$(shell python3 -m pybind11 --includes)
+PYINC=$(shell ${PYTHON} -m pybind11 --includes)
 CXX=g++
 
 all: sib ${SO}
