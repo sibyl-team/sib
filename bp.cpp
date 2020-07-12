@@ -142,18 +142,18 @@ void FactorGraph::set_field(int i, int s, int tobs)
         switch (s) {
                 case 0:
 			for (int t = 0; t < qi; ++t)
-				n.ht[t] *= params.fn_rate * (t < tobs) + (1 - params.fn_rate) * (t >= tobs);
+				n.ht[t] *= params.fn_rate * (n.times[t] < tobs) + (1 - params.fn_rate) * (n.times[t] >= tobs);
                         break;
                 case 1:
 			for (int t = 0; t < qi; ++t) {
-				n.ht[t] *= (1 - params.fp_rate) * (t < tobs) + params.fp_rate * (t >= tobs);
-				n.hg[t] *= (t >= tobs);
+				n.ht[t] *= (1 - params.fp_rate) * (n.times[t] < tobs) + params.fp_rate * (n.times[t] >= tobs);
+				n.hg[t] *= (n.times[t] >= tobs);
 			}
                         break;
                 case 2:
 			for (int t = 0; t < qi; ++t) {
-				n.ht[t] *= (t < tobs);
-				n.hg[t] *= (t < tobs);
+				n.ht[t] *= (n.times[t] < tobs);
+				n.hg[t] *= (n.times[t] < tobs);
 			}
                         break;
         }
