@@ -55,6 +55,12 @@ struct PriorDiscrete : public Proba
 struct PiecewiseLinear : public Proba
 {
 	PiecewiseLinear(RealParams const & p, real_t step) : Proba(p), step(step) {}
+
+	PiecewiseLinear(Proba const & p, int T, real_t step = 1.0) : Proba(T), step(step) {
+		for (int t = 0; t < T; ++t)
+			theta[t] = p(t * step);
+	}
+
 	real_t operator()(real_t d) const {
 		real_t const x = d / step;
 		if (x < 0 || x > theta.size() - 1)

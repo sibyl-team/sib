@@ -168,7 +168,8 @@ PYBIND11_MODULE(_sib, m) {
         .def_property("k", &mygetter<0>, &mysetter<0>)
         .def_property("mu", &mygetter<1>, &mysetter<1>);
     py::class_<PiecewiseLinear, Proba, shared_ptr<PiecewiseLinear>>(m, "PiecewiseLinear")
-        .def(py::init<RealParams const &, real_t>(), py::arg("theta"), py::arg("step") = 1.0);
+        .def(py::init<RealParams const &, real_t>(), py::arg("theta"), py::arg("step") = 1.0)
+        .def(py::init<Proba const &, int, real_t>(), py::arg("prob"), py::arg("num"), py::arg("step") = 1.0);
 
     py::class_<Cached, Proba, shared_ptr<Cached>>(m, "Cached")
         .def(py::init<std::shared_ptr<Proba> const &, int>(), py::arg("prob"), py::arg("T"))
