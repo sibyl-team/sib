@@ -2,7 +2,8 @@
   <img src="examples/figs/sibilla_logo.jpg" width="225" height="265">
 </p>
 
-![C/C++ CI](https://github.com/sibyl-team/sib/workflows/C/C++%20CI/badge.svg)
+[![C/C++ CI](https://github.com/sibyl-team/sib/workflows/C/C++%20CI/badge.svg)](https://github.com/sibyl-team/sib/actions?query=workflow%3A%22C%2FC%2B%2B+CI%22)
+[![codecov.io](https://codecov.io/github/sibyl-team/sib/coverage.svg?branch=master)](https://codecov.io/github/sibyl-team/sib?branch=master)
 
 # Sibilla 
 
