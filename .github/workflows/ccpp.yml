@@ -18,8 +18,8 @@ jobs:
     - name: Install pybind11
       run: pip3 install pybind11 numpy pandas --user
     - uses: actions/checkout@v2
-    - name: make EXTRA="-fprofile-arcs -ftest-coverage"
-      run: make
+    - name: build
+      run: make EXTRA="-fprofile-arcs -ftest-coverage"
     - name: test
       run: make test
     - name: codecov
