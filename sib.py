@@ -43,14 +43,19 @@ def iterate(f,
         tol=1e-3,
         damping=0.0,
         learn=False,
-        callback=None
+        callback=False
     ):
-    if callback == None:
+    newline = False
+    if callback == False:
         callback = lambda t,e,f : print(f"sib.iterate(damp={damping}): {t}/{maxit} {e:1.3e}/{tol}", end='      \r', flush=True)
+        newline = True
+    if callback == None:
+        callback = lambda t,e,f : None
     for t in range(maxit):
         err = f.update(damping=damping, learn=learn)
         if callback(t, err, f)  == False:
             break;
         if err < tol:
             break;
-    print()
+    if newline:
+        print()
