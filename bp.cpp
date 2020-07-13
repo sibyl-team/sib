@@ -105,11 +105,11 @@ void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & o
 				case 0:
 					FS[0]++;
 					FS[t]--;
-					TS[t+1]++;
+					TS[t]++;
 					break;
 				case 1:
 					TI[0]++;
-					TI[t-1]--;
+					TI[t]--;
 					FI[t]++;
 					TR[0]++;
 					TR[t]--;
