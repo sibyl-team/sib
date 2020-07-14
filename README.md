@@ -3,6 +3,7 @@
 </p>
 
 [![C/C++ CI](https://github.com/sibyl-team/sib/workflows/C/C++%20CI/badge.svg)](https://github.com/sibyl-team/sib/actions?query=workflow%3A%22C%2FC%2B%2B+CI%22)
+[![Build status](https://ci.appveyor.com/api/projects/status/ich2wvqxos5lk4o5?svg=true)](https://ci.appveyor.com/project/abraunst/sib)
 [![codecov.io](https://codecov.io/github/sibyl-team/sib/coverage.svg?branch=master)](https://codecov.io/github/sibyl-team/sib?branch=master)
 
 # Sibilla 
