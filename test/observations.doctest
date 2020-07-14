@@ -12,7 +12,7 @@ Set a fixed seed
 >>> params = sib.Params(fp_rate=0.1, fn_rate=0.22, pautoinf=1e-5)
 
 ####### Build a factor graph with everything
->>> f = sib.FactorGraph(contacts=sum(contacts_list, start=[]), observations=sum(observations_list, start=[]), params=params)
+>>> f = sib.FactorGraph(contacts=sum(contacts_list, []), observations=sum(observations_list, []), params=params)
 >>> for n in f.nodes:
 ... 	print("["+" ".join(f"{x:0.7f}" for x in n.ht)+"]")
 [0.1782000 0.1782000 0.0198000 0.0198000 0.0198000 0.0078000 0.0078000]
