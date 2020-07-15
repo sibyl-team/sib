@@ -1,0 +1,22 @@
+####### Import SIB
+>>> import sib, random
+>>> random.seed(1)
+>>> T = 100; N = T + 1
+>>> sib.set_num_threads(1)
+
+####### Build a contacts and observations
+>>> observations_list = [[(int(random.random()*N),1*(random.random()<0.5),t) for i in range(N)] for t in range(T) ]
+>>> params = sib.Params(fp_rate=0.1, fn_rate=0.22, pautoinf=1e-5)
+
+####### Build a factor graph with no contacts
+>>> f = sib.FactorGraph(observations=sum(observations_list, []), params=params)
+>>> sib.iterate(f, tol=1e-15, callback=None)
+>>> f.loglikelihood()
+-9601.958795993436
+
+####### Build a factor graph with contacts
+>>> contacts = [(t,t+1,t,0.5) for t in range(T)];
+>>> f = sib.FactorGraph(contacts=contacts, observations=sum(observations_list, []), params=params)
+>>> sib.iterate(f, tol=1e-15, callback=None)
+>>> f.loglikelihood()
+-9535.901662349681
