@@ -35,7 +35,7 @@ Set a fixed seed
 ...		g.append_contact(*c)
 ...	for o in observations_list[t]:
 ...		g.append_observation(*o)
->>> for n in f.nodes:
+>>> for n in g.nodes:
 ... 	print("["+" ".join(f"{x:0.7f}" for x in n.ht)+"]")
 [0.1782000 0.1782000 0.0198000 0.0198000 0.0198000 0.0078000 0.0078000]
 [1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000]
