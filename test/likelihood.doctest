@@ -10,6 +10,11 @@
 
 ####### Build a factor graph with no contacts
 >>> f = sib.FactorGraph(observations=sum(observations_list, []), params=params)
+>>> f
+FactorGraph
+            nodes: 101
+            edges: 0 (0 asymmetric)
+    time contacts: 0
 >>> sib.iterate(f, tol=1e-15, callback=None)
 >>> f.loglikelihood()
 -9601.958795993436
@@ -17,6 +22,11 @@
 ####### Build a factor graph with contacts
 >>> contacts = [(t,t+1,t,0.5) for t in range(T)];
 >>> f = sib.FactorGraph(contacts=contacts, observations=sum(observations_list, []), params=params)
+>>> f
+FactorGraph
+            nodes: 101
+            edges: 100 (100 asymmetric)
+    time contacts: 100
 >>> sib.iterate(f, tol=1e-15, callback=None)
 >>> f.loglikelihood()
 -9535.901662349681

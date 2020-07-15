@@ -26,7 +26,7 @@ ${SO}: bp.o params.o drop.o pysib.cpp ${DEP}
 test: all doctest
 	${PYTHON} test/run_tests.py
 doctest:
-	for x in ${DOCTEST}; do ${PYTHON} -c "import sys, doctest; (f,t) = doctest.testfile(\"$$x\"); print(f'DOCTEST $$x: PASSED {t-f}/{t}'); sys.exit(int(f > 0))"; done
+	@for x in ${DOCTEST}; do ${PYTHON} -c "import sys, doctest; (f,t) = doctest.testfile(\"$$x\"); print(f'DOCTEST $$x: PASSED {t-f}/{t}'); sys.exit(int(f > 0))"; done
 
 clean:
 	rm -f sib ${SO} *.o
