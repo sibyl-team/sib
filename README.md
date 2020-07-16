@@ -93,7 +93,7 @@ sib.FactorGraph(
   Params,
   contacts,
   observations,
-  individuals = 0
+  individuals = []
 )
     Construct the factor graph from the list of contacts,
     the lists of observations, the Parameters of the model.
