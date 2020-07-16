@@ -584,8 +584,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			}
 			//messages to ti, gi
 			auto const d1 = f.times[gi] - f.times[ti];
-			auto const d2 = f.times[gi + 1] - f.times[ti];
-			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(d2) : prob_r(d1);
+			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(f.times[gi + 1] - f.times[ti]) : prob_r(d1);
 			real_t const c = ti == 0 || ti == qi - 1 ? p0full : (p0full - p1full * (1 - params.pautoinf));
 			ug[gi] += ht[ti] * pg * c;
 			ut[ti] += f.hg[gi] * pg * c;
@@ -595,6 +594,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				//grad theta_r
 				prob_r.grad(dp1, d1);
 				if (gi < qi - 1) {
+					auto const d2 = f.times[gi + 1] - f.times[ti];
 					prob_r.grad(dp2, d2);
 					dzr += ht[ti] * f.hg[gi] * (dp1 - dp2) * c;
 				} else {
