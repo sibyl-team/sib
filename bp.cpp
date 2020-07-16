@@ -197,9 +197,9 @@ Mes & operator--(Mes & msg)
 
 void FactorGraph::drop_contacts(times_t t)
 {
-	for (int i = 0; i < int(nodes.size()); ++i) {
+	for (size_t i = 0; i < nodes.size(); ++i) {
 		Node & fi = nodes[i];
-		for (int k = 0; k < int(fi.neighs.size()); ++k) {
+		for (size_t k = 0; k < fi.neighs.size(); ++k) {
 			if (fi.times[fi.neighs[k].t[0]] < t)
 				throw invalid_argument("can only drop first contact");
 			else if (fi.times[fi.neighs[k].t[0]] == t) {

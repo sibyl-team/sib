@@ -235,6 +235,7 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("s"),
                 py::arg("t"),
                 "appends a new observation with state s to node i at time t")
+        .def("show", &FactorGraph::show_graph)
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
         .def("drop_time", &drop_time, "drop time t (first time)")
         .def("drop_sc", &drop_sc,
