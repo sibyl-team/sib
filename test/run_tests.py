@@ -136,7 +136,7 @@ class SibillaTest(unittest.TestCase):
         probs2 = np.stack([self.find_sources_sib(i)[0] for i in range(self.n_inst)])
 
         print("")
-        self.assertEqual(np.all((probs1-probs2) < 1e-12), True)
+        self.assertEqual(np.all((probs1-probs2) < 1e-10), True)
 
     def test_accuracy(self):
         print("\n--- Testing accuracy ---")
@@ -145,7 +145,7 @@ class SibillaTest(unittest.TestCase):
 
         accu_meas = accu_curve.cumsum().sum()/self.params["n"]
         self.assertGreaterEqual(
-            accu_meas, 12, msg="The accuracy does not correspond. Maybe the observations have the wrong order?")
+            accu_meas, 10, msg="The accuracy does not correspond. Maybe the observations have the wrong order?")
 
     def test_beliefs_fields(self):
         print("\n--- Testing beliefs and fields ---")
@@ -155,7 +155,7 @@ class SibillaTest(unittest.TestCase):
             for n in range(self.num_nodes):
                 #with self.subTest(inst=i,node=n):
                 msg_fail = "Test on inst {} for node {} failed".format(i,n)
-                self.assertEqual(np.all(beliefs_fields[i][n][0] - self.loaded_beliefs[i][n] < 1e-12),True,msg_fail)
+                self.assertEqual(np.all(beliefs_fields[i][n][0] - self.loaded_beliefs[i][n] < 1e-10),True,msg_fail)
                 #self.assertEqual(np.all(beliefs_fields[i][n][1] == self.loaded_fields[i][n]),True,msg_fail)
 
 
