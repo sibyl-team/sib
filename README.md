@@ -18,7 +18,6 @@ See [notes](https://github.com/sibyl-team/sib/blob/master/notes/bpnotes.pdf) and
   - A C++11 compiler
   - python3
   - [pybind11](https://github.com/pybind/pybind11)
-  - header only boost libraries
 
 ## Install
 you can choose one of the following procedures:
