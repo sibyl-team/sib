@@ -18,7 +18,6 @@ See [notes](https://github.com/sibyl-team/sib/blob/master/notes/bpnotes.pdf) and
   - A C++11 compiler
   - python3
   - [pybind11](https://github.com/pybind/pybind11)
-  - header only boost libraries
 
 ## Install
 you can choose one of the following procedures:
@@ -93,7 +92,7 @@ sib.FactorGraph(
   Params,
   contacts,
   observations,
-  individuals = 0
+  individuals = []
 )
     Construct the factor graph from the list of contacts,
     the lists of observations, the Parameters of the model.
@@ -153,7 +152,7 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 ## Maintainers
 The [sibyl-team](https://github.com/sibyl-team):
 
-[Alfredo Braunstein](staff.polito.it/alfredo.braunstein) ([alfredo.braunstein@polito.it](mailto:alfredo.braunstein@polito.it)), [Alessandro Ingrosso](mailto:alessingrosso@gmail.com) ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Indaco Biazzo](mailto:indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni)), [Luca Dall'Asta](mailto:luca.dallasta@polito.it), [Anna Paola Muntoni](),  [Fabio Mazza](), [Giovanni Catania]()
+[Alfredo Braunstein](http://staff.polito.it/alfredo.braunstein) ([alfredo.braunstein@polito.it](mailto:alfredo.braunstein@polito.it)), [Alessandro Ingrosso](mailto:alessingrosso@gmail.com) ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Indaco Biazzo](mailto:indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni)), [Luca Dall'Asta](mailto:luca.dallasta@polito.it), [Anna Paola Muntoni](),  [Fabio Mazza](), [Giovanni Catania]()
 
 <p float="left">
 <img src="examples/figs/polito_log.png" width="186" height="66">
