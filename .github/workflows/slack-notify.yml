@@ -13,3 +13,4 @@ jobs:
         SLACK_USERNAME: 'sibyl-bot'
         SLACK_FOOTER: ''
         SLACK_COLOR: '#3278BD'
+        SLACK_ICON: 'https://github.com/sibyl-team/sib/blob/master/examples/figs/sibbot.jpg'
