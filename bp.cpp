@@ -44,16 +44,20 @@ void FactorGraph::append_time(int i, times_t t)
 {
 	add_node(i);
 	Node & n = nodes[i];
-        if (t < n.times[n.times.size() - 2]) {
-		cerr << t << " < " << n.times[n.times.size() - 2] << endl;
-                throw invalid_argument("observation time too small");
-	} else if (t > n.times[n.times.size() - 2]) {
+	// most common case
+	if (t == n.times[n.times.size() - 2]
+		|| t == *lower_bound(n.times.begin(), n.times.end(), t))
+		return;
+	if (t > n.times[n.times.size() - 2]) {
 		n.push_back_time(t);
                 // adjust infinite times
                 for (int j = 0; j < int(n.neighs.size()); ++j) {
                         n.neighs[j].t.back() = n.times.size() - 1;
                 }
+		return;
         }
+	cerr << t << " < " << n.times[n.times.size() - 2] << endl;
+	throw invalid_argument("observation time unexistent and too small");
 }
 
 void FactorGraph::append_observation(int i, int s, times_t t)
