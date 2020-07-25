@@ -1,5 +1,5 @@
 on: push
-name: Slack Notification Demo
+name: Slack
 jobs:
   slackNotification:
     name: Slack Notification
@@ -12,5 +12,4 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_USERNAME: 'sibyl-bot'
         SLACK_FOOTER: ''
-        SLACK_COLOR: '#3278BD'
-        SLACK_ICON: 'https://github.com/sibyl-team/sib/blob/master/examples/figs/sibbot.jpg'
+        SLACK_ICON: 'https://raw.githubusercontent.com/sibyl-team/sib/master/examples/figs/sibbot.jpg'
