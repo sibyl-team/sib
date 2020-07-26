@@ -148,7 +148,7 @@ PYBIND11_MODULE(_sib, m) {
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
         .def("grad", [](Proba const & p, real_t d) { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta;} )
         .def("__repr__", &lexical_cast<string, Proba>)
-        .def_property("theta", &Proba::get_theta, &Proba::set_theta);
+        .def_readwrite("theta", &Proba::theta);
 
     py::class_<Uniform, Proba, shared_ptr<Uniform>>(m, "Uniform")
         .def(py::init<real_t>(), py::arg("p") = 1.0)
@@ -173,7 +173,7 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<Cached, Proba, shared_ptr<Cached>>(m, "Cached")
         .def(py::init<std::shared_ptr<Proba> const &, int>(), py::arg("prob"), py::arg("T"))
-        .def_readonly("p", &Proba::theta);
+        .def_property("theta", &Cached::get_theta, &Cached::set_theta);
 
     py::class_<Scaled, Proba, shared_ptr<Scaled>>(m, "Scaled")
         .def(py::init<std::shared_ptr<Proba> const &, real_t>(), py::arg("prob"), py::arg("scale") = 1.0);

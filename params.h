@@ -28,7 +28,6 @@ struct Proba
 		return ist;
 	}
 	virtual void set_theta(RealParams const & newtheta) { theta = newtheta; }
-	virtual RealParams get_theta() const { return theta; }
 	RealParams theta;
 };
 
@@ -109,6 +108,8 @@ struct Cached : public Proba
 			prob->grad(dp[d], d);
 		}
 	}
+
+	virtual RealParams get_theta() const { return theta; }
 	void set_theta(RealParams const & newtheta) {
 		theta = newtheta;
 		update();
