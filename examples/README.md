@@ -66,7 +66,7 @@ We also report the values of the AUC in the (𝛼, 𝛽) plane associated with t
 
 ## References
 
-\[1\] [Epidemic mitigation by statistical inference from contact tracing data, Antoine Baker and Indaco Biazzo and Alfredo Braunstein and Giovanni Catania and Luca Dall'Asta and Alessandro Ingrosso and Florent Krzakala and Fabio Mazza and Marc Mézard and Anna Paola Muntoni and Maria Refinetti and Stefano Sarao Mannelli and Lenka Zdeborová, preprint ArXiv 2009.09422](https://arxiv.org/abs/2009.09422)
+\[1\] [Epidemic mitigation by statistical inference from contact tracing data, A Baker, I Biazzo, A Braunstein, G Catania, L Dall'Asta, A Ingrosso, F Krzakala, F Mazza, M Mézard, AP Muntoni, M Refinetti, S Sarao Mannelli, L Zdeborová, preprint ArXiv 2009.09422](https://arxiv.org/abs/2009.09422)
 
 \[2\] [Inference of causality in epidemics on temporal contact networks, A Braunstein, A Ingrosso, Scientific reports 6, 27538, ](https://www.nature.com/articles/srep27538)
 
