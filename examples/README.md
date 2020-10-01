@@ -66,18 +66,20 @@ We also report the values of the AUC in the (𝛼, 𝛽) plane associated with t
 
 ## References
 
-\[1\] [Inference of causality in epidemics on temporal contact networks, A Braunstein, A Ingrosso, Scientific reports 6, 27538, ](https://www.nature.com/articles/srep27538)
+\[1\] [Epidemic mitigation by statistical inference from contact tracing data, A Baker, I Biazzo, A Braunstein, G Catania, L Dall'Asta, A Ingrosso, F Krzakala, F Mazza, M Mézard, AP Muntoni, M Refinetti, S Sarao Mannelli, L Zdeborová, preprint ArXiv 2009.09422](https://arxiv.org/abs/2009.09422)
 
-\[2\] [Bayesian inference of epidemics on networks via belief propagation, F Altarelli, A Braunstein, L Dall’Asta, A Lage-Castellanos, R Zecchina. Physical review letters 112 (11), 118701](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
+\[2\] [Inference of causality in epidemics on temporal contact networks, A Braunstein, A Ingrosso, Scientific reports 6, 27538, ](https://www.nature.com/articles/srep27538)
 
-\[3\] [The patient-zero problem with noisy observations. F Altarelli, A Braunstein, L Dall’Asta, A Ingrosso, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2014 (10), P10016](https://iopscience.iop.org/article/10.1088/1742-5468/2014/10/P10016/meta)
+\[3\] [Bayesian inference of epidemics on networks via belief propagation, F Altarelli, A Braunstein, L Dall’Asta, A Lage-Castellanos, R Zecchina. Physical review letters 112 (11), 118701](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.112.118701)
 
-\[4\] [Containing epidemic outbreaks by message-passing techniques. F Altarelli, A Braunstein, L Dall’Asta, JR Wakeling, R Zecchina. Physical Review X 4 (2), 021024](https://journals.aps.org/prx/abstract/10.1103/PhysRevX.4.021024)
+\[4\] [The patient-zero problem with noisy observations. F Altarelli, A Braunstein, L Dall’Asta, A Ingrosso, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2014 (10), P10016](https://iopscience.iop.org/article/10.1088/1742-5468/2014/10/P10016/meta)
 
-\[5\] [Predicting epidemic evolution on contact networks from partial observations. J Bindi, A Braunstein, L Dall’Asta. Plos one 12 (4), e0176376](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0176376)
+\[5\] [Containing epidemic outbreaks by message-passing techniques. F Altarelli, A Braunstein, L Dall’Asta, JR Wakeling, R Zecchina. Physical Review X 4 (2), 021024](https://journals.aps.org/prx/abstract/10.1103/PhysRevX.4.021024)
 
-\[6\] [Large deviations of cascade processes on graphs. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Physical Review E 87 (6), 062115](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.87.062115)
+\[6\] [Predicting epidemic evolution on contact networks from partial observations. J Bindi, A Braunstein, L Dall’Asta. Plos one 12 (4), e0176376](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0176376)
 
-\[7\] [Optimizing spread dynamics on graphs by message passing. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2013 (09), P09011](https://iopscience.iop.org/article/10.1088/1742-5468/2013/09/P09011/meta)
+\[7\] [Large deviations of cascade processes on graphs. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Physical Review E 87 (6), 062115](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.87.062115)
+
+\[8\] [Optimizing spread dynamics on graphs by message passing. F Altarelli, A Braunstein, L Dall’Asta, R Zecchina. Journal of Statistical Mechanics: Theory and Experiment 2013 (09), P09011](https://iopscience.iop.org/article/10.1088/1742-5468/2013/09/P09011/meta)
 
 
