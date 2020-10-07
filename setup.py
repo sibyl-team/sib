@@ -51,6 +51,7 @@ ext_modules = [
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
+            "./lib",
         ],
         extra_compile_args=[*COMPILE_FLAGS.split(" ")],
         extra_link_args=["-lgomp", "-lm"],
