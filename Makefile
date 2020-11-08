@@ -23,9 +23,7 @@ drop.o: drop.cpp ${DEP}
 ${SO}: bp.o params.o drop.o pysib.cpp ${DEP}
 	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} ${EXTRA} params.o bp.o drop.o pysib.cpp -o $@
 
-test: all doctest
-	${PYTHON} test/run_tests.py
-doctest:
+test:
 	@for x in ${DOCTEST}; do ${PYTHON} -c "import sys, doctest; (f,t) = doctest.testfile(\"$$x\"); print(f'DOCTEST $$x: PASSED {t-f}/{t}'); sys.exit(int(f > 0))"; done
 
 clean:
