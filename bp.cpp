@@ -478,10 +478,12 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 	real_t za = 0.0;
 	RealParams dzr = zero_r, dp1 = zero_r, dp2 = zero_r;
 	RealParams dzi = zero_i, dl = zero_i, dpi = zero_i, dlpi = zero_i;
+	real_t qauto = 1.0;
 	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
 		bool const dolearn = (ti > 0) && learn;
+		real_t const pauto = (0 < ti && ti < qi - 1) ? params.pautoinf : 0.0;
 		update_limits(ti, f, min_in, min_out);
 
 		for (int j = 0; j < n; ++j) {
@@ -553,13 +555,12 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				changed = true;
 				Mes & m = M[j];
 				Mes & r = R[j];
-				//grad m & r
 				/*
-				   .-----min_out
-				   |   .-- min_g
-				   sij     v   v
+					   .-----min_out
+					   |   .-- min_g
+			   	   sij     v   v
 				   . . . . . . . .
-				   sji. . . . . . . .
+			        sji. . . . . . . .
 				   . . . . . . . .
 				   . . . . a a b b <- min_in
 				   . . . . c c d d <- min_out
@@ -589,11 +590,15 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			//messages to ti, gi
 			auto const d1 = f.times[gi] - f.times[ti];
 			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(f.times[gi + 1] - f.times[ti]) : prob_r(d1);
-			real_t const c = ti == 0 || ti == qi - 1 ? p0full : (p0full - p1full * (1 - params.pautoinf));
+			real_t const c = qauto * (ti == 0 || ti == qi - 1 ? p0full  : (p0full - p1full * (1 - pauto)));
 			ug[gi] += ht[ti] * pg * c;
 			ut[ti] += f.hg[gi] * pg * c;
 			real_t const b = ht[ti] * f.hg[gi] * pg;
-			za += b * c;
+			za += c * b;
+			for (int j = 0; j < n; ++j) {
+				CG0[j][min_g[j]] += b * qauto * P0[j];
+				CG01[j][min_g[j]] += b * qauto * (P0[j] - P1[j] * (1 - pauto));
+			}
 			if (dolearn) {
 				//grad theta_r
 				prob_r.grad(dp1, d1);
@@ -606,14 +611,10 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				}
 				//grad theta_i
 				for (int j = 0; j < n; ++j) {
-					dzi += b * P0[j] * dC0[j];
+					dzi += b * qauto * P0[j] * dC0[j] ;
 					if (0 < ti && ti < qi - 1)
-						dzi -= b * P1[j] * dC1[j] * (1 - params.pautoinf);
+						dzi -= b * qauto * P1[j] * dC1[j] * (1 - pauto);
 				}
-			}
-			for (int j = 0; j < n; ++j) {
-				CG0[j][min_g[j]] += b * P0[j];
-				CG01[j][min_g[j]] += b * (P0[j] - P1[j] * (1 - params.pautoinf));
 			}
 		}
 		//messages to sij, sji
@@ -638,6 +639,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				UU[j](qj - 1, sji) += c + CG[0] * pi;
 			}
 		}
+		qauto *= 1 - pauto;
 	}
 	f.f_ = log(za);
 	//apply external fields on t,h
