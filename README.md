@@ -160,7 +160,7 @@ The [sibyl-team](https://github.com/sibyl-team):
 </p>
 
 ## Acknowledgements
-This project has been partially funded by Fondazione CRT through call "La Ricerca dei Talenti", project SIBYL and by the [SmartData@PoliTO] (http://smartdata.polito.it) center on Big Data and Data Science.
+This project has been partially funded by Fondazione CRT through call "La Ricerca dei Talenti", project SIBYL and by the [SmartData@PoliTO](http://smartdata.polito.it) center on Big Data and Data Science.
 
 <p float="left">
 <img src="examples/figs/fcrt-logo.png" width="200" height="52">
