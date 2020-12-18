@@ -18,3 +18,15 @@
 >>> sib.iterate(f, tol=1e-100, callback=None)
 >>> [n.bt for n in f.nodes]
 [VectorReal[0.01, 0.0118602, 0.0136355, 0.015244, 0.0166436, 0.0178183, 0.0187693, 0.0195083, 0.0200531, 0.0204242, 0.0206431, 0.8154], VectorReal[0.01, 0.0138165, 0.0166828, 0.0187891, 0.0202918, 0.0213179, 0.0219701, 0.0223307, 0.0224651, 0.0224255, 0.0222528, 0.787658], VectorReal[0.01, 0.0118602, 0.0136355, 0.015244, 0.0166436, 0.0178183, 0.0187693, 0.0195083, 0.0200531, 0.0204242, 0.0206431, 0.8154]]
+>>> #no observations, no contacts: result is a geometric with parameter pautoinf
+>>> prob_seed = 0.1
+>>> prob_sus = 0.5
+>>> pseed = prob_seed / (2 - prob_seed)
+>>> psus = prob_sus * (1 - pseed)
+>>> observations = [(0,-1,t) for t in range(10)]
+>>> params = sib.Params(prob_r=sib.Exponential(mu=0), pseed=pseed, psus=psus, pautoinf=0.1)
+>>> f = sib.FactorGraph(contacts=[], observations=observations, params=params)
+>>> sib.iterate(f, tol=1e-100, callback=None)
+>>> f.nodes[0].bt
+VectorReal[0.1, 0.09, 0.081, 0.0729, 0.06561, 0.059049, 0.0531441, 0.0478297, 0.0430467, 0.038742, 0.0348678, 0.313811]
+
