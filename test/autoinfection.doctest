@@ -1,0 +1,20 @@
+>>> import sib
+>>> T=10
+>>> contacts = sum([[(i,i+1,t,0.2) for i in range(2)]+[(i+1,i,t,0.2) for i in range(2)] for t in range(T)], [])
+>>> prob_seed = 0.01
+>>> prob_sus = 0.5
+>>> pseed = prob_seed / (2 - prob_seed)
+>>> psus = prob_sus * (1 - pseed)
+>>> #with observations
+>>> observations = [(i,1,T) for i in range(3)]
+>>> params = sib.Params(prob_r=sib.Exponential(mu=0), pseed=pseed, psus=psus, pautoinf=1e-2)
+>>> f = sib.FactorGraph(contacts=contacts, observations=observations, params=params)
+>>> sib.iterate(f, tol=1e-100, callback=None)
+>>> [n.bt for n in f.nodes]
+[VectorReal[0.0636352, 0.0749014, 0.0849232, 0.092888, 0.0983994, 0.101366, 0.101936, 0.100455, 0.0974703, 0.0937401, 0.090285, 0, 0], VectorReal[0.0773335, 0.105156, 0.122317, 0.130322, 0.130341, 0.123266, 0.1098, 0.0905592, 0.0662309, 0.0377971, 0.00687738, 0, 0], VectorReal[0.0636352, 0.0749014, 0.0849232, 0.092888, 0.0983994, 0.101366, 0.101936, 0.100455, 0.0974703, 0.0937401, 0.090285, 0, 0]]
+>>> #no observations: p(t=0) should be prob_seed
+>>> params = sib.Params(prob_r=sib.Exponential(mu=0), pseed=pseed, psus=psus, pautoinf=0.01)
+>>> f = sib.FactorGraph(contacts=contacts, observations=[], params=params)
+>>> sib.iterate(f, tol=1e-100, callback=None)
+>>> [n.bt for n in f.nodes]
+[VectorReal[0.01, 0.0118602, 0.0136355, 0.015244, 0.0166436, 0.0178183, 0.0187693, 0.0195083, 0.0200531, 0.0204242, 0.0206431, 0.8154], VectorReal[0.01, 0.0138165, 0.0166828, 0.0187891, 0.0202918, 0.0213179, 0.0219701, 0.0223307, 0.0224651, 0.0224255, 0.0222528, 0.787658], VectorReal[0.01, 0.0118602, 0.0136355, 0.015244, 0.0166436, 0.0178183, 0.0187693, 0.0195083, 0.0200531, 0.0204242, 0.0206431, 0.8154]]

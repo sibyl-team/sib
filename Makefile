@@ -23,10 +23,13 @@ drop.o: drop.cpp ${DEP}
 ${SO}: bp.o params.o drop.o pysib.cpp ${DEP}
 	${CXX}  -shared ${CFLAGS} ${PYINC} ${LINK} ${EXTRA} params.o bp.o drop.o pysib.cpp -o $@
 
-test:
-	@for x in ${DOCTEST}; do ${PYTHON} -c "import sys, doctest; (f,t) = doctest.testfile(\"$$x\"); print(f'DOCTEST $$x: PASSED {t-f}/{t}'); sys.exit(int(f > 0))"; done
+
+test: ${DOCTEST}
+
+${DOCTEST}: sib
+	@${PYTHON} -c "import sys, doctest; (f,t) = doctest.testfile(\"$@\"); print(f'DOCTEST $@: PASSED {t-f}/{t}'); sys.exit(int(f > 0))"
 
 clean:
 	rm -f sib ${SO} *.o
 
-.PHONY: test
+.PHONY: ${DOCTEST}
