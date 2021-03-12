@@ -163,6 +163,11 @@ PYBIND11_MODULE(_sib, m) {
         .def_property("k", &mygetter<0>, &mysetter<0>)
         .def_property("mu", &mygetter<1>, &mysetter<1>);
 
+    py::class_<ConstantRate, Proba, shared_ptr<ConstantRate>>(m, "ConstantRate")
+        .def(py::init<real_t, real_t>(), py::arg("gamma") = 1.0, py::arg("Dt") = 1.0)
+        .def_property("gamma", &mygetter<0>, &mysetter<0>)
+        .def_property("Dt", [](ConstantRate & p){ return p.Dt; }, [](ConstantRate & p, real_t Dt) { p.Dt = Dt; });
+
     py::class_<UnnormalizedGammaPDF, Proba, shared_ptr<UnnormalizedGammaPDF>>(m, "UnnormalizedGammaPDF")
         .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
         .def_property("k", &mygetter<0>, &mysetter<0>)

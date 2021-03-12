@@ -188,6 +188,15 @@ struct Gamma : public Proba
 	void print(std::ostream & ost) const { ost << "Gamma(" << theta[0] << "," << theta[1] << ")"; }
 };
 
+struct ConstantRate : public Proba
+{
+	ConstantRate(real_t gamma, real_t Dt) : Proba(RealParams({gamma})), Dt(Dt) {}
+	real_t operator()(real_t d) const { return -expm1(-theta[0]*Dt); }
+	void grad(RealParams & dtheta, real_t d) const { dtheta[0] = Dt*exp(-theta[0]*Dt); }
+	void print(std::ostream & ost) const { ost << "ConstatRate(" << theta[0] << "," << Dt << ")"; }
+	real_t Dt;
+};
+
 
 struct PDF : public Proba
 {
