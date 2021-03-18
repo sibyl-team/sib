@@ -21,7 +21,6 @@
 
 using namespace std;
 
-
 int const Tinf = 1000000;
 
 template<class T>
