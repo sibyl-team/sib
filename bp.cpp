@@ -499,14 +499,13 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			Message<RealParams> & dr = dR[j];
 			for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 				int tij = v.t[sij];
-				real_t const l = prob_i(f.times[tij]-f.times[ti]) * v.lambdas[sij];
+				real_t const l = prob_i(f.times[tij]-f.times[ti], v.lambdas[sij]);
 				for (int sji = min_in[j]; sji < qj; ++sji) {
 					m(sji, sij) = l * pi * h(sji, sij);
 					r(sji, sij) = l * pi * h(sji, qj - 1);
 				}
 				if (dolearn) {
-					prob_i.grad(dl, f.times[tij]-f.times[ti]);
-					dl *= v.lambdas[sij];
+					prob_i.grad(dl, f.times[tij]-f.times[ti], v.lambdas[sij]);
 					dlpi = dl * pi + l * dpi;
 					for (int sji = min_in[j]; sji < qj; ++sji) {
 						//grad m & r
@@ -629,7 +628,7 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				real_t c = 0;
 				for (int sij = min_out[j]; sij < qj - 1; ++sij) {
 					int const tij = v.t[sij];
-					real_t const l = prob_i(f.times[tij] - f.times[ti]) * v.lambdas[sij];
+					real_t const l = prob_i(f.times[tij] - f.times[ti], v.lambdas[sij]);
 					//note: CG[sij + 1] counts everything with gi >= sij
 					UU[j](sij, sji) += CG[sij + 1] * pi * l;
 					c += (CG[0] - CG[sij + 1]) * pi * l;

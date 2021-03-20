@@ -20,7 +20,9 @@ struct Proba
 	template<class T>
 	Proba(T const & n) : theta(n) {}
 	virtual real_t operator()(real_t) const = 0;
+	virtual real_t operator()(real_t d, real_t p) const { return operator()(d)*p; }
 	virtual void grad(RealParams & dtheta, real_t d) const = 0;
+	virtual void grad(RealParams & dtheta, real_t d, real_t p) const { grad(dtheta, d); dtheta *= p; }
 	virtual void print(std::ostream &) const = 0;
 	std::istream & operator>>(std::istream & ist) {
 		for (int i = 0; i < int(theta.size()); ++i)
@@ -190,11 +192,12 @@ struct Gamma : public Proba
 
 struct ConstantRate : public Proba
 {
-	ConstantRate(real_t gamma, real_t Dt) : Proba(RealParams({gamma})), Dt(Dt) {}
-	real_t operator()(real_t d) const { return -expm1(-theta[0]*Dt); }
-	void grad(RealParams & dtheta, real_t d) const { dtheta[0] = Dt*exp(-theta[0]*Dt); }
-	void print(std::ostream & ost) const { ost << "ConstatRate(" << theta[0] << "," << Dt << ")"; }
-	real_t Dt;
+	ConstantRate(real_t gamma) : Proba(RealParams({gamma})) {}
+	real_t operator()(real_t d) const { assert(false); return 0.0; }
+	real_t operator()(real_t d, real_t Dt) const { return -expm1(-theta[0]*Dt); }
+	void grad(RealParams & dtheta, real_t d) const { assert(false); }
+	void grad(RealParams & dtheta, real_t d, real_t Dt) const { dtheta[0] = Dt*exp(-theta[0]*Dt); }
+	void print(std::ostream & ost) const { ost << "ConstatRate(" << theta[0] << ")"; }
 };
 
 
