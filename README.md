@@ -150,7 +150,7 @@ If you want to participate write us ([sibyl-team](mailto:sibylteam@gmail.com?sub
 [Apache License 2.0](LICENSE)
 
 ## Maintainers
-The [sibyl-team](https://github.com/sibyl-team):
+The [sibyl-team](https://sibyl-team.github.io/):
 
 [Alfredo Braunstein](http://staff.polito.it/alfredo.braunstein) ([alfredo.braunstein@polito.it](mailto:alfredo.braunstein@polito.it)), [Alessandro Ingrosso](mailto:alessingrosso@gmail.com) ([@ai_ingrosso](https://twitter.com/ai_ngrosso)), [Indaco Biazzo](mailto:indaco.biazzo@polito.it) ([@ocadni](https://twitter.com/ocadni)), [Luca Dall'Asta](mailto:luca.dallasta@polito.it), [Anna Paola Muntoni](),  [Fabio Mazza](), [Giovanni Catania]()
 
