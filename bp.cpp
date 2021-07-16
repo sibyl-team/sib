@@ -456,15 +456,13 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			--min_g[j];
 
 		for (int gi = ti; gi < qi; ++gi) {
-			real_t ht = 1.0;
-			real_t hg = 1.0;
+			real_t w = 1.0;
 			for (unsigned k = 0; k < obs.size(); ++k) {
 				times_t const t = get<0>(obs[k]);
 				real_t const ps = get<1>(obs[k])->ps;
 				real_t const pi = get<1>(obs[k])->pi;
 				real_t const pr = get<1>(obs[k])->pr;
-				ht *= ps * (ti >= t) + pi * (ti < t && t <= gi);
-				hg *= pr * (t > gi);
+				w *= ps * (ti >= t) + pi * (ti < t && t <= gi) + pr * (t > gi);
 			}
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
@@ -513,9 +511,9 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			auto const d1 = f.times[gi] - f.times[ti];
 			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(f.times[gi + 1] - f.times[ti]) : prob_r(d1);
 			real_t const c = qauto * (ti == 0 || ti == qi - 1 ? p0full  : (p0full - p1full * (1 - pauto)));
-			ug[gi] += ht * pg * c;
-			ut[ti] += hg * pg * c;
-			real_t const b = ht * hg * pg;
+			ug[gi] += w * pg * c;
+			ut[ti] += w * pg * c;
+			real_t const b = w * pg;
 			za += c * b;
 			for (int j = 0; j < n; ++j) {
 				CG0[j][min_g[j]] += b * qauto * P0[j];
@@ -527,9 +525,9 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				if (gi < qi - 1) {
 					auto const d2 = f.times[gi + 1] - f.times[ti];
 					prob_r.grad(dp2, d2);
-					dzr += ht * hg * (dp1 - dp2) * c;
+					dzr += w * (dp1 - dp2) * c;
 				} else {
-					dzr += ht * hg * dp1 * c;
+					dzr += w * dp1 * c;
 				}
 				//grad theta_i
 				for (int j = 0; j < n; ++j) {
