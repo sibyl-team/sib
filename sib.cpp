@@ -18,8 +18,9 @@
 
 using namespace std;
 
-pair<vector<tuple<int,int,times_t,real_t> >, vector<tuple<int,int,times_t> > >
-read_files(char const * cont_file, char const * obs_file)
+
+pair<vector<tuple<int,int,times_t,real_t> >, vector<tuple<int,shared_ptr<Test>,times_t>>>
+read_files(Params & params, char const * cont_file, char const * obs_file)
 {
 	string line;
 
@@ -29,8 +30,8 @@ read_files(char const * cont_file, char const * obs_file)
 		exit(EXIT_FAILURE);
 	}
 
-	auto contacts = vector<tuple<int,int,times_t,real_t> >();
-	auto observations = vector<tuple<int,int,times_t> >();
+	auto contacts = vector<tuple<int,int,times_t,real_t>>();
+	auto observations = vector<tuple<int,shared_ptr<Test>,times_t>>();
 
 	int nlines = 0;
 	while (getline(cont, line)) {
@@ -53,6 +54,7 @@ read_files(char const * cont_file, char const * obs_file)
 		exit(EXIT_FAILURE);
 	}
 	nlines = 0;
+	shared_ptr<Test> const tests[] = {shared_ptr<Test>(new Test(1,0,0)), shared_ptr<Test>(new Test(0,1,0)), shared_ptr<Test>(new Test(0,0,1))};
 	while (getline(obs,line)) {
 		nlines++;
 		if(nlines > 1) {
@@ -61,7 +63,7 @@ read_files(char const * cont_file, char const * obs_file)
 			char g1, g2;
 			s >> i >> g1 >> state >> g2 >> t;
 			//cout << i << state << t << endl;
-			observations.push_back(make_tuple(i,state,t));
+			observations.push_back(make_tuple(i,state == -1 ? params.fakeobs : tests[state],t));
 		}
 	}
 	return make_pair(contacts,observations);
@@ -120,7 +122,7 @@ int main(int argc, char ** argv)
 	auto prob_i = shared_ptr<Proba>(new Uniform(1.0));
 	auto prob_r = shared_ptr<Proba>(new Exponential(mu));
 	Params p(prob_i, prob_r, pseed, 0.5, 0.0, 0.0, 0.0, 0.0);
-	auto co = read_files(cont_file, obs_file);
+	auto co = read_files(p, cont_file, obs_file);
 	FactorGraph factor(p, get<0>(co), get<1>(co));
 	factor.iterate(maxit, tol, 0.0);
 	factor.show_beliefs(cout);

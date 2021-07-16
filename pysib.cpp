@@ -144,6 +144,14 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
 
+    py::class_<Test, shared_ptr<Test>>(m, "Test")
+        .def(py::init<real_t,real_t,real_t>(), py::arg("ps")=0.0, py::arg("pi")=0.0, py::arg("pr")=0.0)
+        .def(py::init([](int s)->Test{return Test(s==0, s==1, s==2);}))
+        .def("__repr__", &lexical_cast<string, Test>)
+        .def_readwrite("ps", &Test::ps, "probability of S")
+        .def_readwrite("pi", &Test::pi, "probability of I")
+        .def_readwrite("pr", &Test::pr, "probability of R");
+
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
         .def("grad", [](Proba const & p, real_t d) { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta;} )
@@ -201,10 +209,10 @@ PYBIND11_MODULE(_sib, m) {
 
         .def_readwrite("prob_r", &Params::prob_r)
         .def_readwrite("prob_i", &Params::prob_i)
+        .def_readonly("obs", &Params::obs)
+        .def_readonly("fakeobs", &Params::fakeobs)
         .def_readwrite("pseed", &Params::pseed)
         .def_readwrite("psus", &Params::psus)
-        .def_readwrite("fp_rate", &Params::fp_rate)
-        .def_readwrite("fn_rate", &Params::fn_rate)
         .def_readwrite("pautoinf", &Params::pautoinf)
         .def_readwrite("learn_rate", &Params::learn_rate)
         .def("__repr__", &lexical_cast<string, Params>);
@@ -212,12 +220,12 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
                 vector<tuple<int,int,times_t,real_t>>,
-                vector<tuple<int,int,times_t>>,
+                vector<tuple<int,shared_ptr<Test>,times_t>>,
                 vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
                 py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0, 0.0),
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
-                py::arg("observations") = vector<tuple<int,int,times_t>>(),
+                py::arg("tests") = vector<tuple<int,shared_ptr<Test>,times_t>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration,
                 py::arg("damping") = 0.0,
@@ -235,11 +243,16 @@ PYBIND11_MODULE(_sib, m) {
         .def("reset_observations", &FactorGraph::reset_observations,
                 py::arg("obs"),
                 "resets all observations")
-        .def("append_observation", &FactorGraph::append_observation,
+        .def("append_observation", (void (FactorGraph::*)(int,int,times_t)) &FactorGraph::append_observation,
                 py::arg("i"),
                 py::arg("s"),
                 py::arg("t"),
-                "appends a new observation with state s to node i at time t")
+                "adds a new observation state s to node i at time t")
+        .def("append_observation", (void (FactorGraph::*)(int,shared_ptr<Test> const &,times_t)) &FactorGraph::append_observation,
+                py::arg("i"),
+                py::arg("o"),
+                py::arg("t"),
+                "adds a new test o to node i at time t")
         .def("show", &FactorGraph::show_graph)
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
         .def("drop_time", &drop_time, "drop time t (first time)")

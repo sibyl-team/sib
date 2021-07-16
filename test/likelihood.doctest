@@ -4,12 +4,14 @@
 >>> T = 100; N = T + 1
 >>> sib.set_num_threads(1)
 
-####### Build a contacts and observations
->>> observations_list = [[(int(random.random()*N),1*(random.random()<0.5),t) for i in range(N)] for t in range(T) ]
->>> params = sib.Params(fp_rate=0.1, fn_rate=0.22, pautoinf=1e-5)
+####### Build a contacts and observations. Use "old" wrong observations to make doctest pass
+>>> fp_rate=0.1; fn_rate=0.22
+>>> tests = [sib.Test(1-fn_rate, fn_rate, fn_rate), sib.Test(fp_rate, 1-fp_rate, 0)]
+>>> observations_list = [[(int(random.random()*N),tests[1*(random.random()<0.5)],t) for i in range(N)] for t in range(T) ]
+>>> params = sib.Params(pautoinf=1e-5)
 
 ####### Build a factor graph with no contacts
->>> f = sib.FactorGraph(observations=sum(observations_list, []), params=params)
+>>> f = sib.FactorGraph(tests=sum(observations_list, []), params=params)
 >>> f
 FactorGraph
             nodes: 101
@@ -21,7 +23,7 @@ FactorGraph
 
 ####### Build a factor graph with contacts
 >>> contacts = [(t,t+1,t,0.5) for t in range(T)];
->>> f = sib.FactorGraph(contacts=contacts, observations=sum(observations_list, []), params=params)
+>>> f = sib.FactorGraph(contacts=contacts, tests=sum(observations_list, []), params=params)
 >>> f
 FactorGraph
             nodes: 101

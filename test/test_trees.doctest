@@ -22,9 +22,11 @@ Number of instances: 50
 >>> contacts_sib = list(contacts.to_records(index=False))
 >>> all_marginals = []
 >>> sib_pars = sib.Params(prob_r=sib.Gamma(mu=params["mu"]))
+>>> tests = [sib.Test(s==0,s==1,s==2) for s in range(3)]
 >>> for inst in range(n_inst):
 ... 	obs = list(obs_all_df[inst].to_records(index=False))
-... 	fg = sib.FactorGraph(sib_pars, contacts_sib, obs)
+... 	obs = [(i,tests[s],t) for (i,s,t) in obs]
+... 	fg = sib.FactorGraph(params=sib_pars, contacts=contacts_sib, tests=obs)
 ... 	sib.iterate(fg,200,1e-20,callback=None)
 ... 	s = 0.0
 ... 	for i in range(len(fg.nodes)):
