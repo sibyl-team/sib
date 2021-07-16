@@ -4,6 +4,10 @@
 
 using namespace std;
 
+std::ostream & operator<<(std::ostream & ost, Test const & o) {
+	return ost << "Test(ps=" << o.ps << ", pi=" << o.pi << ", pr=" << o.pr << ")";
+}
+
 Params::Params(shared_ptr<Proba> const & pi,
         shared_ptr<Proba> const & pr,
         real_t pseed,

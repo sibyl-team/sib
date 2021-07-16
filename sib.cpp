@@ -18,7 +18,8 @@
 
 using namespace std;
 
-pair<vector<tuple<int,int,times_t,real_t> >, vector<tuple<int,int,times_t> > >
+
+pair<vector<tuple<int,int,times_t,real_t> >, vector<tuple<int,times_t,shared_ptr<Test>> > >
 read_files(char const * cont_file, char const * obs_file)
 {
 	string line;
@@ -29,8 +30,8 @@ read_files(char const * cont_file, char const * obs_file)
 		exit(EXIT_FAILURE);
 	}
 
-	auto contacts = vector<tuple<int,int,times_t,real_t> >();
-	auto observations = vector<tuple<int,int,times_t> >();
+	auto contacts = vector<tuple<int,int,times_t,real_t>>();
+	auto observations = vector<tuple<int,int,shared_ptr<Test>>>();
 
 	int nlines = 0;
 	while (getline(cont, line)) {
@@ -53,6 +54,7 @@ read_files(char const * cont_file, char const * obs_file)
 		exit(EXIT_FAILURE);
 	}
 	nlines = 0;
+	shared_ptr<Test> const tests[] = {shared_ptr<Test>(new Test(1,0,0)), shared_ptr<Test>(new Test(0,1,0)), shared_ptr<Test>(new Test(0,0,1))};
 	while (getline(obs,line)) {
 		nlines++;
 		if(nlines > 1) {
@@ -61,7 +63,7 @@ read_files(char const * cont_file, char const * obs_file)
 			char g1, g2;
 			s >> i >> g1 >> state >> g2 >> t;
 			//cout << i << state << t << endl;
-			observations.push_back(make_tuple(i,state,t));
+			observations.push_back(make_tuple(i,t,tests[state]));
 		}
 	}
 	return make_pair(contacts,observations);

@@ -144,6 +144,14 @@ PYBIND11_MODULE(_sib, m) {
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
 
+    py::class_<Test, shared_ptr<Test>>(m, "Test")
+        .def(py::init<real_t,real_t,real_t>(), py::arg("ps")=0.0, py::arg("pi")=0.0, py::arg("pr")=0.0)
+        .def(py::init([](int s)->Test{return Test(s==0, s==1, s==2);}))
+        .def("__repr__", &lexical_cast<string, Test>)
+        .def_readwrite("ps", &Test::ps)
+        .def_readwrite("pi", &Test::pi)
+        .def_readwrite("pr", &Test::pr);
+
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
         .def("grad", [](Proba const & p, real_t d) { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta;} )
@@ -212,12 +220,12 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
                 vector<tuple<int,int,times_t,real_t>>,
-                vector<tuple<int,int,times_t>>,
+                vector<tuple<int,times_t,shared_ptr<Test>>>,
                 vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
                 py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0, 0.0),
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
-                py::arg("observations") = vector<tuple<int,int,times_t>>(),
+                py::arg("observations") = vector<tuple<int,times_t,shared_ptr<Test>>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration,
                 py::arg("damping") = 0.0,

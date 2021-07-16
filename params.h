@@ -15,6 +15,17 @@ typedef int times_t;
 
 typedef std::valarray<real_t> RealParams;
 
+struct Test
+{
+	Test(real_t ps, real_t pi, real_t pr) : ps(ps), pi(pi), pr(pr) {}
+	real_t ps;
+	real_t pi;
+	real_t pr;
+};
+
+
+std::ostream & operator<<(std::ostream & ost, Test const & o);
+
 struct Proba
 {
 	template<class T>
