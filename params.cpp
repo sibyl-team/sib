@@ -4,6 +4,10 @@
 
 using namespace std;
 
+std::ostream & operator<<(std::ostream & ost, Test const & o) {
+	return ost << "Test(ps=" << o.ps << ", pi=" << o.pi << ", pr=" << o.pr << ")";
+}
+
 Params::Params(shared_ptr<Proba> const & pi,
         shared_ptr<Proba> const & pr,
         real_t pseed,
@@ -14,18 +18,21 @@ Params::Params(shared_ptr<Proba> const & pi,
 	real_t learn_rate) :
 		prob_i(pi),
 		prob_r(pr),
+                obs(3),
 		pseed(pseed),
 		psus(psus),
-		fp_rate(fp_rate),
-		fn_rate(fn_rate),
 		pautoinf(pautoinf),
 		learn_rate(learn_rate)
-	{
-		if (pseed + psus > 1)
-			throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
-                if (!pi || !pr)
-			throw std::invalid_argument("invalid probability definition");
-	}
+{
+        if (pseed + psus > 1)
+                throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
+        if (!pi || !pr)
+                throw std::invalid_argument("invalid probability definition");
+        obs[0] = shared_ptr<Test>(new Test(1-fn_rate,fn_rate,fn_rate));
+        obs[1] = shared_ptr<Test>(new Test(fp_rate,1-fp_rate,0));
+        obs[2] = shared_ptr<Test>(new Test(0,0,1));
+        fakeobs = shared_ptr<Test>(new Test(1,1,1));
+}
 
 PriorDiscrete::PriorDiscrete(Proba const & pr, int T) : Proba(T)
 {
@@ -41,8 +48,8 @@ std::ostream & operator<<(std::ostream & ost, Params const & p)
         << ",prob_r=" << *p.prob_r
         << ",pseed=" << p.pseed
         << ",psus=" << p.psus
-        << ",fp_rate=" << p.fp_rate
-        << ",fn_rate=" << p.fn_rate
+        << ",test+ =" << *p.obs[1]
+        << ",test- =" << *p.obs[0]
         << ",pautoinf=" << p.pautoinf << ")"
         << ",learn_rate=" << p.learn_rate << ")";
 }

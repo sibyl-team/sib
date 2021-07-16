@@ -85,6 +85,7 @@ struct Node {
 	std::vector<real_t> ht;  // message infection times T[ni+2]
 	std::vector<real_t> hg;  // message recovery times G[ni+2]
 	std::vector<Neigh> neighs;	   // list of neighbors
+	std::vector<std::tuple<time_t, std::shared_ptr<Test>>> obs;
 	real_t f_;
 	real_t err_;
 	RealParams df_i;
@@ -96,19 +97,19 @@ class FactorGraph {
 public:
 	std::vector<Node> nodes;
 	FactorGraph(Params const & params,
-		std::vector<std::tuple<int,int,times_t,real_t> > const & contacts,
-		std::vector<std::tuple<int,int,times_t> > const & obs,
+		std::vector<std::tuple<int, int, times_t, real_t>> const & contacts,
+		std::vector<std::tuple<int, std::shared_ptr<Test>, times_t>> const & tests,
 		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals = std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
 	void append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
 	void drop_contacts(times_t t);
+	void append_observation(int i, std::shared_ptr<Test> const & o, times_t t);
 	void append_observation(int i, int s, times_t t);
 	void append_time(int i, times_t t);
 	void add_node(int i);
-	void init();
 	void set_fields(int i, std::vector<int> const & sobs, std::vector<times_t> const & tobs);
 	void set_field(int i, int s, int t);
-	void reset_observations(std::vector<std::tuple<int, int, times_t> > const & obs);
+	void reset_observations(std::vector<std::tuple<int, std::shared_ptr<Test>, times_t>> const & obs);
 	real_t update(int i, real_t damping, bool learn = false);
 	void show_graph();
 	void show_beliefs(std::ostream &);

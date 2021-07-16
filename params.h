@@ -15,6 +15,17 @@ typedef int times_t;
 
 typedef std::valarray<real_t> RealParams;
 
+struct Test
+{
+	Test(real_t ps, real_t pi, real_t pr) : ps(ps), pi(pi), pr(pr) {}
+	real_t ps;
+	real_t pi;
+	real_t pr;
+};
+
+
+std::ostream & operator<<(std::ostream & ost, Test const & o);
+
 struct Proba
 {
 	template<class T>
@@ -221,10 +232,10 @@ struct PDF : public Proba
 struct Params {
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
+	std::vector<std::shared_ptr<Test>> obs;
+	std::shared_ptr<Test> fakeobs;
 	real_t pseed;
 	real_t psus;
-	real_t fp_rate;
-	real_t fn_rate;
 	real_t pautoinf;
 	real_t learn_rate;
 	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus, real_t fp_rate, real_t fn_rate, real_t pautoinf, real_t learn_rate);

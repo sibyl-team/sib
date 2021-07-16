@@ -59,108 +59,22 @@ void FactorGraph::append_time(int i, times_t t)
 	throw invalid_argument("observation time unexistent and too small");
 }
 
+void FactorGraph::append_observation(int i, shared_ptr<Test> const & o, times_t t)
+{
+	add_node(i);
+	append_time(i, t);
+	if (o != params.fakeobs)
+		nodes[i].obs.push_back(make_tuple(t, o));
+}
+
 void FactorGraph::append_observation(int i, int s, times_t t)
 {
+	add_node(i);
 	append_time(i, t);
-	set_field(i, s, t);
+	if (s != -1)
+		nodes[i].obs.push_back(make_tuple(t, params.obs[s]));
 }
 
-
-
-void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & obs)
-{
-	vector<vector<times_t>> tobs(nodes.size());
-	vector<vector<int>> sobs(nodes.size());
-	for (auto it = obs.begin(); it != obs.end(); ++it) {
-		sobs[get<0>(*it)].push_back(get<1>(*it));
-		tobs[get<0>(*it)].push_back(get<2>(*it));
-	}
-	int largeT = 0;
-	for (int i = 0; i < int(nodes.size()); ++i) {
-		largeT = max(largeT, int(nodes[i].times.size()));
-	}
-	vector<int> FS(largeT), FI(largeT), TS(largeT), TI(largeT), TR(largeT);
-	vector<real_t> pFS(largeT, 1.0), pFI(largeT, 1.0), pTS(largeT, 1.0), pTI(largeT, 1.0);
-
-	for (int t = 1; t < largeT; ++t) {
-		pTI[t] = pTI[t-1] * (1-params.fp_rate);
-		pFI[t] = pFI[t-1] * params.fp_rate;
-		pTS[t] = pTS[t-1] * (1-params.fn_rate);
-		pFS[t] = pFS[t-1] * params.fn_rate;
-	}
-	for (int i = 0; i < int(nodes.size()); ++i) {
-		fill(TS.begin(), TS.end(), 0);
-		fill(FS.begin(), FS.end(), 0);
-		fill(TI.begin(), TI.end(), 0);
-		fill(FI.begin(), FI.end(), 0);
-		fill(TR.begin(), TR.end(), 0);
-		// this assumes ordered observation times
-		int T = nodes[i].times.size();
-		int t = 0;
-		for (int k = 0; k < int(tobs[i].size()); ++k) {
-			int state = sobs[i][k];
-			int to = tobs[i][k];
-			while (nodes[i].times[t] != to && t < T)
-				t++;
-			if (nodes[i].times[t] != to)
-				throw invalid_argument(("this is a bad time: node" + to_string(i) + " time " + to_string(t)).c_str());
-			switch(state) {
-				case 0:
-					FS[0]++;
-					FS[t]--;
-					TS[t]++;
-					break;
-				case 1:
-					TI[0]++;
-					TI[t]--;
-					FI[t]++;
-					TR[0]++;
-					TR[t]--;
-					break;
-				case 2:
-					TR[t]++;
-					TI[t]++;
-					break;
-			}
-		}
-		int fs = 0, fi = 0, ts = 0, ti = 0, tr = 0;
-		for (int t = 0; t < T; ++t) {
-			fs += FS[t];
-			fi += FI[t];
-			ts += TS[t];
-			ti += TI[t];
-			tr += TR[t];
-			nodes[i].ht[t] = pFS[fs] * pTS[ts] * pFI[fi] * pTI[ti];
-			nodes[i].hg[t] = tr == 0;
-
-		}
-	}
-}
-
-
-void FactorGraph::set_field(int i, int s, int tobs)
-{
-	Node & n = nodes[i];
-        int qi = n.times.size();
-        switch (s) {
-                case 0:
-			for (int t = 0; t < qi; ++t)
-				n.ht[t] *= params.fn_rate * (n.times[t] < tobs) + (1 - params.fn_rate) * (n.times[t] >= tobs);
-                        break;
-                case 1:
-			for (int t = 0; t < qi; ++t) {
-				n.ht[t] *= (1 - params.fp_rate) * (n.times[t] < tobs) + params.fp_rate * (n.times[t] >= tobs);
-				n.hg[t] *= (n.times[t] >= tobs);
-			}
-                        break;
-                case 2:
-			for (int t = 0; t < qi; ++t) {
-				n.ht[t] *= (n.times[t] < tobs);
-				n.hg[t] *= (n.times[t] < tobs);
-			}
-                        break;
-        }
-}
 
 Mes & operator++(Mes & msg)
 {
@@ -277,9 +191,10 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 }
 
 
+
 FactorGraph::FactorGraph(Params const & params,
 		vector<tuple<int, int, times_t, real_t> > const & contacts,
-		vector<tuple<int, int, times_t> > const & obs,
+		vector<tuple<int, std::shared_ptr<Test>, times_t>> const & tests,
 		vector<tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>>> const & individuals) :
 	params(params)
 {
@@ -296,7 +211,7 @@ FactorGraph::FactorGraph(Params const & params,
 		n.df_r = RealParams(n.prob_r->theta.size());
 	}
 	auto ic = contacts.begin(), ec = contacts.end();
-	auto io = obs.begin(), eo = obs.end();
+	auto io = tests.begin(), eo = tests.end();
 	while (ic != ec || io != eo) {
 		int tc = ic == ec ? Tinf : get<2>(*ic);
 		int to = io == eo ? Tinf : get<2>(*io);
@@ -310,8 +225,23 @@ FactorGraph::FactorGraph(Params const & params,
 			io++;
 		}
 	}
-	reset_observations(obs);
+	reset_observations(tests);
 }
+
+void FactorGraph::reset_observations(vector<tuple<int, shared_ptr<Test>, times_t>> const & obs)
+{
+	for (unsigned j = 0; j < nodes.size(); ++j)
+		nodes[j].obs.clear();
+	for (unsigned k = 0; k < obs.size(); ++k) {
+		auto p =  obs[k];
+		int i = get<0>(p);
+		auto o = get<1>(p);
+		times_t t = get<2>(p);
+		if (o != params.fakeobs)
+			nodes[i].obs.push_back(make_tuple(t, o));
+	}
+}
+
 
 int FactorGraph::find_neighbor(int i, int j) const
 {
@@ -434,6 +364,7 @@ void update_limits(int ti, Node const &f, vector<int> & min_in, vector<int> & mi
 real_t FactorGraph::update(int i, real_t damping, bool learn)
 {
 	Node & f = nodes[i];
+	auto const & obs = f.obs;
 	int const n = f.neighs.size();
 	int const qi = f.bt.size();
 
@@ -445,6 +376,10 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 	vector<real_t> ut(qi), ug(qi);
 	vector<vector<real_t>> CG0, CG01;
 	vector<RealParams> dC0, dC1;
+
+
+
+
 	for (int j = 0; j < n; ++j) {
 		Neigh const & v = nodes[f.neighs[j].index].neighs[f.neighs[j].pos];
 		v.lock();
@@ -465,20 +400,13 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 	vector<real_t> C0(n), P0(n); // probas tji >= ti for each j
 	vector<real_t> C1(n), P1(n); // probas tji > ti for each j
 	vector<int> min_in(n), min_out(n);
-	vector<real_t> ht = f.ht;
-
-	// apply external fields
-	ht[0] *= params.pseed;
-	for (int t = 1; t < qi - 1; ++t)
-		ht[t] *= 1 - params.pseed - params.psus;
-	ht[qi-1] *= params.psus;
 
 	// main loop
 	real_t za = 0.0;
 	RealParams dzr = zero_r, dp1 = zero_r, dp2 = zero_r;
 	RealParams dzi = zero_i, dl = zero_i, dpi = zero_i, dlpi = zero_i;
 	real_t qauto = 1.0;
-	for (int ti = 0; ti < qi; ++ti) if (ht[ti]) {
+	for (int ti = 0; ti < qi; ++ti) {
 		Proba const & prob_i = ti ? *f.prob_i : *f.prob_i0;
 		Proba const & prob_r = ti ? *f.prob_r : *f.prob_r0;
 		bool const dolearn = (ti > 0) && learn;
@@ -542,7 +470,23 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 		bool changed = true;
 		for (int j = 0; j < n; ++j)
 			--min_g[j];
-		for (int gi = ti; gi < qi; ++gi) if (f.hg[gi]) {
+
+		for (int gi = ti; gi < qi; ++gi) {
+			real_t w = f.ht[ti] * f.hg[gi];
+			if (ti == 0)
+				w *= params.pseed;
+			else if (ti == qi - 1)
+				w *= params.psus;
+			else
+				w *= 1 - params.pseed - params.psus;
+
+			for (unsigned k = 0; k < obs.size(); ++k) {
+				times_t const t = get<0>(obs[k]);
+				real_t const ps = get<1>(obs[k])->ps;
+				real_t const pi = get<1>(obs[k])->pi;
+				real_t const pr = get<1>(obs[k])->pr;
+				w *= ps * (f.times[ti] >= t) + pi * (f.times[ti] < t && t <= f.times[gi]) + pr * (t > f.times[gi]);
+			}
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
 				int const qj = v.t.size();
@@ -590,10 +534,10 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			auto const d1 = f.times[gi] - f.times[ti];
 			real_t const pg = gi < qi - 1 ? prob_r(d1) -  prob_r(f.times[gi + 1] - f.times[ti]) : prob_r(d1);
 			real_t const c = qauto * (ti == 0 || ti == qi - 1 ? p0full  : (p0full - p1full * (1 - pauto)));
-			ug[gi] += ht[ti] * pg * c;
-			ut[ti] += f.hg[gi] * pg * c;
-			real_t const b = ht[ti] * f.hg[gi] * pg;
-			za += c * b;
+			real_t const b = w * pg;
+			ug[gi] += b * c;
+			ut[ti] += b * c;
+			za += b * c;
 			for (int j = 0; j < n; ++j) {
 				CG0[j][min_g[j]] += b * qauto * P0[j];
 				CG01[j][min_g[j]] += b * qauto * (P0[j] - P1[j] * (1 - pauto));
@@ -604,9 +548,9 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 				if (gi < qi - 1) {
 					auto const d2 = f.times[gi + 1] - f.times[ti];
 					prob_r.grad(dp2, d2);
-					dzr += ht[ti] * f.hg[gi] * (dp1 - dp2) * c;
+					dzr += w * (dp1 - dp2) * c;
 				} else {
-					dzr += ht[ti] * f.hg[gi] * dp1 * c;
+					dzr += w * dp1 * c;
 				}
 				//grad theta_i
 				for (int j = 0; j < n; ++j) {
@@ -641,11 +585,6 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 		qauto *= 1 - pauto;
 	}
 	f.f_ = log(za);
-	//apply external fields on t,h
-	for (int t = 0; t < qi; ++t) {
-		ut[t] *= ht[t];
-		ug[t] *= f.hg[t];
-	}
 	//update parameters
 	if (learn && za) {
 		f.df_r = dzr/za;

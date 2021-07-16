@@ -1,5 +1,7 @@
 from _sib import *
 
+import sys
+
 import _sib
 
 __module_file__ = _sib.__file__
@@ -37,6 +39,21 @@ def marginal_t(n, t):
     M = n.marginal_index(ttrue)
 
     return M
+
+
+def FactorGraph(params = _sib.Params(_sib.Uniform(1.0), _sib.Exponential(0.5), 0.1, 0.45, 0.0, 0.0 ,0.0, 0.0),
+                contacts = [],
+                observations = [],
+                tests = [],
+                times = [],
+                individuals = []):
+    if len(observations) > 0:
+        if len(tests) > 0:
+            print("only one between tests and observations is allowed")
+            return None
+        tests = [(i, params.fakeobs if s == -1 else params.obs[s],t) for (i,s,t) in observations if s <= 2]
+    return _sib.FactorGraph(params = params, contacts = contacts, tests = tests, individuals = individuals)
+
 
 def iterate(f,
         maxit=100,
