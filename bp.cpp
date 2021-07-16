@@ -114,6 +114,10 @@ void FactorGraph::drop_contacts(times_t t)
 				fi.neighs[k].lambdas.erase(fi.neighs[k].lambdas.begin(), fi.neighs[k].lambdas.begin() + 1);
 				--fi.neighs[k].msg;
 			}
+			for (unsigned k = fi.obs.size(); k--;) {
+				if (get<0>(fi.obs[k]) == t)
+					fi.obs.erase(fi.obs.begin() + k);
+			}
 		}
 	}
 }
@@ -459,10 +463,8 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 			real_t w = 1.0;
 			for (unsigned k = 0; k < obs.size(); ++k) {
 				times_t const t = get<0>(obs[k]);
-				real_t const ps = get<1>(obs[k])->ps;
-				real_t const pi = get<1>(obs[k])->pi;
-				real_t const pr = get<1>(obs[k])->pr;
-				w *= ps * (ti >= t) + pi * (ti < t && t <= gi) + pr * (t > gi);
+				Test const & o = *get<1>(obs[k]);
+				w *= o.ps * (ti >= t) + o.pi * (ti < t && t <= gi) + o.pr * (t > gi);
 			}
 			for (int j = 0; j < n; ++j) {
 				Neigh const & v = f.neighs[j];
