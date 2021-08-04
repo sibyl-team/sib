@@ -25,6 +25,12 @@ void drop_time(FactorGraph & fg, int t)
 			}
                 }
 		f.times[0] = t;
+		for (auto it = f.obs.begin(); it != f.obs.end();) {
+			if (t == get<0>(*it))
+				f.obs.erase(it);
+			else
+				++it;
+		}
         }
 }
 
