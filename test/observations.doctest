@@ -3,49 +3,33 @@
 >>> import sib, random
 
 Set a fixed seed
->>> random.seed(1)
+>>> sib.set_num_threads(1)
 >>> N,T = 10,5
 
-####### Build a contacts and observations
+####### Build contact and observations lists
 >>> contacts_list=[[(i,j,t,random.random()*0.1) for i in range(N) for j in range(i) ] for t in range(T)];
 >>> observations_list = [[(int(random.random()*N),1*(random.random()<0.5),t) for i in range(4)] for t in range(T) ]
 >>> params = sib.Params(fp_rate=0.1, fn_rate=0.22, pautoinf=1e-5)
 
-####### Build a factor graph with everything
->>> f = sib.FactorGraph(contacts=sum(contacts_list, []), observations=sum(observations_list, []), params=params)
->>> for n in f.nodes:
-... 	print("["+" ".join(f"{x:0.7f}" for x in n.ht)+"]")
-[0.1782000 0.1782000 0.0198000 0.0198000 0.0198000 0.0078000 0.0078000]
-[1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000]
-[0.0095832 0.0339768 0.0339768 0.0037752 0.0133848 0.0474552 0.0474552]
-[0.1980000 0.0220000 0.0220000 0.0780000 0.0780000 0.0780000 0.0780000]
-[0.9000000 0.9000000 0.9000000 0.9000000 0.1000000 0.1000000 0.1000000]
-[0.1980000 0.1980000 0.0220000 0.0220000 0.0780000 0.0780000 0.0780000]
-[0.0106480 0.1338480 0.1338480 0.4745520 0.4745520 0.4745520 0.4745520]
-[0.2200000 0.2200000 0.2200000 0.2200000 0.7800000 0.7800000 0.7800000]
-[0.1603800 0.1603800 0.0631800 0.0070200 0.0070200 0.0007800 0.0007800]
-[1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000]
->>> [list(n.hg) for n in f.nodes]
-[[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]
-
 ######## Build factor graph iteratively
 >>> g = sib.FactorGraph(params=params)
 >>> for t in range(T):
-...	for c in contacts_list[t]:
-...		g.append_contact(*c)
-...	for o in observations_list[t]:
-...		g.append_observation(*o)
->>> for n in g.nodes:
-... 	print("["+" ".join(f"{x:0.7f}" for x in n.ht)+"]")
-[0.1782000 0.1782000 0.0198000 0.0198000 0.0198000 0.0078000 0.0078000]
-[1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000]
-[0.0095832 0.0339768 0.0339768 0.0037752 0.0133848 0.0474552 0.0474552]
-[0.1980000 0.0220000 0.0220000 0.0780000 0.0780000 0.0780000 0.0780000]
-[0.9000000 0.9000000 0.9000000 0.9000000 0.1000000 0.1000000 0.1000000]
-[0.1980000 0.1980000 0.0220000 0.0220000 0.0780000 0.0780000 0.0780000]
-[0.0106480 0.1338480 0.1338480 0.4745520 0.4745520 0.4745520 0.4745520]
-[0.2200000 0.2200000 0.2200000 0.2200000 0.7800000 0.7800000 0.7800000]
-[0.1603800 0.1603800 0.0631800 0.0070200 0.0070200 0.0007800 0.0007800]
-[1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000]
->>> [list(n.hg) for n in g.nodes]
-[[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]
+...    for c in contacts_list[t]:
+...            g.append_contact(*c)
+...    for o in observations_list[t]:
+...            g.append_observation(*o)
+>>> random.seed(1)
+>>> #sib.iterate(g, callback=None)
+>>> sib.iterate(g, tol=1e-10, callback=None)
+
+####### Build a factor graph with everything
+>>> f = sib.FactorGraph(contacts=sum(contacts_list, []), observations=sum(observations_list, []), params=params)
+>>> random.seed(1)
+>>> sib.iterate(f, tol=1e-10, callback=None)
+>>> def isapprox(a,b):
+...     return len(a) == len(b) and sum(abs(a[i]-b[i]) for i in range(len(a))) < 1e-8
+>>> [isapprox(f.nodes[i].bt, g.nodes[i].bt) for i in range(len(f.nodes))]
+[True, True, True, True, True, True, True, True, True, True]
+>>> [isapprox(f.nodes[i].bg, g.nodes[i].bg) for i in range(len(f.nodes))]
+[True, True, True, True, True, True, True, True, True, True]
+

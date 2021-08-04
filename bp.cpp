@@ -83,9 +83,9 @@ void FactorGraph::reset_observations(vector<tuple<int, int, times_t> > const & o
 	vector<real_t> pFS(largeT, 1.0), pFI(largeT, 1.0), pTS(largeT, 1.0), pTI(largeT, 1.0);
 
 	for (int t = 1; t < largeT; ++t) {
-		pTI[t] = pTI[t-1] * (1-params.fp_rate);
+		pTI[t] = pTI[t-1] * (1-params.fn_rate);
 		pFI[t] = pFI[t-1] * params.fp_rate;
-		pTS[t] = pTS[t-1] * (1-params.fn_rate);
+		pTS[t] = pTS[t-1] * (1-params.fp_rate);
 		pFS[t] = pFS[t-1] * params.fn_rate;
 	}
 	for (int i = 0; i < int(nodes.size()); ++i) {
@@ -145,11 +145,11 @@ void FactorGraph::set_field(int i, int s, int tobs)
         switch (s) {
                 case 0:
 			for (int t = 0; t < qi; ++t)
-				n.ht[t] *= params.fn_rate * (n.times[t] < tobs) + (1 - params.fn_rate) * (n.times[t] >= tobs);
+				n.ht[t] *= params.fn_rate * (n.times[t] < tobs) + (1 - params.fp_rate) * (n.times[t] >= tobs);
                         break;
                 case 1:
 			for (int t = 0; t < qi; ++t) {
-				n.ht[t] *= (1 - params.fp_rate) * (n.times[t] < tobs) + params.fp_rate * (n.times[t] >= tobs);
+				n.ht[t] *= (1 - params.fn_rate) * (n.times[t] < tobs) + params.fp_rate * (n.times[t] >= tobs);
 				n.hg[t] *= (n.times[t] >= tobs);
 			}
                         break;
