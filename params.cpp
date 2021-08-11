@@ -28,8 +28,8 @@ Params::Params(shared_ptr<Proba> const & pi,
                 throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
         if (!pi || !pr)
                 throw std::invalid_argument("invalid probability definition");
-        obs[0] = shared_ptr<Test>(new Test(1-fn_rate,fn_rate,fn_rate));
-        obs[1] = shared_ptr<Test>(new Test(fp_rate,1-fp_rate,0));
+        obs[0] = shared_ptr<Test>(new Test(1-fp_rate,fn_rate,fn_rate));
+        obs[1] = shared_ptr<Test>(new Test(fp_rate,1-fn_rate,fp_rate));
         obs[2] = shared_ptr<Test>(new Test(0,0,1));
         fakeobs = shared_ptr<Test>(new Test(1,1,1));
 }
