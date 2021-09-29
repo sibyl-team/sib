@@ -6,7 +6,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/ich2wvqxos5lk4o5?svg=true)](https://ci.appveyor.com/project/abraunst/sib)
 [![codecov.io](https://codecov.io/github/sibyl-team/sib/coverage.svg?branch=master)](https://codecov.io/github/sibyl-team/sib?branch=master)
 
-# Sib
+# SIB
 
 > SIB: [S]tatistical [I]nference in Epidemics via [B]elief Propagation
 
