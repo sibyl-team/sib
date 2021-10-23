@@ -19,8 +19,10 @@ def sib_test():
 
 
 __version__ = '0.1.2'
-COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -fopenmp"
-
+COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -fopenmp" #unix
+#COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -Xpreprocessor -fopenmp" #macosx with libomp
+extra_link_args = ["-lgomp", "-lm"] #unix
+#extra_link_args = ["-lomp", "-lm"] #macosx with libomp
 
 
 class get_pybind_include(object):
@@ -54,7 +56,7 @@ ext_modules = [
             "./lib",
         ],
         extra_compile_args=[*COMPILE_FLAGS.split(" ")],
-        extra_link_args=["-lgomp", "-lm"],
+        extra_link_args=extra_link_args,
         language='c++'
     ),
 ]

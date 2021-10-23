@@ -36,6 +36,16 @@ You'll obtain a standalone CLI ./sib, plus a dynamic library containing a python
 
 When not installing with `pip`, make sure to include the `sib` folder into the python path.
 
+### note for macosx users
+
+Use OpenMP with Apple Clang and Homebrew libomp:
+1. Check requirements.
+1. `brew install libomp`
+2. open setup.py and uncomment the following line:
+    - `COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -Xpreprocessor -fopenmp"`
+    - `extra_link_args = ["-lomp", "-lm"]`
+3. `pip install .`
+
 ## Quick start
 
  Have a look at this [notebook](./examples/dummy_test.ipynb).
