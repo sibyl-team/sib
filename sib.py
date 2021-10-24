@@ -51,7 +51,7 @@ def FactorGraph(params = _sib.Params(_sib.Uniform(1.0), _sib.Exponential(0.5), 0
         if len(tests) > 0:
             print("only one between tests and observations is allowed")
             return None
-        tests = [(i, params.fakeobs if s == -1 else params.obs[s],t) for (i,s,t) in observations if s <= 2]
+        tests = [(i, params.fakeobs if s == -1 else params.obs[s],t) for (i,s,t) in observations if s < len(params.obs)]
     return _sib.FactorGraph(params = params, contacts = contacts, tests = tests, individuals = individuals)
 
 

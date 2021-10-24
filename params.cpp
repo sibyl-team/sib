@@ -18,7 +18,7 @@ Params::Params(shared_ptr<Proba> const & pi,
 	real_t learn_rate) :
 		prob_i(pi),
 		prob_r(pr),
-                obs(3),
+                obs(4),
 		pseed(pseed),
 		psus(psus),
 		pautoinf(pautoinf),
@@ -28,9 +28,10 @@ Params::Params(shared_ptr<Proba> const & pi,
                 throw std::domain_error("pseed and psus are exclusive events but pseed+psus>1");
         if (!pi || !pr)
                 throw std::invalid_argument("invalid probability definition");
-        obs[0] = shared_ptr<Test>(new Test(1-fp_rate,fn_rate,1-fp_rate));
+        obs[0] = shared_ptr<Test>(new Test(1-fp_rate,fn_rate,fn_rate));
         obs[1] = shared_ptr<Test>(new Test(fp_rate,1-fn_rate,fp_rate));
         obs[2] = shared_ptr<Test>(new Test(0,0,1));
+        obs[3] = shared_ptr<Test>(new Test(1-fp_rate,fn_rate,1-fp_rate));
         fakeobs = shared_ptr<Test>(new Test(1,1,1));
 }
 
