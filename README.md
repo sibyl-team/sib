@@ -100,8 +100,8 @@ sib.Params(
 ```python
 sib.FactorGraph(
   Params,
-  contacts,
-  observations,
+  contacts = [],
+  tests = [],
   individuals = []
 )
     Construct the factor graph from the list of contacts,
@@ -117,10 +117,8 @@ sib.FactorGraph(
         list of single direct contacts (for bidirectional contacts add also
         the inverse contact). Order of tuple contact: (node_i, node_j, time, lambda)
         The lambdas are the instantaneous probability of infection.
-    observations: list<tuple(int, int, int)>
-        list of single observation on single node a time t. Order of observation tuple:
-        (node_i, state, time)
-        Where state could be 0, 1 or 2 representing susceptible, infected, recovery.
+    tests: list<tuple(int, sib.Test, int)>
+        list of single observation on single node a time t. Order of observation tuple: (node_i, sib.Test, time). sib.Test is a class containing the probability to be susceptible, infected, recovery, given by medical tests or symptoms.
     individuals: list(tuple(int, prior_t, prior_r)) [optional]
         List of tuple where each tuple are the prior on the infectiousness and recoverability of node "i".
 
@@ -128,6 +126,20 @@ sib.FactorGraph(
     ------
       Class FactorGraph
 
+```
+
+```python
+sib.Test(
+  ps = 0.0, 
+  pi = 0.0, 
+  pr = 0.0
+)
+Evidence given by a test.
+    Parameters
+    ----------
+    ps: probability to be susceptible
+    pi: probability to be infected
+    pr: probability to be recovery
 ```
 
 ```python
