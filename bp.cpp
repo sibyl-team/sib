@@ -67,15 +67,6 @@ void FactorGraph::append_observation(int i, shared_ptr<Test> const & o, times_t 
 		nodes[i].obs.push_back(make_tuple(t, o));
 }
 
-void FactorGraph::append_observation(int i, int s, times_t t)
-{
-	add_node(i);
-	append_time(i, t);
-	if (s != -1)
-		nodes[i].obs.push_back(make_tuple(t, params.obs[s]));
-}
-
-
 Mes & operator++(Mes & msg)
 {
 	int oldqj = msg.qj;

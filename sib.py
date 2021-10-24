@@ -41,38 +41,55 @@ def marginal_t(n, t):
     return M
 
 
-def FactorGraph(params = _sib.Params(_sib.Uniform(1.0), _sib.Exponential(0.5), 0.1, 0.45, 0.0, 0.0 ,0.0, 0.0),
+
+
+class FactorGraph(_sib.FactorGraph):
+
+
+    def gettest(self, s):
+        if isinstance(s, int) and s == -1:
+            return self._fakeobs
+        elif isinstance(s, int) and 0 <= s < len(self.puretest):
+            return self.puretest[s]
+        else:
+            return s
+
+    def __init__(self, params = _sib.Params(_sib.Uniform(1.0), _sib.Exponential(0.5), 0.1, 0.45, 0.0, 0.0),
                 contacts = [],
                 observations = [],
                 tests = [],
                 times = [],
                 individuals = []):
-    if len(observations) > 0:
-        if len(tests) > 0:
-            print("only one between tests and observations is allowed")
-            return None
-        tests = [(i, params.fakeobs if s == -1 else params.obs[s],t) for (i,s,t) in observations if s <= 2]
-    return _sib.FactorGraph(params = params, contacts = contacts, tests = tests, individuals = individuals)
+        self.puretest = [_sib.Test(s==0,s==1,s==2) for s in range(3)]
+        self._fakeobs = _sib.Test(1,1,1)
+        tests = [(i, self.gettest(s), t) for (i,s,t) in observations+tests]
+        _sib.FactorGraph.__init__(self, params = params, contacts = contacts, tests = tests, individuals = individuals)
 
+    def append_observation(self, i, s, t):
+        _sib.append_observation(self, i, gettest(s), t)
 
-def iterate(f,
-        maxit=100,
-        tol=1e-3,
-        damping=0.0,
-        learn=False,
-        callback=False
-    ):
-    newline = False
-    if callback == False:
-        callback = lambda t,e,f : print(f"sib.iterate(damp={damping}): {t}/{maxit} {e:1.3e}/{tol}", end='      \r', flush=True)
-        newline = True
-    if callback == None:
-        callback = lambda t,e,f : None
-    for t in range(maxit):
-        err = f.update(damping=damping, learn=learn)
-        if callback(t, err, f)  == False:
-            break;
-        if err < tol:
-            break;
-    if newline:
-        print()
+    def iterate(self,
+            maxit=100,
+            tol=1e-3,
+            damping=0.0,
+            learn=False,
+            callback=False
+        ):
+        newline = False
+        if callback == False:
+            callback = lambda t,e,f : print(f"sib.iterate(damp={damping}): {t}/{maxit} {e:1.3e}/{tol}", end='      \r', flush=True)
+            newline = True
+        if callback == None:
+            callback = lambda t,e,f : None
+        for t in range(maxit):
+            err = self.update(damping=damping, learn=learn)
+            if callback(t, err, self)  == False:
+                break;
+            if err < tol:
+                break;
+        if newline:
+            print()
+
+def iterate(f, maxit=100, tol=1e-3, damping=0.0, learn=False, callback=False):
+    return f.iterate(maxit=maxit, tol=tol, damping=damping, learn=learn, callback=callback)
+

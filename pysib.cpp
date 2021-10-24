@@ -196,20 +196,17 @@ PYBIND11_MODULE(_sib, m) {
 
 
     py::class_<Params>(m, "Params")
-        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t, real_t, real_t>(),
+        .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t>(),
                 "SIB Params class. prob_i and prob_r parameters are defaults.",
                 py::arg("prob_i") = *new Uniform(1.0),
                 py::arg("prob_r") = *new Exponential(0.1),
                 py::arg("pseed") = 0.01,
                 py::arg("psus") = 0.5,
-                py::arg("fp_rate") = 0.0,
-                py::arg("fn_rate") = 0.0,
                 py::arg("pautoinf") = 0.0,
                 py::arg("learn_rate") = 0.0)
 
         .def_readwrite("prob_r", &Params::prob_r)
         .def_readwrite("prob_i", &Params::prob_i)
-        .def_readonly("obs", &Params::obs)
         .def_readonly("fakeobs", &Params::fakeobs)
         .def_readwrite("pseed", &Params::pseed)
         .def_readwrite("psus", &Params::psus)
@@ -223,7 +220,7 @@ PYBIND11_MODULE(_sib, m) {
                 vector<tuple<int,shared_ptr<Test>,times_t>>,
                 vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
                 >(),
-                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0, 0.0, 0.0),
+                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0),
                 py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
                 py::arg("tests") = vector<tuple<int,shared_ptr<Test>,times_t>>(),
                 py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())

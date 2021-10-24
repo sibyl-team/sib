@@ -8,10 +8,12 @@
 ####### Build a contacts and observations
 >>> contacts = [[(t,t+1,t,0.5)] for t in range(T)]
 >>> observations_list = [[(int(random.random()*N),1*(random.random()<0.5),t) for i in range(N)] for t in range(T) ]
->>> params = sib.Params(fp_rate=0.1, fn_rate=0.22, pautoinf=1e-5)
+>>> fp_rate=0.1; fn_rate=0.22
+>>> params = sib.Params(pautoinf=1e-5)
 
 ####### Build a factor graph with contacts and drop two times
 >>> f = sib.FactorGraph(contacts=sum(contacts, []), observations=sum(observations_list, []), params=params)
+>>> f.puretest = [sib.Test(1-fn_rate,fn_rate,1-fn_rate), sib.Test(fp_rate, 1-fp_rate, fp_rate), sib.Test(0,0,1)]
 >>> f.drop_time(0)
 >>> f.drop_time(1)
 >>> sib.iterate(f, tol=1e-10, callback=None)

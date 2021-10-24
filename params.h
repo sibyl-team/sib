@@ -232,13 +232,12 @@ struct PDF : public Proba
 struct Params {
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
-	std::vector<std::shared_ptr<Test>> obs;
 	std::shared_ptr<Test> fakeobs;
 	real_t pseed;
 	real_t psus;
 	real_t pautoinf;
 	real_t learn_rate;
-	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus, real_t fp_rate, real_t fn_rate, real_t pautoinf, real_t learn_rate);
+	Params(std::shared_ptr<Proba> const & pi, std::shared_ptr<Proba> const & pr, real_t pseed, real_t psus, real_t pautoinf, real_t learn_rate);
 };
 
 std::ostream & operator<<(std::ostream &, Params const &);
