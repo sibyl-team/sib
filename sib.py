@@ -66,7 +66,7 @@ class FactorGraph(_sib.FactorGraph):
         _sib.FactorGraph.__init__(self, params = params, contacts = contacts, tests = tests, individuals = individuals)
 
     def append_observation(self, i, s, t):
-        _sib.append_observation(self, i, gettest(s), t)
+        _sib.FactorGraph.append_observation(self, i, self.gettest(s), t)
 
     def iterate(self,
             maxit=100,
