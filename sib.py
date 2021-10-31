@@ -49,10 +49,10 @@ class FactorGraph(_sib.FactorGraph):
     def gettest(self, s):
         if isinstance(s, int) and s == -1:
             return self._fakeobs
-        elif isinstance(s, int) and 0 <= s < len(self.puretest):
-            return self.puretest[s]
-        else:
+        elif isinstance(s, Test):
             return s
+        else:
+            return self.puretest[s]
 
     def __init__(self, params = _sib.Params(_sib.Uniform(1.0), _sib.Exponential(0.5), 0.1, 0.45, 0.0, 0.0),
                 contacts = [],
