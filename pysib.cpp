@@ -1,13 +1,13 @@
 // This file is part of sibilla : inference in epidemics with Belief Propagation
 // Author: Alfredo Braunstein
 
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pytypes.h>
 #include <pybind11/iostream.h>
+#include <pybind11/operators.h>
 #include <string>
 #include <sstream>
 #include <numeric>
@@ -17,144 +17,147 @@
 #include "bp.h"
 #include "drop.h"
 
-
 PYBIND11_MAKE_OPAQUE(std::valarray<real_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<real_t>);
 PYBIND11_MAKE_OPAQUE(std::vector<int>);
 PYBIND11_MAKE_OPAQUE(std::vector<Node>);
+PYBIND11_MAKE_OPAQUE(std::vector<Neigh>);
 
 namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
-
-
-
-
-vector<real_t> make_vector(py::list & l)
+vector<real_t> make_vector(py::list &l)
 {
     vector<real_t> v(l.size());
     int i = 0;
-    for (py::handle o : l) {
+    for (py::handle o : l)
+    {
         v[i++] = py::cast<real_t>(o);
     }
     return v;
 }
 
-map<int, vector<times_t> >
-get_times(FactorGraph const & f) {
-        map<int, vector<times_t> > times;
-        for (int i = 0; i < int(f.nodes.size()); ++i) {
-            times[i] = f.nodes[i].times;
-            times[i].pop_back();
-        }
-        return times;
+map<int, vector<times_t>>
+get_times(FactorGraph const &f)
+{
+    map<int, vector<times_t>> times;
+    for (int i = 0; i < int(f.nodes.size()); ++i)
+    {
+        times[i] = f.nodes[i].times;
+        times[i].pop_back();
+    }
+    return times;
 }
 
 vector<tuple<real_t, real_t, real_t>>
-get_marginal(Node const & n)
+get_marginal(Node const &n)
 {
-        vector<real_t> rbt(n.bt.size());
-        vector<real_t> lbg(n.bg.size());
-        int const T = n.bt.size() - 1;
-        lbg[0] = n.bg[0];
-        rbt[T] = n.bt[T];
-        for (int t = 1; t <= T; ++t) {
-            lbg[t] = lbg[t-1] + n.bg[t];
-            rbt[T - t] = rbt[T - t + 1] + n.bt[T - t];
-        }
-        auto marg = vector<tuple<real_t, real_t, real_t>>(T-1);
-        for (int t = 1; t < T; ++t)
-            marg[t-1] = make_tuple(rbt[t], 1-rbt[t]-lbg[t-1], lbg[t-1]);
-        return marg;
+    vector<real_t> rbt(n.bt.size());
+    vector<real_t> lbg(n.bg.size());
+    int const T = n.bt.size() - 1;
+    lbg[0] = n.bg[0];
+    rbt[T] = n.bt[T];
+    for (int t = 1; t <= T; ++t)
+    {
+        lbg[t] = lbg[t - 1] + n.bg[t];
+        rbt[T - t] = rbt[T - t + 1] + n.bt[T - t];
+    }
+    auto marg = vector<tuple<real_t, real_t, real_t>>(T - 1);
+    for (int t = 1; t < T; ++t)
+        marg[t - 1] = make_tuple(rbt[t], 1 - rbt[t] - lbg[t - 1], lbg[t - 1]);
+    return marg;
 }
 
-tuple<real_t, real_t, real_t> get_marginal_index(Node const & n, int t)
+tuple<real_t, real_t, real_t> get_marginal_index(Node const &n, int t)
 {
-        if (t < 0 || t >= int(n.bt.size()) - 2)
-            throw py::key_error("Time out of range");
-        return get_marginal(n)[t];
+    if (t < 0 || t >= int(n.bt.size()) - 2)
+        throw py::key_error("Time out of range");
+    return get_marginal(n)[t];
 }
 
-
-
-void check_index(FactorGraph const & G, int i)
+void check_index(FactorGraph const &G, int i)
 {
-        if (i < 0 || i >= int(G.nodes.size()))
-                throw invalid_argument("unexistent index");
-
+    if (i < 0 || i >= int(G.nodes.size()))
+        throw invalid_argument("unexistent index");
 }
 
-
-template<int i>
-real_t mygetter(Proba & p)
+template <int i>
+real_t mygetter(Proba &p)
 {
     return p.theta[i];
 }
 
-template<int i>
-void mysetter(Proba & p, real_t x)
+template <int i>
+void mysetter(Proba &p, real_t x)
 {
     p.theta[i] = x;
 }
 
-PYBIND11_MODULE(_sib, m) {
+PYBIND11_MODULE(_sib, m)
+{
     py::class_<RealParams>(m, "RealParams", py::buffer_protocol())
-        .def(py::init([](py::buffer const b) {
+        .def(py::init([](py::buffer const b)
+                      {
                 py::buffer_info info = b.request();
                 if (info.format != py::format_descriptor<real_t>::format() || info.ndim != 1)
                 throw std::runtime_error("Incompatible buffer format!");
 
                 auto v = new RealParams(info.shape[0]);
                 memcpy(&(*v)[0], info.ptr, sizeof(real_t) * (size_t) (v->size()));
-                return v;
-                }))
-        .def(py::init([](vector<real_t> const & p)->RealParams {return RealParams(&p[0], p.size());}))
-        .def(py::init([](py::list & l)->RealParams {auto v = make_vector(l); return RealParams(&v[0], v.size());}))
-        .def_buffer([](RealParams &p) -> py::buffer_info {
-            return py::buffer_info(
-                &p[0],                               /* Pointer to buffer */
-                sizeof(real_t),                          /* Size of one scalar */
-                py::format_descriptor<real_t>::format(), /* Python struct-style format descriptor */
-                1,                                      /* Number of dimensions */
-                { p.size() },                 /* Buffer dimensions */
-                { sizeof(real_t) }             /* Strides (in bytes) for each index */
-                );
-        })
-        .def("__add__", [](RealParams & p, RealParams & q)->RealParams { return p + q; })
-        .def("__getitem__", [](const RealParams &p, ssize_t i) {
+                return v; }))
+        .def(py::init([](vector<real_t> const &p) -> RealParams
+                      { return RealParams(&p[0], p.size()); }))
+        .def(py::init([](py::list &l) -> RealParams
+                      {auto v = make_vector(l); return RealParams(&v[0], v.size()); }))
+        .def_buffer([](RealParams &p) -> py::buffer_info
+                    { return py::buffer_info(
+                          &p[0],                                   /* Pointer to buffer */
+                          sizeof(real_t),                          /* Size of one scalar */
+                          py::format_descriptor<real_t>::format(), /* Python struct-style format descriptor */
+                          1,                                       /* Number of dimensions */
+                          {p.size()},                              /* Buffer dimensions */
+                          {sizeof(real_t)}                         /* Strides (in bytes) for each index */
+                      ); })
+        .def("__add__", [](RealParams &p, RealParams &q) -> RealParams
+             { return p + q; })
+        .def("__getitem__", [](const RealParams &p, ssize_t i)
+             {
                 if (i > int(p.size()))
                     throw py::index_error();
-                return p[i];
-                })
-        .def("__setitem__", [](RealParams &p, ssize_t i, real_t v) {
+                return p[i]; })
+        .def("__setitem__", [](RealParams &p, ssize_t i, real_t v)
+             {
                 if (i > int(p.size()))
                     throw py::index_error();
-                p[i] = v;
-                })
-        .def("__repr__", [](RealParams &p) {
+                p[i] = v; })
+        .def("__repr__", [](RealParams &p)
+             {
                     string s = "RealParams([";
                     for (size_t i = 0; i < p.size(); ++i)
                         s += (i ? ",":"") + lexical_cast<string>(p[i]);
                     s+="])";
-                    return s;
-                });
+                    return s; });
     // py::add_ostream_redirect(m, "ostream_redirect");
     py::bind_vector<std::vector<int>>(m, "VectorInt");
     py::bind_vector<std::vector<real_t>>(m, "VectorReal");
     py::bind_vector<std::vector<Node>>(m, "VectorNode");
+    py::bind_vector<std::vector<Neigh>>(m, "VectorNeigh");
 
     py::class_<Test, shared_ptr<Test>>(m, "Test")
-        .def(py::init<real_t,real_t,real_t>(), py::arg("ps")=0.0, py::arg("pi")=0.0, py::arg("pr")=0.0)
-        .def(py::init([](int s)->Test{return Test(s==0, s==1, s==2);}))
+        .def(py::init<real_t, real_t, real_t>(), py::arg("ps") = 0.0, py::arg("pi") = 0.0, py::arg("pr") = 0.0)
+        .def(py::init([](int s) -> Test
+                      { return Test(s == 0, s == 1, s == 2); }))
         .def("__repr__", &lexical_cast<string, Test>)
         .def_readwrite("ps", &Test::ps, "probability of S")
         .def_readwrite("pi", &Test::pi, "probability of I")
         .def_readwrite("pr", &Test::pr, "probability of R");
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
-        .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
-        .def("grad", [](Proba const & p, real_t d) { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta;} )
+        .def("__call__", [](Proba const &p, real_t d)
+             { return p(d); })
+        .def("grad", [](Proba const &p, real_t d)
+             { RealParams dtheta(0.0, p.theta.size()); p.grad(dtheta, d); return dtheta; })
         .def("__repr__", &lexical_cast<string, Proba>)
         .def_readwrite("theta", &Proba::theta);
 
@@ -174,7 +177,11 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<ConstantRate, Proba, shared_ptr<ConstantRate>>(m, "ConstantRate")
         .def(py::init<real_t, real_t>(), py::arg("gamma") = 1.0, py::arg("Dt") = 1.0)
         .def_property("gamma", &mygetter<0>, &mysetter<0>)
-        .def_property("Dt", [](ConstantRate & p){ return p.Dt; }, [](ConstantRate & p, real_t Dt) { p.Dt = Dt; });
+        .def_property(
+            "Dt", [](ConstantRate &p)
+            { return p.Dt; },
+            [](ConstantRate &p, real_t Dt)
+            { p.Dt = Dt; });
 
     py::class_<UnnormalizedGammaPDF, Proba, shared_ptr<UnnormalizedGammaPDF>>(m, "UnnormalizedGammaPDF")
         .def(py::init<real_t, real_t>(), py::arg("k") = 1.0, py::arg("mu") = 0.1)
@@ -194,16 +201,15 @@ PYBIND11_MODULE(_sib, m) {
     py::class_<PDF, Proba, shared_ptr<PDF>>(m, "PDF")
         .def(py::init<std::shared_ptr<Proba> const &>());
 
-
     py::class_<Params>(m, "Params")
         .def(py::init<shared_ptr<Proba> const &, shared_ptr<Proba> const &, real_t, real_t, real_t, real_t>(),
-                "SIB Params class. prob_i and prob_r parameters are defaults.",
-                py::arg("prob_i") = *new Uniform(1.0),
-                py::arg("prob_r") = *new Exponential(0.1),
-                py::arg("pseed") = 0.01,
-                py::arg("psus") = 0.5,
-                py::arg("pautoinf") = 0.0,
-                py::arg("learn_rate") = 0.0)
+             "SIB Params class. prob_i and prob_r parameters are defaults.",
+             py::arg("prob_i") = *new Uniform(1.0),
+             py::arg("prob_r") = *new Exponential(0.1),
+             py::arg("pseed") = 0.01,
+             py::arg("psus") = 0.5,
+             py::arg("pautoinf") = 0.0,
+             py::arg("learn_rate") = 0.0)
 
         .def_readwrite("prob_r", &Params::prob_r)
         .def_readwrite("prob_i", &Params::prob_i)
@@ -216,54 +222,56 @@ PYBIND11_MODULE(_sib, m) {
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
-                vector<tuple<int,int,times_t,real_t>>,
-                vector<tuple<int,shared_ptr<Test>,times_t>>,
-                vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>
-                >(),
-                py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0),
-                py::arg("contacts") = vector<tuple<int,int,times_t,real_t>>(),
-                py::arg("tests") = vector<tuple<int,shared_ptr<Test>,times_t>>(),
-                py::arg("individuals") = vector<tuple<int,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>,shared_ptr<Proba>>>())
+                      vector<tuple<int, int, times_t, real_t>>,
+                      vector<tuple<int, shared_ptr<Test>, times_t>>,
+                      vector<tuple<int, shared_ptr<Proba>, shared_ptr<Proba>, shared_ptr<Proba>, shared_ptr<Proba>>>>(),
+             py::arg("params") = Params(shared_ptr<Proba>(new Uniform(1.0)), shared_ptr<Proba>(new Exponential(0.5)), 0.1, 0.45, 0.0, 0.0),
+             py::arg("contacts") = vector<tuple<int, int, times_t, real_t>>(),
+             py::arg("tests") = vector<tuple<int, shared_ptr<Test>, times_t>>(),
+             py::arg("individuals") = vector<tuple<int, shared_ptr<Proba>, shared_ptr<Proba>, shared_ptr<Proba>, shared_ptr<Proba>>>())
         .def("update", &FactorGraph::iteration,
-                py::arg("damping") = 0.0,
-                py::arg("learn") = false,
-                "perform one iteration")
+             py::arg("damping") = 0.0,
+             py::arg("learn") = false,
+             "perform one iteration")
         .def("loglikelihood", &FactorGraph::loglikelihood, "compute the bethe log-likelihood")
         .def("__repr__", &lexical_cast<string, FactorGraph>)
-        .def("append_contact", (void (FactorGraph::*)(int,int,times_t,real_t,real_t)) &FactorGraph::append_contact,
-                py::arg("i"),
-                py::arg("j"),
-                py::arg("t"),
-                py::arg("lambdaij"),
-                py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE),
-                "appends a new contact from i to j at time t with transmission probabilities lambdaij, lambdaji")
+        .def("append_contact", (void(FactorGraph::*)(int, int, times_t, real_t, real_t)) & FactorGraph::append_contact,
+             py::arg("i"),
+             py::arg("j"),
+             py::arg("t"),
+             py::arg("lambdaij"),
+             py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE),
+             "appends a new contact from i to j at time t with transmission probabilities lambdaij, lambdaji")
         .def("reset_observations", &FactorGraph::reset_observations,
-                py::arg("obs"),
-                "resets all observations")
-        .def("append_observation", (void (FactorGraph::*)(int,int,times_t)) &FactorGraph::append_observation,
-                py::arg("i"),
-                py::arg("s"),
-                py::arg("t"),
-                "adds a new observation state s to node i at time t")
-        .def("append_observation", (void (FactorGraph::*)(int,shared_ptr<Test> const &,times_t)) &FactorGraph::append_observation,
-                py::arg("i"),
-                py::arg("o"),
-                py::arg("t"),
-                "adds a new test o to node i at time t")
+             py::arg("obs"),
+             "resets all observations")
+        .def("append_observation", (void(FactorGraph::*)(int, int, times_t)) & FactorGraph::append_observation,
+             py::arg("i"),
+             py::arg("s"),
+             py::arg("t"),
+             "adds a new observation state s to node i at time t")
+        .def("append_observation", (void(FactorGraph::*)(int, shared_ptr<Test> const &, times_t)) & FactorGraph::append_observation,
+             py::arg("i"),
+             py::arg("o"),
+             py::arg("t"),
+             "adds a new test o to node i at time t")
         .def("show", &FactorGraph::show_graph)
         .def("drop_contacts", &FactorGraph::drop_contacts, "drop contacts at time t (first time)")
         .def("drop_time", &drop_time, "drop time t (first time)")
         .def("drop_sc", &drop_sc,
-                py::arg("t"),
-                py::arg("maxit_bp") = 1,
-                py::arg("tol_bp") = 1e-3,
-                py::arg("damping_bp") = 0.0,
-                py::arg("maxit_sc") = 20,
-                py::arg("tol_sc") = 1e-3,
-                py::arg("damping_sc") = 0.1,
-                "drop contacts at time t (first time), adjusting fields")
+             py::arg("t"),
+             py::arg("maxit_bp") = 1,
+             py::arg("tol_bp") = 1e-3,
+             py::arg("damping_bp") = 0.0,
+             py::arg("maxit_sc") = 20,
+             py::arg("tol_sc") = 1e-3,
+             py::arg("damping_sc") = 0.1,
+             "drop contacts at time t (first time), adjusting fields")
 
-        .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
+        .def(
+            "showmsg", [](FactorGraph &f)
+            { f.show_msg(std::cout); },
+            "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
         .def_readonly("params", &FactorGraph::params, "parameters");
 
@@ -272,6 +280,7 @@ PYBIND11_MODULE(_sib, m) {
         .def("marginal_index", &get_marginal_index, "marginal at a given time (excluding time -1)")
         .def_readwrite("ht", &Node::ht, "external prior on ti")
         .def_readwrite("hg", &Node::hg, "external prior on gi")
+        .def_readonly("neighs", &Node::neighs, "list of neighbors")
         .def_readonly("bt", &Node::bt, "belief on ti")
         .def_readonly("bg", &Node::bg, "belief on gi")
         .def_readonly("err", &Node::err_, "error on update")
@@ -284,6 +293,25 @@ PYBIND11_MODULE(_sib, m) {
         .def_readonly("prob_i0", &Node::prob_i0, "probability of infection as function of t-ti for ti=0")
         .def_readonly("prob_r0", &Node::prob_r0, "cumulative probability of recovery P(tr>t) for ti=0");
 
+    py::class_<Neigh>(m, "Neighbor", "SIB class representing a neighbor")
+        .def_readwrite("msg", &Neigh::msg, "messages to neighbor");
+
+    py::class_<Mes>(m, "BP message", "SIB class representing a BP message")
+        .def("size", &Mes::size, "size of message q*q")
+        .def("dim", &Mes::dim, "dim of message q, 0<=sij,sji<q")
+        .def("init_rand", &Mes::init_rand, "initialize random message (rand stdlib)")
+        .def("init_uniform", &Mes::init_uniform, "initialize uniform message (1.)")
+        .def("__call__", &Mes::val, py::arg("sji"), py::arg("sij"), "value of message in sji, sij");
+
+    m.def("msg_val", [](const Mes &a, int sji, int sij)
+          { return a(sji, sij); });
+    m.def("msg_val", [](Mes &a, int sji, int sij)
+          { return a(sji, sij); });
+    //.def("__call__", [](int,int)) & Mes::operator(), py::arg("sji"), py::arg("sij"));
+
     m.def("set_num_threads", &omp_set_num_threads, "sets the maximum number of simultaneous cpu threads");
-    m.def("version", [](){return VERSION;}, "compiled version of sib");
+    m.def(
+        "version", []()
+        { return VERSION; },
+        "compiled version of sib");
 }
