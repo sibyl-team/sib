@@ -40,11 +40,12 @@ When not installing with `pip`, make sure to include the `sib` folder into the p
 
 Use OpenMP with Apple Clang and Homebrew libomp:
 1. Check requirements.
-1. `brew install libomp`
-2. open setup.py and uncomment the following line:
+2. Create a conda env (tested with python=3.8) and activate it
+3. `conda install openmp`
+4. open setup.py and uncomment the following line:
     - `COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -Xpreprocessor -fopenmp"`
     - `extra_link_args = ["-lomp", "-lm"]`
-3. `pip install .`
+5. `pip install .` in the sib folder.
 
 ## Quick start
 
