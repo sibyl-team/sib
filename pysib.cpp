@@ -212,7 +212,15 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("psus", &Params::psus)
         .def_readwrite("pautoinf", &Params::pautoinf)
         .def_readwrite("learn_rate", &Params::learn_rate)
-        .def("__repr__", &lexical_cast<string, Params>);
+        .def("__repr__", &lexical_cast<string, Params>)
+        .def("__copy__", [](const Params &s){
+            return Params(s); 
+        })
+        .def("__deepcopy__", [](const Params &s, py::dict){
+            return Params(s); 
+        }, "memo"_a);
+
+        ;
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
