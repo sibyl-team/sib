@@ -150,7 +150,19 @@ PYBIND11_MODULE(_sib, m) {
         .def("__repr__", &lexical_cast<string, Test>)
         .def_readwrite("ps", &Test::ps, "probability of S")
         .def_readwrite("pi", &Test::pi, "probability of I")
-        .def_readwrite("pr", &Test::pr, "probability of R");
+        .def_readwrite("pr", &Test::pr, "probability of R")
+        .def(py::pickle(
+            [](const Test &t){ //__getstate__
+                return py::make_tuple(t.ps, t.pi, t.pr);
+            },
+            [](py::tuple p){ //__set_state__
+                if (p.size()!=3)
+                    throw std::runtime_error("Invalid pickling state!");
+                Test test = Test(p[0].cast<real_t>(), p[1].cast<real_t>(),
+                    p[2].cast<real_t>());
+                return test;
+            }
+        ));
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
