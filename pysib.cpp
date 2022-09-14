@@ -218,7 +218,7 @@ PYBIND11_MODULE(_sib, m) {
         })
         .def("__deepcopy__", [](const Params &s, py::dict){
             return Params(s); 
-        }, "memo"_a);
+        }, "memo");
 
         ;
 
