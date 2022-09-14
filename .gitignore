@@ -11,3 +11,5 @@ __pycache__/
 # python build files
 build/
 sib.egg-info/
+
+.eggs
