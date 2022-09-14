@@ -220,8 +220,6 @@ PYBIND11_MODULE(_sib, m) {
             return Params(s); 
         }, "memo");
 
-        ;
-
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
                 vector<tuple<int,int,times_t,real_t>>,
@@ -273,7 +271,13 @@ PYBIND11_MODULE(_sib, m) {
 
         .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
-        .def_readonly("params", &FactorGraph::params, "parameters");
+        .def_readonly("params", &FactorGraph::params, "parameters")
+        .def("__copy__", [](const FactorGraph &s){
+            return FactorGraph(s); 
+        })
+        .def("__deepcopy__", [](const FactorGraph &s, py::dict){
+            return FactorGraph(s); 
+        }, "memo");
 
     py::class_<Node>(m, "Node", "SIB class representing an individual")
         .def("marginal", &get_marginal, "compute marginal probabilities (pS,pI,pR) corresponding to times n.times[1:]")
