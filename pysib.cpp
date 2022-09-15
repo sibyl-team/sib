@@ -27,7 +27,7 @@ namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
-
+using namespace pybind11::literals;
 
 
 
@@ -155,7 +155,7 @@ PYBIND11_MODULE(_sib, m) {
             [](const Test &t){ //__getstate__
                 return py::make_tuple(t.ps, t.pi, t.pr);
             },
-            [](py::tuple p){ //__set_state__
+            [](py::tuple p){ //__setstate__
                 if (p.size()!=3)
                     throw std::runtime_error("Invalid pickling state!");
                 Test test = Test(p[0].cast<real_t>(), p[1].cast<real_t>(),
@@ -230,7 +230,7 @@ PYBIND11_MODULE(_sib, m) {
         })
         .def("__deepcopy__", [](const Params &s, py::dict){
             return Params(s); 
-        }, "memo");
+        }, "memo"_a);
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
@@ -289,7 +289,7 @@ PYBIND11_MODULE(_sib, m) {
         })
         .def("__deepcopy__", [](const FactorGraph &s, py::dict){
             return FactorGraph(s); 
-        }, "memo");
+        }, "memo"_a);
 
     py::class_<Node>(m, "Node", "SIB class representing an individual")
         .def("marginal", &get_marginal, "compute marginal probabilities (pS,pI,pR) corresponding to times n.times[1:]")
