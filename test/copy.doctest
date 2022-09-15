@@ -1,0 +1,21 @@
+>>> import sib
+>>> import copy
+>>> 
+>>> t = sib.Test(0.1,0.6,0.3)
+>>> 
+>>> copy.copy(t)
+Test(ps=0.1, pi=0.6, pr=0.3)
+>>> memo = dict()
+>>> copy.deepcopy(t, memo)
+Test(ps=0.1, pi=0.6, pr=0.3)
+>>> 
+>>> 
+>>> par = sib.Params(prob_i=sib.Gamma(0.6,0.1),prob_r=sib.Exponential(mu=0.2),
+...     pseed=0.01,
+...     psus=0.5,
+...     pautoinf=1e-6,
+... )
+>>> copy.copy(par)
+Params(prob_i=Gamma(0.6,0.1),prob_r=Exponential(0.2),pseed=0.01,psus=0.5,pautoinf=1e-06),learn_rate=0)
+>>> copy.deepcopy(par, memo)
+Params(prob_i=Gamma(0.6,0.1),prob_r=Exponential(0.2),pseed=0.01,psus=0.5,pautoinf=1e-06),learn_rate=0)

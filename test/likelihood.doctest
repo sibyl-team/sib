@@ -32,3 +32,16 @@ FactorGraph
 >>> sib.iterate(f, tol=1e-15, callback=None)
 >>> f.loglikelihood()
 -9535.906070631045
+
+### test copying of FactorGraph
+>>> import copy
+>>> copy.copy(f)
+FactorGraph
+            nodes: 101
+            edges: 100 (100 asymmetric)
+    time contacts: 100
+>>> copy.deepcopy(f)
+FactorGraph
+            nodes: 101
+            edges: 100 (100 asymmetric)
+    time contacts: 100
