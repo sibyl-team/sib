@@ -27,7 +27,7 @@ namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
-
+using namespace pybind11::literals;
 
 
 
@@ -150,7 +150,19 @@ PYBIND11_MODULE(_sib, m) {
         .def("__repr__", &lexical_cast<string, Test>)
         .def_readwrite("ps", &Test::ps, "probability of S")
         .def_readwrite("pi", &Test::pi, "probability of I")
-        .def_readwrite("pr", &Test::pr, "probability of R");
+        .def_readwrite("pr", &Test::pr, "probability of R")
+        .def(py::pickle(
+            [](const Test &t){ //__getstate__
+                return py::make_tuple(t.ps, t.pi, t.pr);
+            },
+            [](py::tuple p){ //__setstate__
+                if (p.size()!=3)
+                    throw std::runtime_error("Invalid pickling state!");
+                Test test = Test(p[0].cast<real_t>(), p[1].cast<real_t>(),
+                    p[2].cast<real_t>());
+                return test;
+            }
+        ));
 
     py::class_<Proba, shared_ptr<Proba>>(m, "Proba")
         .def("__call__", [](Proba const & p, real_t d) { return p(d); } )
@@ -212,7 +224,13 @@ PYBIND11_MODULE(_sib, m) {
         .def_readwrite("psus", &Params::psus)
         .def_readwrite("pautoinf", &Params::pautoinf)
         .def_readwrite("learn_rate", &Params::learn_rate)
-        .def("__repr__", &lexical_cast<string, Params>);
+        .def("__repr__", &lexical_cast<string, Params>)
+        .def("__copy__", [](const Params &s){
+            return Params(s); 
+        })
+        .def("__deepcopy__", [](const Params &s, py::dict){
+            return Params(s); 
+        }, "memo"_a);
 
     py::class_<FactorGraph>(m, "FactorGraph", "SIB class representing the graphical model of the epidemics")
         .def(py::init<Params const &,
@@ -265,7 +283,13 @@ PYBIND11_MODULE(_sib, m) {
 
         .def("showmsg", [](FactorGraph & f){f.show_msg(std::cout);}, "show messages for debugging")
         .def_readonly("nodes", &FactorGraph::nodes, "all nodes in this FactorGraph")
-        .def_readonly("params", &FactorGraph::params, "parameters");
+        .def_readonly("params", &FactorGraph::params, "parameters")
+        .def("__copy__", [](const FactorGraph &s){
+            return FactorGraph(s); 
+        })
+        .def("__deepcopy__", [](const FactorGraph &s, py::dict){
+            return FactorGraph(s); 
+        }, "memo"_a);
 
     py::class_<Node>(m, "Node", "SIB class representing an individual")
         .def("marginal", &get_marginal, "compute marginal probabilities (pS,pI,pR) corresponding to times n.times[1:]")
