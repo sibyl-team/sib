@@ -28,7 +28,7 @@ ALL_OBS_FILE= "all_obs.json.bz2"
 ALL_EPI = "all_epidemies"
 
 NAMES_COLS_CONTACTS = ["t","i","j","lambda"]
-CONTACTS_DTYPES = dict(zip(NAMES_COLS_CONTACTS,(np.int,np.int,np.int,np.float) ))
+CONTACTS_DTYPES = dict(zip(NAMES_COLS_CONTACTS,(np.int_,np.int_,np.int_,np.float_) ))
 
 
 
