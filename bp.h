@@ -24,6 +24,7 @@ struct Message : public std::vector<T>
 	Message(size_t qj) : std::vector<T>(qj*qj), qj(qj) {}
 	void clear() { for (int i = 0; i < int(std::vector<T>::size()); ++i) std::vector<T>::operator[](i)*=0.0; }
 	size_t dim() const { return qj;}
+	//map reference from 2D to 1D
 	inline T & operator()(int sji, int sij) { return std::vector<T>::operator[](qj * sij + sji); }
 	inline T const & operator()(int sji, int sij) const { return std::vector<T>::operator[](qj * sij + sji); }
 	size_t qj;
