@@ -83,3 +83,66 @@ instance 47: True
 instance 48: True
 instance 49: True
 
+>>> cts = contacts.to_records(index=False)
+>>> for inst in range(n_inst):
+... 	obs = list(obs_all_df[inst].to_records(index=False))
+... 	obs = [(i,tests[s],t) for (i,s,t) in obs]
+... 	fg = sib.FactorGraph(params=sib_pars)
+...     fg.append_contacts_npy(cts["i"], cts["j"], cts["t"], cts["lambda"])
+...     for o in obs:
+...         fg.append_observation(*o)
+... 	sib.iterate(fg,200,1e-20,callback=None)
+... 	s = 0.0
+... 	for i in range(len(fg.nodes)):
+...         s += sum(abs(beliefs[f"{inst}_{i}"][0]-np.array(fg.nodes[i].bt)))
+... 	print(f"instance {inst}: {s < 1e-10}")
+instance 0: True
+instance 1: True
+instance 2: True
+instance 3: True
+instance 4: True
+instance 5: True
+instance 6: True
+instance 7: True
+instance 8: True
+instance 9: True
+instance 10: True
+instance 11: True
+instance 12: True
+instance 13: True
+instance 14: True
+instance 15: True
+instance 16: True
+instance 17: True
+instance 18: True
+instance 19: True
+instance 20: True
+instance 21: True
+instance 22: True
+instance 23: True
+instance 24: True
+instance 25: True
+instance 26: True
+instance 27: True
+instance 28: True
+instance 29: True
+instance 30: True
+instance 31: True
+instance 32: True
+instance 33: True
+instance 34: True
+instance 35: True
+instance 36: True
+instance 37: True
+instance 38: True
+instance 39: True
+instance 40: True
+instance 41: True
+instance 42: True
+instance 43: True
+instance 44: True
+instance 45: True
+instance 46: True
+instance 47: True
+instance 48: True
+instance 49: True

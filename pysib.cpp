@@ -27,7 +27,41 @@ namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
+template <typename T>
+struct NpyArrayC{ 
+ typedef py::array_t<T,py::array::c_style | py::array::forcecast> typ;
+};
 
+void append_contacts_numpy(FactorGraph &G, NpyArrayC<int>::typ &from, NpyArrayC<int>::typ &to,
+     NpyArrayC<int>::typ &times, NpyArrayC<real_t>::typ &lambdas){
+
+    auto buf_i = from.request();
+    auto buf_j = to.request();
+    auto buf_t = times.request();
+
+    auto buf_lam = lambdas.request();
+
+    if (buf_i.ndim !=1 || buf_j.ndim !=1 || buf_t.ndim != 1 || buf_lam.ndim != 1)
+    {
+        throw std::runtime_error("Provide vectors of single dimension");
+    }
+
+    auto mlen = buf_i.shape[0];
+    if(buf_j.shape[0]!=mlen || buf_t.shape[0]!=mlen || buf_lam.shape[0]!=mlen){
+        throw std::runtime_error("Vectors have to be equal in length");
+    }
+
+    //pointers to memory
+    auto ptr_i = static_cast<int*>(buf_i.ptr);
+    auto ptr_j = static_cast<int*>(buf_j.ptr);
+    auto ptr_t = static_cast<int*>(buf_t.ptr);
+    auto ptr_lam = static_cast<real_t*>(buf_lam.ptr);
+    for(int k=0; k<mlen; k++){
+        //cerr << ptr_i[k] << " -> "<<ptr_j[k] <<", t: "<<ptr_t[k]<<", lam: "<<ptr_lam[k]<<endl;
+        G.append_contact(ptr_i[k], ptr_j[k], ptr_t[k], ptr_lam[k]);
+    }
+
+}
 
 
 
@@ -237,6 +271,13 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("lambdaij"),
                 py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE),
                 "appends a new contact from i to j at time t with transmission probabilities lambdaij, lambdaji")
+        .def("append_contacts_npy", &append_contacts_numpy,
+                py::arg("arr_i"),
+                py::arg("arr_j"),
+                py::arg("arr_t"),
+                py::arg("arr_lambs"),
+                "Append many contacts from numpy arrays"
+        )
         .def("reset_observations", &FactorGraph::reset_observations,
                 py::arg("obs"),
                 "resets all observations")
