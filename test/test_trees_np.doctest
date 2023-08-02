@@ -19,14 +19,16 @@ Number of instances: 50
 
 ### TEST RESULTS
 >>> beliefs = np.load(folder_data / "beliefs_tree.npz")
->>> contacts_sib = list(contacts.to_records(index=False))
->>> all_marginals = []
->>> sib_pars = sib.Params(prob_r=sib.Gamma(mu=params["mu"]))
 >>> tests = [sib.Test(s==0,s==1,s==2) for s in range(3)]
+>>> sib_pars = sib.Params(prob_r=sib.Gamma(mu=params["mu"]))
+>>> cts = contacts.to_records(index=False)
 >>> for inst in range(n_inst):
 ... 	obs = list(obs_all_df[inst].to_records(index=False))
 ... 	obs = [(i,tests[s],t) for (i,s,t) in obs]
-... 	fg = sib.FactorGraph(params=sib_pars, contacts=contacts_sib, tests=obs)
+... 	fg = sib.FactorGraph(params=sib_pars)
+...     fg.append_contacts_npy(cts["i"], cts["j"], cts["t"], cts["lambda"])
+...     for o in obs:
+...         fg.append_observation(*o)
 ... 	sib.iterate(fg,200,1e-20,callback=None)
 ... 	s = 0.0
 ... 	for i in range(len(fg.nodes)):

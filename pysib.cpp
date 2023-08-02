@@ -56,9 +56,15 @@ void append_contacts_numpy(FactorGraph &G, NpyArrayC<int>::typ &from, NpyArrayC<
     auto ptr_j = static_cast<int*>(buf_j.ptr);
     auto ptr_t = static_cast<int*>(buf_t.ptr);
     auto ptr_lam = static_cast<real_t*>(buf_lam.ptr);
+    // first loop -> add nodes to the graph if needed
+    // second loop in parallel -> expand times and messages
+    // check for uniqueness of (i,j)
     for(int k=0; k<mlen; k++){
         //cerr << ptr_i[k] << " -> "<<ptr_j[k] <<", t: "<<ptr_t[k]<<", lam: "<<ptr_lam[k]<<endl;
-        G.append_contact(ptr_i[k], ptr_j[k], ptr_t[k], ptr_lam[k]);
+       //G.append_contact(ptr_i[k], ptr_j[k], ptr_t[k], ptr_lam[k]);
+       G.check_neighbors(ptr_i[k], ptr_j[k]);
+       G.add_contact_single(ptr_i[k], ptr_j[k], ptr_t[k],ptr_lam[k]);
+       G.add_contact_single(ptr_j[k], ptr_i[k],ptr_t[k], FactorGraph::DO_NOT_OVERWRITE);
     }
 
 }
