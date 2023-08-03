@@ -14,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include <iterator>
 #include <exception>
+#include <unordered_map>
 #include "bp.h"
 #include "drop.h"
 
@@ -59,12 +60,54 @@ void append_contacts_numpy(FactorGraph &G, NpyArrayC<int>::typ &from, NpyArrayC<
     // first loop -> add nodes to the graph if needed
     // second loop in parallel -> expand times and messages
     // check for uniqueness of (i,j)
+    typedef std::unordered_map<int, vector<tuple<int, int, real_t> > > mapType;
+    unordered_map<int, vector<tuple<int, int, real_t> > > itolistmap;
     for(int k=0; k<mlen; k++){
         //cerr << ptr_i[k] << " -> "<<ptr_j[k] <<", t: "<<ptr_t[k]<<", lam: "<<ptr_lam[k]<<endl;
        //G.append_contact(ptr_i[k], ptr_j[k], ptr_t[k], ptr_lam[k]);
+       auto i = ptr_i[k];
+       auto j = ptr_j[k];
+       auto t = ptr_t[k];
+       auto lam = ptr_lam[k];
        G.check_neighbors(ptr_i[k], ptr_j[k]);
-       G.add_contact_single(ptr_i[k], ptr_j[k], ptr_t[k],ptr_lam[k]);
-       G.add_contact_single(ptr_j[k], ptr_i[k],ptr_t[k], FactorGraph::DO_NOT_OVERWRITE);
+       //G.add_contact_single(ptr_i[k], ptr_j[k], ptr_t[k],ptr_lam[k]);
+       //G.add_contact_single(ptr_j[k], ptr_i[k],ptr_t[k], FactorGraph::DO_NOT_OVERWRITE);
+       // find vector
+       auto vec_l = itolistmap.find(i);
+       if( vec_l != itolistmap.end()){
+         //append
+         vec_l->second.push_back( make_tuple(j, t, lam));
+       }else{
+            vector<tuple<int, int, real_t> > mvec {make_tuple(j,t,lam)};
+            itolistmap.emplace(make_pair(i,mvec));
+       }
+       //REVERSE
+       vec_l = itolistmap.find(j);
+       if( vec_l != itolistmap.end()){
+         //append
+         vec_l->second.push_back( make_tuple(i, t, FactorGraph::DO_NOT_OVERWRITE));
+       }else{
+            vector<tuple<int, int, real_t> > mvec{make_tuple(i,t,FactorGraph::DO_NOT_OVERWRITE)};
+            itolistmap.emplace(make_pair(j,mvec));
+       }
+         
+    }
+
+    mapType::iterator mapIter;
+    //#pragma omp parallel for
+    //#pragma omp single nowait
+    {
+        for(mapIter=itolistmap.begin();mapIter!=itolistmap.end();++mapIter) //construct the distance matrix
+        {
+           //#pragma omp task firstprivate(mapIter)
+            {
+                int i = mapIter-> first;
+                auto listC = mapIter -> second;
+                for(auto vecIt = listC.begin(); vecIt!=listC.end(); ++vecIt){
+                    G.add_contact_single(i, get<0>(*vecIt), get<1>(*vecIt), get<2>(*vecIt));
+                }
+            } 
+        }
     }
 
 }
