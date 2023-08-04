@@ -24,6 +24,7 @@ struct Message : public std::vector<T>
 	Message(size_t qj) : std::vector<T>(qj*qj), qj(qj) {}
 	void clear() { for (int i = 0; i < int(std::vector<T>::size()); ++i) std::vector<T>::operator[](i)*=0.0; }
 	size_t dim() const { return qj;}
+	//map reference from 2D to 1D
 	inline T & operator()(int sji, int sij) { return std::vector<T>::operator[](qj * sij + sji); }
 	inline T const & operator()(int sji, int sij) const { return std::vector<T>::operator[](qj * sij + sji); }
 	size_t qj;
@@ -70,10 +71,10 @@ struct Node {
 	void push_back_time(times_t t) {
 		times.back() = t;
 		times.push_back(Tinf);
-		ht.push_back(ht.back());
-		hg.push_back(hg.back());
-		bt.push_back(bt.back());
-		bg.push_back(bg.back());
+        ht.push_back(ht.back());
+        hg.push_back(hg.back());
+        bt.push_back(bt.back());
+        bg.push_back(bg.back());
 	}
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
@@ -102,6 +103,8 @@ public:
 		std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>> > const & individuals = std::vector<std::tuple<int, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>, std::shared_ptr<Proba>>>());
 	int find_neighbor(int i, int j) const;
 	void append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji = DO_NOT_OVERWRITE);
+	void check_neighbors(int i, int j);
+	void add_contact_single(int i, int j, times_t t, real_t lambdaij);
 	void drop_contacts(times_t t);
 	void append_observation(int i, std::shared_ptr<Test> const & o, times_t t);
 	void append_time(int i, times_t t);

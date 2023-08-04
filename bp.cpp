@@ -119,28 +119,89 @@ void FactorGraph::drop_contacts(times_t t)
 	}
 }
 
+void FactorGraph::check_neighbors(int i, int j){
+	if (i == j)
+		throw invalid_argument("self loops are not allowed");
+    add_node(i);
+    add_node(j);
+	//node i
+	Node & fi = nodes[i];
+	//node j
+	Node & fj = nodes[j];
+	int ki = find_neighbor(i, j);
+	int kj = find_neighbor(j, i);
+	//check neighbors are mutual
+	if (ki == int(fi.neighs.size())) {
+		assert(kj == int(fj.neighs.size()));
+		fi.neighs.push_back(Neigh(j, kj));
+		fj.neighs.push_back(Neigh(i, ki));
+	}
+}
+
+void FactorGraph::add_contact_single(int i, int j, times_t t, real_t lambdaij){
+	Node & fi = nodes[i];
+	int qi = fi.times.size();
+	if (fi.times[qi - 2] > t)
+		throw invalid_argument("time of contacts should be ordered");
+	int ki = find_neighbor(i, j);
+	//add contact times for i & j
+	Neigh & ni = fi.neighs[ki];
+	if (fi.times[qi - 2] < t) {
+		fi.push_back_time(t);
+                ++qi;
+	}
+	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
+		//the time are not in the times
+		ni.t.back() = qi - 2;
+		ni.t.push_back(qi - 1);
+		if (lambdaij != DO_NOT_OVERWRITE)
+			ni.lambdas.back() = lambdaij;
+
+        ni.lambdas.push_back(0.0);
+		//expand the messages
+		++ni.msg;
+	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
+		//times are already done, write the lambdas
+		if (lambdaij != DO_NOT_OVERWRITE)
+			ni.lambdas[ni.t.size() - 2] = lambdaij;
+
+	} else {
+		throw invalid_argument("time of contacts should be ordered");
+	}
+    // adjust infinite times
+    for (int k = 0; k < int(fi.neighs.size()); ++k) {
+        fi.neighs[k].t.back() = qi - 1;
+	}
+	
+}
+
 void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_t lambdaji)
 {
 	if (i == j)
 		throw invalid_argument("self loops are not allowed");
     add_node(i);
     add_node(j);
+	//node i
 	Node & fi = nodes[i];
+	//node j
 	Node & fj = nodes[j];
+	//i
 	int qi = fi.times.size();
+	//j
 	int qj = fj.times.size();
+	//sanity checks
 	if (fi.times[qi - 2] > t || fj.times[qj - 2] > t)
 		throw invalid_argument("time of contacts should be ordered");
-
+	
 	int ki = find_neighbor(i, j);
 	int kj = find_neighbor(j, i);
-
+	//check neighbors are mutual
 	if (ki == int(fi.neighs.size())) {
 		assert(kj == int(fj.neighs.size()));
 		fi.neighs.push_back(Neigh(j, kj));
 		fj.neighs.push_back(Neigh(i, ki));
 	}
-
+	//add contact times for i & j
 	Neigh & ni = fi.neighs[ki];
 	Neigh & nj = fj.neighs[kj];
 	if (fi.times[qi - 2] < t) {
@@ -153,7 +214,9 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 		fj.push_back_time(t);
         ++qj;
 	}
+	//check on node i, apply to node j
 	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
+		//the times are not in the times
 		ni.t.back() = qi - 2;
 		nj.t.back() = qj - 2;
 		ni.t.push_back(qi - 1);
@@ -167,6 +230,7 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 		++ni.msg;
 		++nj.msg;
 	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
+		//times are already done, write the lambdas
 		if (lambdaij != DO_NOT_OVERWRITE)
 			ni.lambdas[ni.t.size() - 2] = lambdaij;
 		if (lambdaji != DO_NOT_OVERWRITE)
@@ -175,11 +239,11 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 		throw invalid_argument("time of contacts should be ordered");
 	}
     // adjust infinite times
-	for (int k = 0; k < int(fi.neighs.size()); ++k) {
-			fi.neighs[k].t.back() = qi - 1;
+    for (int k = 0; k < int(fi.neighs.size()); ++k) {
+        fi.neighs[k].t.back() = qi - 1;
 	}
-	for (int k = 0; k < int(fj.neighs.size()); ++k) {
-			fj.neighs[k].t.back() = qj - 1;
+    for (int k = 0; k < int(fj.neighs.size()); ++k) {
+        fj.neighs[k].t.back() = qj - 1;
 	}
 }
 
