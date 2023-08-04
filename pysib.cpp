@@ -94,12 +94,13 @@ void append_contacts_numpy(FactorGraph &G, NpyArrayC<int>::typ &from, NpyArrayC<
     }
 
     mapType::iterator mapIter;
-    //#pragma omp parallel for
-    //#pragma omp single nowait
+#pragma omp parallel
+{
+#pragma omp single nowait
     {
         for(mapIter=itolistmap.begin();mapIter!=itolistmap.end();++mapIter) //construct the distance matrix
         {
-           //#pragma omp task firstprivate(mapIter)
+#pragma omp task firstprivate(mapIter)
             {
                 int i = mapIter-> first;
                 auto listC = mapIter -> second;
@@ -109,6 +110,7 @@ void append_contacts_numpy(FactorGraph &G, NpyArrayC<int>::typ &from, NpyArrayC<
             } 
         }
     }
+}
 
 }
 
