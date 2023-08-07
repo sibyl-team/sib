@@ -17,6 +17,13 @@ def sib_test():
     test_suite = test_loader.discover('test', pattern='*_tests.py')
     return test_suite
 
+def git_version():
+    ver_str = subprocess.Popen(['git', 'show', '-s',
+            '--pretty=%h %ad %d'],
+            stdout=subprocess.PIPE).communicate()[0].decode()[:-1]
+    if ver_str[-1] == '\n':
+        ver_str = ver_str[:-1]
+    return '"' + ver_str + '"'
 
 __version__ = '0.1.2'
 COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -fopenmp" #unix
@@ -47,9 +54,7 @@ ext_modules = [
         "pysib.cpp",
         "drop.cpp"
         ],
-        define_macros=[('VERSION', '"' + subprocess.Popen(['git', 'show', '-s',
-            '--pretty=%h %ad %d'],
-            stdout=subprocess.PIPE).communicate()[0].decode()[:-1] + '"')],
+        define_macros=[('VERSION', git_version())],
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
