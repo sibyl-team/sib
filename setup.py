@@ -25,7 +25,7 @@ def git_version():
         ver_str = ver_str[:-1]
     return '"' + ver_str + '"'
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -fopenmp" #unix
 #COMPILE_FLAGS = "-fPIC -std=c++11 -Wall -O3 -g -Xpreprocessor -fopenmp" #macosx with libomp
 extra_link_args = ["-lgomp", "-lm"] #unix
