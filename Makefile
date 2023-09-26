@@ -1,9 +1,10 @@
 PYTHON=python3
+PYTHON_CONFIG=python3-config
 INC=-Ilib -I${CONDA_PREFIX}/include
 EXTRA=-O3
 VERSION=$(shell git show -s --pretty="%h %ad %d")
 CFLAGS=-fPIC -std=c++11 -Wall -g -fopenmp ${INC}
-SO=_sib$(shell ${PYTHON}-config --extension-suffix)
+SO=_sib$(shell ${PYTHON_CONFIG} --extension-suffix)
 LINK=-lgomp -lm -DVERSION="\"${VERSION}\""
 PYINC=$(shell ${PYTHON} -m pybind11 --includes)
 DEP=$(wildcard *.h)
