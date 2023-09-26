@@ -71,10 +71,10 @@ struct Node {
 	void push_back_time(times_t t) {
 		times.back() = t;
 		times.push_back(Tinf);
-        ht.push_back(ht.back());
-        hg.push_back(hg.back());
-        bt.push_back(bt.back());
-        bg.push_back(bg.back());
+		ht.push_back(ht.back());
+		hg.push_back(hg.back());
+		bt.push_back(bt.back());
+		bg.push_back(bg.back());
 	}
 	std::shared_ptr<Proba> prob_i;
 	std::shared_ptr<Proba> prob_r;
