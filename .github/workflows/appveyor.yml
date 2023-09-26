@@ -1,0 +1,16 @@
+version: 1.0.{build}
+image: Ubuntu
+install:
+- sh: >-
+    ls /home/appveyor/
+
+    source /home/appveyor/venv3.9/bin/activate
+
+    pip install pybind11
+build_script:
+- sh: make
+test_script:
+- sh: >-
+    pip install numpy pandas scipy scikit-learn
+
+    make test
