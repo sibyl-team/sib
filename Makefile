@@ -28,7 +28,7 @@ ${SO}: bp.o params.o drop.o pysib.cpp ${DEP}
 test: ${DOCTEST}
 
 env:
-	ls $(dirname `which ${PYTHON}`)
+	ls $(shell dirname `which ${PYTHON}`)
 	@which ${PYTHON}
 	@which ${PYTHON_CONFIG}
 
