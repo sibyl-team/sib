@@ -14,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include <iterator>
 #include <exception>
+#include <unordered_map>
 #include "bp.h"
 #include "drop.h"
 
@@ -27,7 +28,91 @@ namespace py = pybind11;
 using namespace std;
 using boost::lexical_cast;
 
+template <typename T>
+struct NpyArrayC{ 
+ typedef py::array_t<T,py::array::c_style | py::array::forcecast> typ;
+};
 
+void append_contacts_numpy(FactorGraph &G, NpyArrayC<int>::typ &from, NpyArrayC<int>::typ &to,
+     NpyArrayC<int>::typ &times, NpyArrayC<real_t>::typ &lambdas){
+
+    auto buf_i = from.request();
+    auto buf_j = to.request();
+    auto buf_t = times.request();
+
+    auto buf_lam = lambdas.request();
+
+    if (buf_i.ndim !=1 || buf_j.ndim !=1 || buf_t.ndim != 1 || buf_lam.ndim != 1)
+    {
+        throw std::runtime_error("Provide vectors of single dimension");
+    }
+
+    auto mlen = buf_i.shape[0];
+    if(buf_j.shape[0]!=mlen || buf_t.shape[0]!=mlen || buf_lam.shape[0]!=mlen){
+        throw std::runtime_error("Vectors have to be equal in length");
+    }
+
+    //pointers to memory
+    auto ptr_i = static_cast<int*>(buf_i.ptr);
+    auto ptr_j = static_cast<int*>(buf_j.ptr);
+    auto ptr_t = static_cast<int*>(buf_t.ptr);
+    auto ptr_lam = static_cast<real_t*>(buf_lam.ptr);
+    // first loop -> add nodes to the graph if needed
+    // second loop in parallel -> expand times and messages
+    // check for uniqueness of (i,j)
+    typedef std::unordered_map<int, vector<tuple<int, int, real_t> > > mapType;
+    unordered_map<int, vector<tuple<int, int, real_t> > > itolistmap;
+    for(int k=0; k<mlen; k++){
+        //cerr << ptr_i[k] << " -> "<<ptr_j[k] <<", t: "<<ptr_t[k]<<", lam: "<<ptr_lam[k]<<endl;
+       //G.append_contact(ptr_i[k], ptr_j[k], ptr_t[k], ptr_lam[k]);
+       auto i = ptr_i[k];
+       auto j = ptr_j[k];
+       auto t = ptr_t[k];
+       auto lam = ptr_lam[k];
+       G.check_neighbors(ptr_i[k], ptr_j[k]);
+       //G.add_contact_single(ptr_i[k], ptr_j[k], ptr_t[k],ptr_lam[k]);
+       //G.add_contact_single(ptr_j[k], ptr_i[k],ptr_t[k], FactorGraph::DO_NOT_OVERWRITE);
+       // find vector
+       auto vec_l = itolistmap.find(i);
+       if( vec_l != itolistmap.end()){
+         //append
+         vec_l->second.push_back( make_tuple(j, t, lam));
+       }else{
+            vector<tuple<int, int, real_t> > mvec {make_tuple(j,t,lam)};
+            itolistmap.emplace(make_pair(i,mvec));
+       }
+       //REVERSE
+       vec_l = itolistmap.find(j);
+       if( vec_l != itolistmap.end()){
+         //append
+         vec_l->second.push_back( make_tuple(i, t, FactorGraph::DO_NOT_OVERWRITE));
+       }else{
+            vector<tuple<int, int, real_t> > mvec{make_tuple(i,t,FactorGraph::DO_NOT_OVERWRITE)};
+            itolistmap.emplace(make_pair(j,mvec));
+       }
+         
+    }
+
+    mapType::iterator mapIter;
+#pragma omp parallel
+{
+#pragma omp single nowait
+    {
+        for(mapIter=itolistmap.begin();mapIter!=itolistmap.end();++mapIter) //construct the distance matrix
+        {
+#pragma omp task firstprivate(mapIter)
+            {
+                int i = mapIter-> first;
+                auto listC = mapIter -> second;
+                for(auto vecIt = listC.begin(); vecIt!=listC.end(); ++vecIt){
+                    G.add_contact_single(i, get<0>(*vecIt), get<1>(*vecIt), get<2>(*vecIt));
+                }
+            } 
+        }
+    }
+}
+
+}
 
 
 
@@ -237,6 +322,13 @@ PYBIND11_MODULE(_sib, m) {
                 py::arg("lambdaij"),
                 py::arg("lambdaji") = real_t(FactorGraph::DO_NOT_OVERWRITE),
                 "appends a new contact from i to j at time t with transmission probabilities lambdaij, lambdaji")
+        .def("append_contacts_npy", &append_contacts_numpy,
+                py::arg("arr_i"),
+                py::arg("arr_j"),
+                py::arg("arr_t"),
+                py::arg("arr_lambs"),
+                "Append many contacts from numpy arrays"
+        )
         .def("reset_observations", &FactorGraph::reset_observations,
                 py::arg("obs"),
                 "resets all observations")
