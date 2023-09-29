@@ -48,13 +48,13 @@ void FactorGraph::append_time(int i, times_t t)
 		|| t == *lower_bound(n.times.begin(), n.times.end(), t))
 		return;
 	if (t > n.times[n.times.size() - 2]) {
-			n.push_back_time(t);
-		// adjust infinite times
-		for (int j = 0; j < int(n.neighs.size()); ++j) {
-			n.neighs[j].t.back() = n.times.size() - 1;
-		}
-			return;
-	}
+		n.push_back_time(t);
+                // adjust infinite times
+                for (int j = 0; j < int(n.neighs.size()); ++j) {
+                        n.neighs[j].t.back() = n.times.size() - 1;
+                }
+		return;
+        }
 	cerr << t << " < " << n.times[n.times.size() - 2] << endl;
 	throw invalid_argument("observation time unexistent and too small");
 }
@@ -80,7 +80,7 @@ Mes & operator++(Mes & msg)
 			msg(sji, sij) = msg[oldqj * sij + sji];
 		}
 	}
-	msg(qj - 1, qj - 1) = msg(qj - 2, qj - 2);
+        msg(qj - 1, qj - 1) = msg(qj - 2, qj - 2);
 	for (int s = 0; s < qj; ++s) {
 		msg(s, qj - 1) = msg(s, qj - 2);
 		msg(qj - 1, s) = msg(qj - 2, s);
@@ -177,38 +177,35 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 {
 	if (i == j)
 		throw invalid_argument("self loops are not allowed");
-	add_node(i);
-	add_node(j);
+        add_node(i);
+        add_node(j);
 	Node & fi = nodes[i];
 	Node & fj = nodes[j];
 	int qi = fi.times.size();
 	int qj = fj.times.size();
-	//sanity checks
 	if (fi.times[qi - 2] > t || fj.times[qj - 2] > t)
 		throw invalid_argument("time of contacts should be ordered");
-	
+
 	int ki = find_neighbor(i, j);
 	int kj = find_neighbor(j, i);
-	//check neighbors are mutual
+
 	if (ki == int(fi.neighs.size())) {
 		assert(kj == int(fj.neighs.size()));
 		fi.neighs.push_back(Neigh(j, kj));
 		fj.neighs.push_back(Neigh(i, ki));
 	}
-	//add contact times for i & j
+
 	Neigh & ni = fi.neighs[ki];
 	Neigh & nj = fj.neighs[kj];
 	if (fi.times[qi - 2] < t) {
 		fi.push_back_time(t);
-		++qi;
+                ++qi;
 	}
 	if (fj.times[qj - 2] < t) {
 		fj.push_back_time(t);
-		++qj;
+                ++qj;
 	}
-	//check on node i, apply to node j
 	if (ni.t.size() < 2 || ni.t[ni.t.size() - 2] < qi - 2) {
-		//the times are not in the times
 		ni.t.back() = qi - 2;
 		nj.t.back() = qj - 2;
 		ni.t.push_back(qi - 1);
@@ -217,13 +214,11 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 			ni.lambdas.back() = lambdaij;
 		if (lambdaji != DO_NOT_OVERWRITE)
 			nj.lambdas.back() = lambdaji;
-		ni.lambdas.push_back(0.0);
-		nj.lambdas.push_back(0.0);
-		//expand the messages
+                ni.lambdas.push_back(0.0);
+                nj.lambdas.push_back(0.0);
 		++ni.msg;
 		++nj.msg;
 	} else if (ni.t[ni.t.size() - 2] == qi - 2) {
-		//times are already done, write the lambdas
 		if (lambdaij != DO_NOT_OVERWRITE)
 			ni.lambdas[ni.t.size() - 2] = lambdaij;
 		if (lambdaji != DO_NOT_OVERWRITE)
@@ -231,12 +226,12 @@ void FactorGraph::append_contact(int i, int j, times_t t, real_t lambdaij, real_
 	} else {
 		throw invalid_argument("time of contacts should be ordered");
 	}
-	// adjust infinite times
-	for (int k = 0; k < int(fi.neighs.size()); ++k) {
-		fi.neighs[k].t.back() = qi - 1;
+        // adjust infinite times
+        for (int k = 0; k < int(fi.neighs.size()); ++k) {
+                fi.neighs[k].t.back() = qi - 1;
 	}
-	for (int k = 0; k < int(fj.neighs.size()); ++k) {
-		fj.neighs[k].t.back() = qj - 1;
+        for (int k = 0; k < int(fj.neighs.size()); ++k) {
+                fj.neighs[k].t.back() = qj - 1;
 	}
 }
 
@@ -699,6 +694,7 @@ real_t FactorGraph::iterate(int maxit, real_t tol, real_t damping, bool learn)
 	return err;
 }
 
+
 ostream & operator<<(ostream & ost, FactorGraph const & f)
 {
 	int nasym = 0;
@@ -706,8 +702,8 @@ ostream & operator<<(ostream & ost, FactorGraph const & f)
 	int ncont = 0;
 	for(int i = 0; i < int(f.nodes.size()); ++i) {
 		for (auto vit = f.nodes[i].neighs.begin(), vend = f.nodes[i].neighs.end(); vit != vend; ++vit) {
-			if (vit->index < i)
-				continue;
+                        if (vit->index < i)
+                                continue;
 			++nedge;
 			ncont += vit->lambdas.size() - 1;
 			if (vit->lambdas != f.nodes[vit->index].neighs[vit->pos].lambdas)
