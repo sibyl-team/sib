@@ -27,7 +27,11 @@ ${SO}: bp.o params.o drop.o pysib.cpp ${DEP}
 
 test: ${DOCTEST}
 
-${DOCTEST}: sib ${SO}
+env:
+	@which ${PYTHON}
+	@which ${PYTHON_CONFIG}
+
+${DOCTEST}: env sib ${SO}
 	@${PYTHON} -c "import sys, doctest; (f,t) = doctest.testfile(\"$@\"); print(f'DOCTEST $@: PASSED {t-f}/{t}'); sys.exit(int(f > 0))"
 
 clean:
