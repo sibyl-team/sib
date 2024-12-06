@@ -518,12 +518,9 @@ real_t FactorGraph::update(int i, real_t damping, bool learn)
 
 		for (int gi = ti; gi < qi; ++gi) {
 			real_t w = f.ht[ti] * f.hg[gi];
-			if (ti == 0)
-				w *= params.pseed;
-			else if (ti == qi - 1)
-				w *= params.psus;
-			else
-				w *= 1 - params.pseed - params.psus;
+
+			w *= params.pseed * (ti == 0) + (1 - params.pseed) * (ti != 0)
+			w *= params.psus * (ti == qi - 1) + (1 - params.psus) * (ti != qi - 1)
 
 			for (unsigned k = 0; k < obs.size(); ++k) {
 				times_t const t = get<0>(obs[k]);
